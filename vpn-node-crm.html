@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NodeGrid — Control de nodos dVPN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080C16;
+    --panel:#0F1729;
+    --panel-2:#0B1220;
+    --border:#1E2A45;
+    --border-soft:#16203868;
+    --text:#E8EDF9;
+    --muted:#8592B0;
+    --muted-2:#5C6889;
+    --good:#2FE3B0;
+    --good-dim:#2FE3B026;
+    --warn:#F5B94D;
+    --warn-dim:#F5B94D26;
+    --bad:#FF5C6C;
+    --bad-dim:#FF5C6C26;
+    --accent:#5B8CFF;
+    --accent-dim:#5B8CFF26;
+    --mono:'IBM Plex Mono', monospace;
+    --display:'Space Grotesk', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--display);}
+  ::selection{background:var(--accent-dim);}
+  a{color:inherit;}
+
+  /* ---------- topbar ---------- */
+  header.topbar{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(180deg, var(--panel) 0%, #0B1324 100%);
+    border-bottom:1px solid var(--border);
+    padding:18px 28px 0 28px;
+  }
+  .topbar-inner{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;
+    background:conic-gradient(from 220deg, var(--accent), var(--good), var(--accent));
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:13px;color:#04101c;
+    box-shadow:0 0 0 1px var(--border), 0 8px 18px -6px #5B8CFF55;
+  }
+  .brand h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.2px;}
+  .brand p{margin:1px 0 0;font-size:12.5px;color:var(--muted);font-family:var(--mono);}
+  nav.tabs{display:flex;gap:2px;margin-top:14px;overflow-x:auto;}
+  nav.tabs button{
+    appearance:none;border:none;background:transparent;color:var(--muted);
+    font-family:var(--display);font-size:13.5px;font-weight:500;
+    padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+    display:flex;align-items:center;gap:7px;
+  }
+  nav.tabs button .count{
+    font-family:var(--mono);font-size:11px;background:var(--panel-2);border:1px solid var(--border);
+    padding:1px 6px;border-radius:20px;color:var(--muted-2);
+  }
+  nav.tabs button:hover{color:var(--text);}
+  nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent);}
+
+  main{max-width:1180px;margin:0 auto;padding:26px 28px 80px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .grid-2{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;}
+  @media(max-width:860px){.grid-2{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;
+  }
+  .card h2{margin:0 0 4px;font-size:15px;font-weight:600;}
+  .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 16px;line-height:1.5;}
+
+  textarea{
+    width:100%;min-height:150px;background:var(--panel-2);border:1px solid var(--border);
+    border-radius:10px;color:var(--text);font-family:var(--mono);font-size:12.5px;padding:12px;
+    resize:vertical;
+  }
+  textarea:focus, input:focus, select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
+  input[type=text], input[type=url], input[type=number], select{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:8px;padding:9px 11px;font-family:var(--display);font-size:13px;
+  }
+  label.file-btn{
+    background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;
+    font-size:13px;cursor:pointer;color:var(--muted);
+  }
+  label.file-btn:hover{color:var(--text);}
+  input[type=file]{display:none;}
+
+  button.btn{
+    appearance:none;border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+    padding:9px 16px;border-radius:8px;font-family:var(--display);font-weight:500;font-size:13px;cursor:pointer;
+  }
+  button.btn:hover{border-color:var(--accent);}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#04101c;font-weight:600;}
+  button.btn.primary:hover{filter:brightness(1.08);}
+  button.btn.good{background:var(--good-dim);border-color:var(--good);color:var(--good);}
+  button.btn.bad{background:var(--bad-dim);border-color:var(--bad);color:var(--bad);}
+  button.btn.small{padding:5px 10px;font-size:11.5px;}
+  button.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .status-msg{margin-top:12px;font-family:var(--mono);font-size:12px;padding:9px 12px;border-radius:8px;display:none;}
+  .status-msg.show{display:block;}
+  .status-msg.ok{background:var(--good-dim);color:var(--good);}
+  .status-msg.err{background:var(--bad-dim);color:var(--bad);}
+
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  @media(max-width:700px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+  .stat .num{font-family:var(--mono);font-size:24px;font-weight:600;}
+  .stat .lbl{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .stat.good .num{color:var(--good);}
+  .stat.accent .num{color:var(--accent);}
+  .stat.warn .num{color:var(--warn);}
+  .stat.bad .num{color:var(--bad);}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .toolbar input[type=text]{flex:1;min-width:160px;}
+
+  /* node card fingerprint */
+  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+  .node-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+    border-left:3px solid var(--good);position:relative;
+  }
+  .node-card.rank1{box-shadow:0 0 0 1px var(--good), 0 8px 22px -10px #2FE3B055;}
+  .node-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .node-loc{font-weight:600;font-size:14px;}
+  .node-isp{font-size:11.5px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+  .node-id{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
+  .fingerprint{display:flex;gap:3px;align-items:flex-end;height:26px;margin:12px 0 8px;}
+  .fingerprint i{flex:1;background:var(--border);border-radius:2px;}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-bottom:12px;}
+  .metrics b{display:block;color:var(--text);font-size:12.5px;}
+  .node-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  select.assign-select{flex:1;min-width:110px;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.8px;}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;
+     padding:8px 10px;border-bottom:1px solid var(--border);}
+  td{padding:9px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  tr:hover td{background:#0D1729;}
+  .badge{font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:20px;display:inline-block;}
+  .badge.disp{background:var(--good-dim);color:var(--good);}
+  .badge.uso{background:var(--accent-dim);color:var(--accent);}
+  .badge.bloq{background:var(--bad-dim);color:var(--bad);}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--muted);}
+  .empty b{color:var(--text);display:block;margin-bottom:4px;font-size:14px;}
+
+  .acc-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .acc-name{font-weight:600;font-size:14px;min-width:130px;}
+  .acc-node{flex:1;min-width:220px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .acc-node b{color:var(--text);font-family:var(--display);}
+  .acc-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
+  footer.log{
+    max-width:1180px;margin:0 auto;padding:0 28px 60px;
+  }
+  .log-list{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11.5px;color:var(--muted-2);}
+  .log-list li{padding:5px 0;border-bottom:1px solid var(--border-soft);}
+  .log-list li span{color:var(--muted);}
+
+  .modal-overlay{
+    position:fixed;inset:0;background:#02040aB0;backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:360px;width:100%;}
+  .modal h3{margin:0 0 6px;font-size:15px;}
+  .modal p{color:var(--muted);font-size:12.5px;margin:0 0 14px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">NG</div>
+      <div>
+        <h1>NodeGrid</h1>
+        <p>Control de nodos dVPN · datos guardados solo en este navegador</p>
+      </div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button data-view="import" class="active">Cargar datos</button>
+    <button data-view="disponibles">Disponibles <span class="count" id="cnt-disp">0</span></button>
+    <button data-view="cuentas">Cuentas <span class="count" id="cnt-acc">0</span></button>
+    <button data-view="bloqueados">Bloqueados <span class="count" id="cnt-bloq">0</span></button>
+    <button data-view="todos">Todos los nodos <span class="count" id="cnt-todos">0</span></button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===================== VISTA: IMPORTAR ===================== -->
+  <section class="view active" id="view-import">
+    <div class="stat-grid">
+      <div class="stat accent"><div class="num" id="s-total">0</div><div class="lbl">Nodos cargados</div></div>
+      <div class="stat good"><div class="num" id="s-disp">0</div><div class="lbl">Disponibles (GB)</div></div>
+      <div class="stat"><div class="num" id="s-uso">0</div><div class="lbl">En uso</div></div>
+      <div class="stat bad"><div class="num" id="s-bloq">0</div><div class="lbl">Bloqueados</div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>Pegar el JSON de la API</h2>
+        <p class="hint">Copia la respuesta completa de la API (el array de nodos) y pégala aquí. Puedes hacerlo cada vez que quieras refrescar la calidad de los nodos: nunca se te borran ni repiten los que ya tienes en uso o bloqueados.</p>
+        <textarea id="json-input" placeholder="[ { &quot;id&quot;: 123, &quot;location&quot;: {...}, &quot;quality&quot;: {...} }, ... ]"></textarea>
+        <div class="row">
+          <label class="file-btn">Subir archivo .json
+            <input type="file" id="file-input" accept="application/json,.json">
+          </label>
+          <button class="btn primary" id="btn-load">Cargar / actualizar pool</button>
+          <button class="btn" id="btn-clear-input">Limpiar campo</button>
+        </div>
+        <div class="status-msg" id="load-status"></div>
+      </div>
+
+      <div class="card">
+        <h2>Traer nodos directo de la API de Mysterium</h2>
+        <p class="hint">Consulta en vivo <code>discovery.mysterium.network</code> sin copiar/pegar nada. Si el navegador bloquea la petición (CORS), usa el botón "Abrir en pestaña" y pega el resultado en el panel de la izquierda — funciona siempre.</p>
+        <div class="row" style="margin-top:0">
+          <input type="text" id="api-country" placeholder="País (ej: GB)" value="GB" style="width:120px">
+          <select id="api-service">
+            <option value="">Cualquier servicio</option>
+            <option value="wireguard">wireguard</option>
+            <option value="openvpn">openvpn</option>
+          </select>
+        </div>
+        <div class="row">
+          <input type="text" id="api-extra" placeholder="Parámetros extra (opcional), ej: quality_min=1&ip_type=residential" style="flex:1;min-width:200px">
+        </div>
+        <div class="row">
+          <button class="btn primary" id="btn-fetch">Buscar nodos ahora</button>
+          <button class="btn" id="btn-open-tab">Abrir en pestaña nueva</button>
+        </div>
+        <div class="status-msg" id="fetch-status"></div>
+        <p class="hint" style="margin-top:14px;margin-bottom:0">Los parámetros de país/servicio se le piden a la API, pero además esta app siempre vuelve a filtrar GB y calidad por su cuenta, así que aunque la API ignore un parámetro, el resultado que ves sigue siendo correcto.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>Actividad reciente</h2>
+      <p class="hint">Últimas 12 acciones realizadas en este equipo.</p>
+      <ul class="log-list" id="log-list"><li>Sin actividad todavía.</li></ul>
+    </div>
+  </section>
+
+  <!-- ===================== VISTA: DISPONIBLES ===================== -->
+  <section class="view" id="view-disponibles">
+    <div class="toolbar">
+      <label style="font-size:12.5px;color:var(--muted)">País:</label>
+      <select id="disp-country"></select>
+      <input type="text" id="disp-search" placeholder="Buscar por ciudad, ISP o ID...">
+      <button class="btn" id="disp-refresh">↻ Refrescar orden</button>
+    </div>
+    <div class="node-grid" id="disp-grid"></div>
+  </section>
+
+  <!-- ===================== VISTA: CUENTAS ===================== -->
+  <section class="view" id="view-cuentas">
+    <div class="card" style="margin-bottom:18px">
+      <h2>Nueva cuenta / slot</h2>
+      <p class="hint">Crea una cuenta por cada conexión que manejas (ej: "Cuenta 15"). A cada una le asignas un nodo, y si falla, la reemplazas con un clic.</p>
+      <div class="row" style="margin-top:0">
+        <input type="text" id="acc-name-input" placeholder="Nombre de la cuenta, ej: Cuenta 15">
+        <button class="btn primary" id="btn-add-acc">Crear cuenta</button>
+      </div>
+    </div>
+    <div id="acc-list"></div>
+  </section>
+
+  <!-- ===================== VISTA: BLOQUEADOS ===================== -->
+  <section class="view" id="view-bloqueados">
+    <div class="toolbar">
+      <input type="text" id="bloq-search" placeholder="Buscar por ciudad, ISP o ID...">
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>ID búsqueda</th><th>Ubicación</th><th>ISP</th><th>Motivo</th><th>Fecha</th><th>Acción</th></tr></thead>
+      <tbody id="bloq-tbody"></tbody>
+    </table>
+  </section>
+
+  <!-- ===================== VISTA: TODOS ===================== -->
+  <section class="view" id="view-todos">
+    <div class="toolbar">
+      <select id="todos-country"></select>
+      <select id="todos-estado">
+        <option value="">Todos los estados</option>
+        <option value="disponible">Disponible</option>
+        <option value="uso">En uso</option>
+        <option value="bloqueado">Bloqueado</option>
+      </select>
+      <input type="text" id="todos-search" placeholder="Buscar por ciudad, ISP o ID...">
+    </div>
+    <table>
+      <thead><tr>
+        <th>ID</th><th>ID búsqueda (Mysterium Dark)</th><th>Ubicación</th><th>ISP</th><th>Uptime</th><th>Latencia</th><th>Pérdida</th><th>Calidad</th><th>Estado</th><th>Acción</th>
+      </tr></thead>
+      <tbody id="todos-tbody"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Confirmar</h3>
+    <p id="modal-text"></p>
+    <div class="row" style="margin-top:4px">
+      <button class="btn" id="modal-cancel">Cancelar</button>
+      <button class="btn bad" id="modal-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORAGE_KEY = "nodegrid_state_v1";
+
+  /* ---------------- estado ---------------- */
+  function defaultState(){
+    return { nodes:{}, blocked:{}, assignments:{}, accounts:[], nextAccId:1, log:[] };
+  }
+  let state = loadState();
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      return Object.assign(defaultState(), parsed);
+    }catch(e){
+      return defaultState();
+    }
+  }
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("No se pudo guardar el estado:", e); }
+  }
+  function addLog(msg){
+    state.log.unshift({ ts: new Date().toISOString(), msg });
+    state.log = state.log.slice(0, 40);
+  }
+
+  /* ---------------- helpers de datos ---------------- */
+  function isGB(node){
+    const c = ((node.location && node.location.country) || "").toUpperCase().trim();
+    return c === "GB" || c === "UK" || c === "UNITED KINGDOM" || c === "GREAT BRITAIN";
+  }
+  function nodeStatus(id){
+    if(state.blocked[id]) return "bloqueado";
+    if(Object.values(state.assignments).includes(String(id))) return "uso";
+    return "disponible";
+  }
+  function assignedAccountFor(id){
+    for(const accId in state.assignments){
+      if(state.assignments[accId] === String(id)) return accId;
+    }
+    return null;
+  }
+  function fmt(v, suffix){
+    if(v === undefined || v === null || v === "") return "—";
+    return v + (suffix || "");
+  }
+
+  // El ID que se pega en Mysterium Dark para buscar el nodo: los primeros
+  // 14 caracteres del provider_id (ej: "0x5949a57c9e308ee70e7a3c1ad8ddee663820b6cf" -> "0x5949a57c9e30").
+  function searchId(providerId){
+    if(!providerId) return "—";
+    return String(providerId).slice(0, 14);
+  }
+
+  function copyToClipboard(text, btnEl){
+    const done = () => {
+      if(!btnEl) return;
+      const original = btnEl.textContent;
+      btnEl.textContent = "Copiado ✓";
+      setTimeout(() => { btnEl.textContent = original; }, 1200);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+  function fallbackCopy(text, done){
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    }catch(e){
+      alert("No se pudo copiar automáticamente. ID: " + text);
+    }
+  }
+
+  // orden: sin fallo de monitoreo > mayor uptime > menor pérdida > menor latencia > mayor calidad > mayor ancho de banda
+  function compareNodes(a, b){
+    const qa = a.quality || {}, qb = b.quality || {};
+    const fa = qa.monitoring_failed ? 1 : 0, fb = qb.monitoring_failed ? 1 : 0;
+    if(fa !== fb) return fa - fb;
+    const ua = num(qa.uptime), ub = num(qb.uptime);
+    if(ub !== ua) return ub - ua;
+    const pa = num(qa.packetLoss, 1e9), pb = num(qb.packetLoss, 1e9);
+    if(pa !== pb) return pa - pb;
+    const la = num(qa.latency, 1e9), lb = num(qb.latency, 1e9);
+    if(la !== lb) return la - lb;
+    const qqa = num(qa.quality), qqb = num(qb.quality);
+    if(qqb !== qqa) return qqb - qqa;
+    const ba = num(qa.bandwidth), bb = num(qb.bandwidth);
+    return bb - ba;
+  }
+  function num(v, fallback){ return (typeof v === "number" && !isNaN(v)) ? v : (fallback === undefined ? 0 : fallback); }
+
+  function allNodesArr(){
+    return Object.values(state.nodes);
+  }
+  function availableGBSorted(){
+    return allNodesArr()
+      .filter(n => isGB(n) && nodeStatus(n.id) === "disponible")
+      .sort(compareNodes);
+  }
+  function bestAvailableFor(countryFilterFn){
+    const list = allNodesArr().filter(n => nodeStatus(n.id) === "disponible" && countryFilterFn(n)).sort(compareNodes);
+    return list[0] || null;
+  }
+
+  /* ---------------- carga de JSON ---------------- */
+  function mergeNodes(arr){
+    // La API de Mysterium devuelve literalmente "null" cuando no hay nodos que
+    // coincidan con el filtro. Lo tratamos como "cero resultados", no como error.
+    if(arr === null || arr === undefined) arr = [];
+    if(!Array.isArray(arr)) throw new Error("El JSON debe ser una lista (array) de nodos, o null.");
+    let added = 0, updated = 0;
+    arr.forEach(raw => {
+      if(raw === null || typeof raw !== "object" || raw.id === undefined || raw.id === null) return;
+      const id = String(raw.id);
+      if(state.nodes[id]) updated++; else added++;
+      state.nodes[id] = Object.assign({}, raw, { id });
+    });
+    return { added, updated };
+  }
+
+  function showStatus(el, ok, text){
+    el.textContent = text;
+    el.className = "status-msg show " + (ok ? "ok" : "err");
+  }
+
+  document.getElementById("btn-load").addEventListener("click", () => {
+    const el = document.getElementById("load-status");
+    const raw = document.getElementById("json-input").value.trim();
+    if(!raw){ showStatus(el, false, "Pega o sube un JSON primero."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      const { added, updated } = mergeNodes(parsed);
+      addLog(`Import manual: ${added} nodos nuevos, ${updated} actualizados.`);
+      saveState();
+      renderAll();
+      showStatus(el, true, `Listo: ${added} nodos nuevos, ${updated} actualizados. Total en pool: ${allNodesArr().length}.`);
+    }catch(e){
+      showStatus(el, false, "El texto no es un JSON válido: " + e.message);
+    }
+  });
+
+  document.getElementById("btn-clear-input").addEventListener("click", () => {
+    document.getElementById("json-input").value = "";
+  });
+
+  document.getElementById("file-input").addEventListener("change", (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { document.getElementById("json-input").value = reader.result; };
+    reader.onerror = () => { showStatus(document.getElementById("load-status"), false, "No se pudo leer el archivo."); };
+    reader.readAsText(file);
+  });
+
+  const MYST_API_BASE = "https://discovery.mysterium.network/api/v3/proposals";
+
+  function buildMystApiUrl(){
+    const country = document.getElementById("api-country").value.trim();
+    const service = document.getElementById("api-service").value.trim();
+    const extra = document.getElementById("api-extra").value.trim();
+    const params = [];
+    if(country) params.push("location_country=" + encodeURIComponent(country));
+    if(service) params.push("service_type=" + encodeURIComponent(service));
+    params.push("include_monitoring_failed=true");
+    let url = MYST_API_BASE + (params.length ? "?" + params.join("&") : "");
+    if(extra){
+      url += (url.includes("?") ? "&" : "?") + extra.replace(/^[&?]+/, "");
+    }
+    return url;
+  }
+
+  document.getElementById("btn-fetch").addEventListener("click", async () => {
+    const el = document.getElementById("fetch-status");
+    const url = buildMystApiUrl();
+    showStatus(el, true, "Consultando la API de Mysterium...");
+    try{
+      const res = await fetch(url, { method:"GET", headers:{ "Accept":"application/json" } });
+      if(!res.ok) throw new Error("La API respondió con estado " + res.status);
+      const data = await res.json(); // puede ser null si no hay nodos
+      const { added, updated } = mergeNodes(data);
+      const total = Array.isArray(data) ? data.length : 0;
+      addLog(`Import desde API Mysterium: ${added} nodos nuevos, ${updated} actualizados (${total} recibidos).`);
+      saveState();
+      renderAll();
+      showStatus(el, true, total === 0
+        ? "La API no devolvió nodos con estos filtros. Prueba sin país o cambia el servicio."
+        : `Listo: ${added} nuevos, ${updated} actualizados de ${total} recibidos.`);
+    }catch(e){
+      showStatus(el, false, "No se pudo consultar directo (probable bloqueo CORS del servidor). Usa 'Abrir en pestaña nueva', copia el JSON que se muestra y pégalo en el panel de la izquierda. Detalle: " + e.message);
+    }
+  });
+
+  document.getElementById("btn-open-tab").addEventListener("click", () => {
+    window.open(buildMystApiUrl(), "_blank");
+  });
+
+  /* ---------------- acciones de nodos ---------------- */
+  function blockNode(id, reason){
+    id = String(id);
+    // liberar cualquier asignación previa
+    for(const accId in state.assignments){
+      if(state.assignments[accId] === id) delete state.assignments[accId];
+    }
+    state.blocked[id] = { reason: reason || "Bloqueado manualmente", ts: new Date().toISOString() };
+    addLog(`Nodo ${id} bloqueado (${reason || "manual"}).`);
+  }
+  function unblockNode(id){
+    id = String(id);
+    delete state.blocked[id];
+    addLog(`Nodo ${id} desbloqueado.`);
+  }
+  function assignNodeToAccount(nodeId, accId){
+    nodeId = String(nodeId); accId = String(accId);
+    if(state.blocked[nodeId]) return false;
+    // liberar cuenta previa de este nodo si la tenía otra cuenta
+    for(const a in state.assignments){
+      if(state.assignments[a] === nodeId && a !== accId) delete state.assignments[a];
+    }
+    state.assignments[accId] = nodeId;
+    addLog(`Nodo ${nodeId} asignado a ${accountName(accId)}.`);
+    return true;
+  }
+  function unassign(accId){
+    accId = String(accId);
+    const nodeId = state.assignments[accId];
+    delete state.assignments[accId];
+    if(nodeId) addLog(`Nodo ${nodeId} liberado de ${accountName(accId)} (vuelve a disponibles).`);
+  }
+  function accountName(accId){
+    const acc = state.accounts.find(a => String(a.id) === String(accId));
+    return acc ? acc.name : ("Cuenta #" + accId);
+  }
+
+  /* ---------------- render: barra de pestañas / contadores ---------------- */
+  function renderCounts(){
+    const totalGBdisp = allNodesArr().filter(n => isGB(n) && nodeStatus(n.id) === "disponible").length;
+    const totalUso = Object.keys(state.assignments).length;
+    const totalBloq = Object.keys(state.blocked).length;
+    document.getElementById("cnt-disp").textContent = totalGBdisp;
+    document.getElementById("cnt-acc").textContent = state.accounts.length;
+    document.getElementById("cnt-bloq").textContent = totalBloq;
+    document.getElementById("cnt-todos").textContent = allNodesArr().length;
+
+    document.getElementById("s-total").textContent = allNodesArr().length;
+    document.getElementById("s-disp").textContent = totalGBdisp;
+    document.getElementById("s-uso").textContent = totalUso;
+    document.getElementById("s-bloq").textContent = totalBloq;
+  }
+
+  function renderLog(){
+    const ul = document.getElementById("log-list");
+    if(!state.log.length){ ul.innerHTML = "<li>Sin actividad todavía.</li>"; return; }
+    ul.innerHTML = state.log.slice(0,12).map(item => {
+      const d = new Date(item.ts);
+      const time = d.toLocaleString();
+      return `<li><span>${time} —</span> ${escapeHtml(item.msg)}</li>`;
+    }).join("");
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  /* ---------------- fingerprint visual ---------------- */
+  function fingerprintHTML(q){
+    q = q || {};
+    const uptime = clamp01(q.uptime);
+    const quality = clamp01(q.quality);
+    const invLoss = 1 - clamp01(q.packetLoss);
+    const bars = [uptime, quality, invLoss];
+    return bars.map(v => {
+      const h = Math.max(4, Math.round(v*26));
+      const color = v > 0.66 ? "var(--good)" : v > 0.4 ? "var(--warn)" : "var(--bad)";
+      return `<i style="height:${h}px;background:${color}"></i>`;
+    }).join("");
+  }
+  function clamp01(v){
+    if(v === undefined || v === null || isNaN(v)) return 0.4;
+    let x = Number(v);
+    if(x > 1) x = x/100; // soporta escalas 0-100 o 0-1
+    return Math.min(1, Math.max(0, x));
+  }
+
+  /* ---------------- vista: disponibles ---------------- */
+  function countryList(){
+    const set = new Set();
+    allNodesArr().forEach(n => { const c = (n.location && n.location.country) || ""; if(c) set.add(c); });
+    return Array.from(set).sort();
+  }
+  function fillCountrySelect(sel, includeGBDefault){
+    const current = sel.value;
+    const countries = countryList();
+    let opts = `<option value="">Todos los países</option>`;
+    countries.forEach(c => { opts += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`; });
+    sel.innerHTML = opts;
+    if(current && countries.includes(current)) sel.value = current;
+    else if(includeGBDefault && countries.some(c => c.toUpperCase()==="GB")) sel.value = countries.find(c=>c.toUpperCase()==="GB");
+  }
+
+  function renderDisponibles(){
+    const sel = document.getElementById("disp-country");
+    fillCountrySelect(sel, true);
+    const countryFilter = sel.value;
+    const search = document.getElementById("disp-search").value.trim().toLowerCase();
+
+    let list = allNodesArr().filter(n => nodeStatus(n.id) === "disponible");
+    list = list.filter(n => countryFilter ? ((n.location && n.location.country) === countryFilter) : isGB(n));
+    if(search){
+      list = list.filter(n => {
+        const hay = [n.id, n.location && n.location.city, n.location && n.location.isp].join(" ").toLowerCase();
+        return hay.includes(search);
+      });
+    }
+    list.sort(compareNodes);
+
+    const grid = document.getElementById("disp-grid");
+    if(!list.length){
+      grid.innerHTML = `<div class="empty"><b>No hay nodos disponibles con estos filtros</b>Carga un JSON nuevo o cambia el país / búsqueda.</div>`;
+      return;
+    }
+    const accOptions = accountSelectOptions();
+    grid.innerHTML = list.map((n, idx) => {
+      const loc = n.location || {}; const q = n.quality || {};
+      return `
+      <div class="node-card ${idx===0 ? "rank1":""}">
+        <div class="node-top">
+          <div>
+            <div class="node-loc">${escapeHtml(loc.city || "Ciudad desconocida")}, ${escapeHtml(loc.country || "?")}</div>
+            <div class="node-isp">${escapeHtml(loc.isp || "ISP desconocido")}</div>
+          </div>
+          <div class="node-id">#${escapeHtml(n.id)}</div>
+        </div>
+        <div class="fingerprint">${fingerprintHTML(q)}</div>
+        <div class="metrics">
+          <div>Uptime<b>${fmt(q.uptime)}</b></div>
+          <div>Latencia<b>${fmt(q.latency,"ms")}</b></div>
+          <div>Pérdida<b>${fmt(q.packetLoss)}</b></div>
+          <div>Ancho<b>${fmt(q.bandwidth)}</b></div>
+        </div>
+        <div class="row" style="margin:0 0 10px;gap:6px">
+          <code style="font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(searchId(n.provider_id))}</code>
+          <button class="btn small" data-action="copy" data-copy="${escapeHtml(searchId(n.provider_id))}">Copiar ID</button>
+        </div>
+        <div class="node-actions">
+          <select class="assign-select" data-node="${n.id}">${accOptions}</select>
+          <button class="btn small good" data-action="assign" data-node="${n.id}">Asignar</button>
+          <button class="btn small bad" data-action="block" data-node="${n.id}">Bloquear</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function accountSelectOptions(){
+    if(!state.accounts.length) return `<option value="">Sin cuentas — crea una</option>`;
+    return `<option value="">Elegir cuenta...</option>` +
+      state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join("");
+  }
+
+  document.getElementById("disp-grid").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if(!btn) return;
+    if(btn.dataset.action === "copy"){
+      copyToClipboard(btn.getAttribute("data-copy"), btn);
+      return;
+    }
+    const nodeId = btn.getAttribute("data-node");
+    if(btn.dataset.action === "block"){
+      confirmModal("Bloquear nodo", `¿Bloquear el nodo #${nodeId}? No volverá a aparecer como disponible.`, () => {
+        blockNode(nodeId, "Bloqueado desde el panel de disponibles");
+        saveState(); renderAll();
+      });
+    } else if(btn.dataset.action === "assign"){
+      const card = btn.closest(".node-card");
+      const sel = card.querySelector("select.assign-select");
+      const accId = sel.value;
+      if(!accId){ alert("Elige o crea primero una cuenta."); return; }
+      assignNodeToAccount(nodeId, accId);
+      saveState(); renderAll();
+    }
+  });
+  document.getElementById("disp-country").addEventListener("change", renderDisponibles);
+  document.getElementById("disp-search").addEventListener("input", renderDisponibles);
+  document.getElementById("disp-refresh").addEventListener("click", renderDisponibles);
+
+  /* ---------------- vista: cuentas ---------------- */
+  document.getElementById("btn-add-acc").addEventListener("click", () => {
+    const input = document.getElementById("acc-name-input");
+    const name = input.value.trim();
+    if(!name){ alert("Escribe un nombre para la cuenta."); return; }
+    const id = state.nextAccId++;
+    state.accounts.push({ id, name });
+    addLog(`Cuenta creada: ${name}.`);
+    input.value = "";
+    saveState(); renderAll();
+  });
+
+  function renderCuentas(){
+    const wrap = document.getElementById("acc-list");
+    if(!state.accounts.length){
+      wrap.innerHTML = `<div class="empty"><b>Aún no tienes cuentas</b>Crea una arriba para empezar a asignar nodos.</div>`;
+      return;
+    }
+    wrap.innerHTML = state.accounts.map(acc => {
+      const nodeId = state.assignments[acc.id];
+      const node = nodeId ? state.nodes[nodeId] : null;
+      let nodeInfo;
+      let copyBtn = "";
+      if(node){
+        const loc = node.location || {}, q = node.quality || {};
+        const sid = searchId(node.provider_id);
+        nodeInfo = `<b>#${escapeHtml(node.id)}</b> · ${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")} · uptime ${fmt(q.uptime)} · latencia ${fmt(q.latency,"ms")} · ID: <b>${escapeHtml(sid)}</b>`;
+        copyBtn = `<button class="btn small" data-action="copy" data-copy="${escapeHtml(sid)}">Copiar ID</button>`;
+      } else {
+        nodeInfo = `Sin nodo asignado`;
+      }
+      return `
+      <div class="acc-card">
+        <div class="acc-name">${escapeHtml(acc.name)}</div>
+        <div class="acc-node">${nodeInfo}</div>
+        <div class="acc-actions">
+          ${copyBtn}
+          ${node
+            ? `<button class="btn small bad" data-action="damaged" data-acc="${acc.id}">Nodo dañado (bloquear y reemplazar)</button>
+               <button class="btn small" data-action="unassign" data-acc="${acc.id}">Liberar</button>`
+            : `<button class="btn small good" data-action="auto" data-acc="${acc.id}">Asignar mejor nodo</button>`
+          }
+          <button class="btn small" data-action="delete" data-acc="${acc.id}">Eliminar cuenta</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  document.getElementById("acc-list").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if(!btn) return;
+    if(btn.dataset.action === "copy"){
+      copyToClipboard(btn.getAttribute("data-copy"), btn);
+      return;
+    }
+    const accId = btn.getAttribute("data-acc");
+    const action = btn.dataset.action;
+
+    if(action === "auto"){
+      const best = bestAvailableFor(isGB);
+      if(!best){ alert("No hay nodos GB disponibles. Carga más nodos o revisa el pool."); return; }
+      assignNodeToAccount(best.id, accId);
+      saveState(); renderAll();
+
+    } else if(action === "damaged"){
+      confirmModal("Marcar nodo como dañado", `Se bloqueará el nodo actual de "${accountName(accId)}" y se asignará automáticamente el siguiente mejor disponible.`, () => {
+        const nodeId = state.assignments[accId];
+        if(nodeId) blockNode(nodeId, `Dañado en ${accountName(accId)}`);
+        const best = bestAvailableFor(isGB);
+        if(best) assignNodeToAccount(best.id, accId);
+        else addLog(`Sin reemplazo disponible para ${accountName(accId)}.`);
+        saveState(); renderAll();
+      });
+
+    } else if(action === "unassign"){
+      unassign(accId);
+      saveState(); renderAll();
+
+    } else if(action === "delete"){
+      confirmModal("Eliminar cuenta", `Se eliminará "${accountName(accId)}". Su nodo (si tiene) volverá a disponibles.`, () => {
+        unassign(accId);
+        state.accounts = state.accounts.filter(a => String(a.id) !== String(accId));
+        addLog(`Cuenta eliminada.`);
+        saveState(); renderAll();
+      });
+    }
+  });
+
+  /* ---------------- vista: bloqueados ---------------- */
+  function renderBloqueados(){
+    const search = document.getElementById("bloq-search").value.trim().toLowerCase();
+    const tbody = document.getElementById("bloq-tbody");
+    let ids = Object.keys(state.blocked);
+    if(search){
+      ids = ids.filter(id => {
+        const n = state.nodes[id] || {};
+        const loc = n.location || {};
+        const hay = [id, loc.city, loc.isp].join(" ").toLowerCase();
+        return hay.includes(search);
+      });
+    }
+    if(!ids.length){
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">No hay nodos bloqueados.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = ids.map(id => {
+      const n = state.nodes[id] || {};
+      const loc = n.location || {};
+      const info = state.blocked[id];
+      const date = info && info.ts ? new Date(info.ts).toLocaleString() : "—";
+      const sid = searchId(n.provider_id);
+      return `<tr>
+        <td class="node-id">#${escapeHtml(id)}</td>
+        <td><code style="font-family:var(--mono);font-size:11.5px">${escapeHtml(sid)}</code></td>
+        <td>${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}</td>
+        <td>${escapeHtml(loc.isp||"—")}</td>
+        <td>${escapeHtml(info ? info.reason : "—")}</td>
+        <td>${date}</td>
+        <td><button class="btn small" data-action="unblock" data-node="${id}">Desbloquear</button></td>
+      </tr>`;
+    }).join("");
+  }
+  document.getElementById("bloq-tbody").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action='unblock']");
+    if(!btn) return;
+    unblockNode(btn.getAttribute("data-node"));
+    saveState(); renderAll();
+  });
+  document.getElementById("bloq-search").addEventListener("input", renderBloqueados);
+
+  /* ---------------- vista: todos ---------------- */
+  function renderTodos(){
+    fillCountrySelect(document.getElementById("todos-country"), false);
+    const country = document.getElementById("todos-country").value;
+    const estado = document.getElementById("todos-estado").value;
+    const search = document.getElementById("todos-search").value.trim().toLowerCase();
+
+    let list = allNodesArr();
+    if(country) list = list.filter(n => (n.location && n.location.country) === country);
+    if(estado) list = list.filter(n => nodeStatus(n.id) === (estado === "uso" ? "uso" : estado));
+    if(search){
+      list = list.filter(n => {
+        const loc = n.location || {};
+        const hay = [n.id, loc.city, loc.isp].join(" ").toLowerCase();
+        return hay.includes(search);
+      });
+    }
+    list.sort(compareNodes);
+
+    const tbody = document.getElementById("todos-tbody");
+    if(!list.length){
+      tbody.innerHTML = `<tr><td colspan="10" class="empty">Sin resultados. Carga un JSON o ajusta los filtros.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list.map(n => {
+      const loc = n.location || {}, q = n.quality || {};
+      const st = nodeStatus(n.id);
+      const badge = st === "disponible" ? `<span class="badge disp">Disponible</span>`
+                  : st === "uso" ? `<span class="badge uso">${escapeHtml(accountName(assignedAccountFor(n.id)))}</span>`
+                  : `<span class="badge bloq">Bloqueado</span>`;
+      let action = "";
+      if(st === "disponible"){
+        action = `<button class="btn small bad" data-action="block" data-node="${n.id}">Bloquear</button>`;
+      } else if(st === "bloqueado"){
+        action = `<button class="btn small" data-action="unblock" data-node="${n.id}">Desbloquear</button>`;
+      } else {
+        action = `<button class="btn small" data-action="unassign2" data-node="${n.id}">Liberar</button>`;
+      }
+      const sid = searchId(n.provider_id);
+      return `<tr>
+        <td class="node-id">#${escapeHtml(n.id)}</td>
+        <td>
+          <div class="row" style="margin:0;gap:6px;flex-wrap:nowrap">
+            <code style="font-family:var(--mono);font-size:11.5px">${escapeHtml(sid)}</code>
+            <button class="btn small" data-action="copy" data-copy="${escapeHtml(sid)}">Copiar</button>
+          </div>
+        </td>
+        <td>${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}</td>
+        <td>${escapeHtml(loc.isp||"—")}</td>
+        <td>${fmt(q.uptime)}</td>
+        <td>${fmt(q.latency,"ms")}</td>
+        <td>${fmt(q.packetLoss)}</td>
+        <td>${fmt(q.quality)}</td>
+        <td>${badge}</td>
+        <td>${action}</td>
+      </tr>`;
+    }).join("");
+  }
+  document.getElementById("todos-tbody").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if(!btn) return;
+    if(btn.dataset.action === "copy"){
+      copyToClipboard(btn.getAttribute("data-copy"), btn);
+      return;
+    }
+    const nodeId = btn.getAttribute("data-node");
+    if(btn.dataset.action === "block"){
+      confirmModal("Bloquear nodo", `¿Bloquear el nodo #${nodeId}?`, () => {
+        blockNode(nodeId, "Bloqueado desde el panel general"); saveState(); renderAll();
+      });
+    } else if(btn.dataset.action === "unblock"){
+      unblockNode(nodeId); saveState(); renderAll();
+    } else if(btn.dataset.action === "unassign2"){
+      const accId = assignedAccountFor(nodeId);
+      if(accId) unassign(accId);
+      saveState(); renderAll();
+    }
+  });
+  document.getElementById("todos-country").addEventListener("change", renderTodos);
+  document.getElementById("todos-estado").addEventListener("change", renderTodos);
+  document.getElementById("todos-search").addEventListener("input", renderTodos);
+
+  /* ---------------- modal de confirmación ---------------- */
+  let pendingConfirm = null;
+  function confirmModal(title, text, onConfirm){
+    document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal-text").textContent = text;
+    pendingConfirm = onConfirm;
+    document.getElementById("modal-overlay").classList.add("show");
+  }
+  document.getElementById("modal-cancel").addEventListener("click", () => {
+    document.getElementById("modal-overlay").classList.remove("show");
+    pendingConfirm = null;
+  });
+  document.getElementById("modal-confirm").addEventListener("click", () => {
+    document.getElementById("modal-overlay").classList.remove("show");
+    if(pendingConfirm) pendingConfirm();
+    pendingConfirm = null;
+  });
+
+  /* ---------------- navegación de pestañas ---------------- */
+  document.querySelectorAll("nav.tabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("view-" + btn.dataset.view).classList.add("active");
+    });
+  });
+
+  /* ---------------- render maestro ---------------- */
+  function renderAll(){
+    renderCounts();
+    renderLog();
+    renderDisponibles();
+    renderCuentas();
+    renderBloqueados();
+    renderTodos();
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

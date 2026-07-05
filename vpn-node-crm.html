@@ -29,17 +29,15 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:var(--display);}
+  code{font-family:var(--mono);}
   ::selection{background:var(--accent-dim);}
-  a{color:inherit;}
 
-  /* ---------- topbar ---------- */
   header.topbar{
     position:sticky;top:0;z-index:20;
     background:linear-gradient(180deg, var(--panel) 0%, #0B1324 100%);
     border-bottom:1px solid var(--border);
     padding:18px 28px 0 28px;
   }
-  .topbar-inner{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;}
   .brand{display:flex;align-items:center;gap:12px;}
   .brand-mark{
     width:34px;height:34px;border-radius:9px;
@@ -68,31 +66,25 @@
   .view.active{display:block;animation:fade .25s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
-  .grid-2{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
   @media(max-width:860px){.grid-2{grid-template-columns:1fr;}}
 
-  .card{
-    background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;
-  }
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;}
   .card h2{margin:0 0 4px;font-size:15px;font-weight:600;}
   .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 16px;line-height:1.5;}
 
   textarea{
-    width:100%;min-height:150px;background:var(--panel-2);border:1px solid var(--border);
-    border-radius:10px;color:var(--text);font-family:var(--mono);font-size:12.5px;padding:12px;
-    resize:vertical;
+    width:100%;min-height:130px;background:var(--panel-2);border:1px solid var(--border);
+    border-radius:10px;color:var(--text);font-family:var(--mono);font-size:12.5px;padding:12px;resize:vertical;
   }
   textarea:focus, input:focus, select:focus{outline:2px solid var(--accent);outline-offset:1px;}
 
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;}
-  input[type=text], input[type=url], input[type=number], select{
+  input[type=text], select{
     background:var(--panel-2);border:1px solid var(--border);color:var(--text);
     border-radius:8px;padding:9px 11px;font-family:var(--display);font-size:13px;
   }
-  label.file-btn{
-    background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;
-    font-size:13px;cursor:pointer;color:var(--muted);
-  }
+  label.file-btn{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;color:var(--muted);}
   label.file-btn:hover{color:var(--text);}
   input[type=file]{display:none;}
 
@@ -120,18 +112,20 @@
   .stat .lbl{font-size:11.5px;color:var(--muted);margin-top:2px;}
   .stat.good .num{color:var(--good);}
   .stat.accent .num{color:var(--accent);}
-  .stat.warn .num{color:var(--warn);}
   .stat.bad .num{color:var(--bad);}
 
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
   .toolbar input[type=text]{flex:1;min-width:160px;}
 
-  /* node card fingerprint */
-  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
-  .node-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
-    border-left:3px solid var(--good);position:relative;
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .chip{
+    display:flex;align-items:center;gap:6px;background:var(--bad-dim);color:var(--bad);
+    border:1px solid var(--bad);border-radius:20px;padding:4px 6px 4px 12px;font-size:12px;font-family:var(--mono);
   }
+  .chip button{background:none;border:none;color:var(--bad);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;}
+
+  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+  .node-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;border-left:3px solid var(--good);position:relative;}
   .node-card.rank1{box-shadow:0 0 0 1px var(--good), 0 8px 22px -10px #2FE3B055;}
   .node-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
   .node-loc{font-weight:600;font-size:14px;}
@@ -139,123 +133,112 @@
   .node-id{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
   .fingerprint{display:flex;gap:3px;align-items:flex-end;height:26px;margin:12px 0 8px;}
   .fingerprint i{flex:1;background:var(--border);border-radius:2px;}
-  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-bottom:12px;}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-bottom:10px;}
   .metrics b{display:block;color:var(--text);font-size:12.5px;}
   .node-actions{display:flex;gap:6px;flex-wrap:wrap;}
   select.assign-select{flex:1;min-width:110px;}
+  .idbox{display:flex;gap:6px;align-items:center;margin:0 0 10px;}
+  .idbox code{flex:1;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
 
   table{width:100%;border-collapse:collapse;font-size:12.8px;}
-  th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;
-     padding:8px 10px;border-bottom:1px solid var(--border);}
-  td{padding:9px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:8px 10px;border-bottom:1px solid var(--border);}
+  td{padding:8px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
   tr:hover td{background:#0D1729;}
-  .badge{font-family:var(--mono);font-size:10.5px;padding:2px 8px;border-radius:20px;display:inline-block;}
-  .badge.disp{background:var(--good-dim);color:var(--good);}
-  .badge.uso{background:var(--accent-dim);color:var(--accent);}
-  .badge.bloq{background:var(--bad-dim);color:var(--bad);}
+  select.status-select{font-size:11.5px;padding:5px 7px;}
+  select.status-select.disponible{color:var(--good);border-color:var(--good);}
+  select.status-select.uso{color:var(--accent);border-color:var(--accent);}
+  select.status-select.bloqueado{color:var(--bad);border-color:var(--bad);}
 
   .empty{text-align:center;padding:40px 20px;color:var(--muted);}
   .empty b{color:var(--text);display:block;margin-bottom:4px;font-size:14px;}
 
-  .acc-card{
-    background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;
-    display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
-  }
+  .acc-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
   .acc-name{font-weight:600;font-size:14px;min-width:130px;}
   .acc-node{flex:1;min-width:220px;font-family:var(--mono);font-size:12px;color:var(--muted);}
   .acc-node b{color:var(--text);font-family:var(--display);}
   .acc-actions{display:flex;gap:6px;flex-wrap:wrap;}
 
-  footer.log{
-    max-width:1180px;margin:0 auto;padding:0 28px 60px;
-  }
+  footer.log{max-width:1180px;margin:0 auto;padding:0 28px 60px;}
   .log-list{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11.5px;color:var(--muted-2);}
   .log-list li{padding:5px 0;border-bottom:1px solid var(--border-soft);}
   .log-list li span{color:var(--muted);}
 
-  .modal-overlay{
-    position:fixed;inset:0;background:#02040aB0;backdrop-filter:blur(2px);
-    display:none;align-items:center;justify-content:center;z-index:50;padding:20px;
-  }
+  .modal-overlay{position:fixed;inset:0;background:#02040aB0;backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
   .modal-overlay.show{display:flex;}
-  .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:360px;width:100%;}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:380px;width:100%;}
   .modal h3{margin:0 0 6px;font-size:15px;}
-  .modal p{color:var(--muted);font-size:12.5px;margin:0 0 14px;}
+  .modal p{color:var(--muted);font-size:12.5px;margin:0 0 14px;line-height:1.5;}
 </style>
 </head>
 <body>
 
 <header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="brand-mark">NG</div>
-      <div>
-        <h1>NodeGrid</h1>
-        <p>Control de nodos dVPN · datos guardados solo en este navegador</p>
-      </div>
+  <div class="brand">
+    <div class="brand-mark">NG</div>
+    <div>
+      <h1>NodeGrid</h1>
+      <p>Control de nodos dVPN · datos guardados solo en este navegador</p>
     </div>
   </div>
   <nav class="tabs">
-    <button data-view="import" class="active">Cargar datos</button>
+    <button data-view="cargar" class="active">Cargar</button>
     <button data-view="disponibles">Disponibles <span class="count" id="cnt-disp">0</span></button>
     <button data-view="cuentas">Cuentas <span class="count" id="cnt-acc">0</span></button>
-    <button data-view="bloqueados">Bloqueados <span class="count" id="cnt-bloq">0</span></button>
-    <button data-view="todos">Todos los nodos <span class="count" id="cnt-todos">0</span></button>
+    <button data-view="nodos">Nodos <span class="count" id="cnt-todos">0</span></button>
   </nav>
 </header>
 
 <main>
 
-  <!-- ===================== VISTA: IMPORTAR ===================== -->
-  <section class="view active" id="view-import">
+  <!-- ===================== VISTA: CARGAR ===================== -->
+  <section class="view active" id="view-cargar">
     <div class="stat-grid">
-      <div class="stat accent"><div class="num" id="s-total">0</div><div class="lbl">Nodos cargados</div></div>
+      <div class="stat accent"><div class="num" id="s-total">0</div><div class="lbl">Nodos con datos cargados</div></div>
       <div class="stat good"><div class="num" id="s-disp">0</div><div class="lbl">Disponibles (GB)</div></div>
       <div class="stat"><div class="num" id="s-uso">0</div><div class="lbl">En uso</div></div>
       <div class="stat bad"><div class="num" id="s-bloq">0</div><div class="lbl">Bloqueados</div></div>
     </div>
 
+    <div class="card" style="margin-bottom:18px">
+      <h2>1. Pegar el JSON de la API</h2>
+      <p class="hint">Copia la respuesta completa de la API (el array de nodos) y pégala aquí. Puedes hacerlo cada vez que quieras refrescar la calidad de los nodos: nunca se te borran ni repiten los que ya tienes en uso o bloqueados. Cada nodo se identifica por los primeros 14 caracteres de su <code>provider_id</code>.</p>
+      <textarea id="json-input" placeholder="[ { &quot;provider_id&quot;: &quot;0x...&quot;, &quot;location&quot;: {...}, &quot;quality&quot;: {...} }, ... ]"></textarea>
+      <div class="row">
+        <label class="file-btn">Subir archivo .json
+          <input type="file" id="file-input" accept="application/json,.json">
+        </label>
+        <button class="btn primary" id="btn-load">Cargar / actualizar pool</button>
+        <button class="btn" id="btn-clear-input">Limpiar campo</button>
+        <button class="btn bad" id="btn-clear-json-data">Vaciar datos JSON cargados</button>
+      </div>
+      <p class="hint" style="margin:8px 0 0">"Vaciar datos JSON cargados" borra ubicación/calidad de todos los nodos, pero <b>no toca</b> tus bloqueados ni tus en uso — quedan exactamente igual. Así puedes subir un JSON nuevo después y solo verás candidatos que de verdad estén disponibles, sin arrastrar miles de resultados viejos.</p>
+      <div class="status-msg" id="load-status"></div>
+    </div>
+
     <div class="grid-2">
       <div class="card">
-        <h2>Pegar el JSON de la API</h2>
-        <p class="hint">Copia la respuesta completa de la API (el array de nodos) y pégala aquí. Puedes hacerlo cada vez que quieras refrescar la calidad de los nodos: nunca se te borran ni repiten los que ya tienes en uso o bloqueados.</p>
-        <textarea id="json-input" placeholder="[ { &quot;id&quot;: 123, &quot;location&quot;: {...}, &quot;quality&quot;: {...} }, ... ]"></textarea>
+        <h2>2. Pegar IDs ya bloqueados</h2>
+        <p class="hint">Pega tu lista tal cual la tengas (separados por espacios, tabs o saltos de línea). No hace falta el ID completo, cualquier largo sirve — la app siempre usa los primeros 14 caracteres.</p>
+        <textarea id="blocked-input" style="min-height:100px" placeholder="0x16526d1c4107  0x8569a8273767  ..."></textarea>
         <div class="row">
-          <label class="file-btn">Subir archivo .json
-            <input type="file" id="file-input" accept="application/json,.json">
-          </label>
-          <button class="btn primary" id="btn-load">Cargar / actualizar pool</button>
-          <button class="btn" id="btn-clear-input">Limpiar campo</button>
+          <button class="btn bad" id="btn-import-blocked">Marcar como bloqueados</button>
         </div>
-        <div class="status-msg" id="load-status"></div>
+        <div class="status-msg" id="blocked-status"></div>
       </div>
 
       <div class="card">
-        <h2>Traer nodos directo de la API de Mysterium</h2>
-        <p class="hint">Consulta en vivo <code>discovery.mysterium.network</code> sin copiar/pegar nada. Si el navegador bloquea la petición (CORS), usa el botón "Abrir en pestaña" y pega el resultado en el panel de la izquierda — funciona siempre.</p>
-        <div class="row" style="margin-top:0">
-          <input type="text" id="api-country" placeholder="País (ej: GB)" value="GB" style="width:120px">
-          <select id="api-service">
-            <option value="">Cualquier servicio</option>
-            <option value="wireguard">wireguard</option>
-            <option value="openvpn">openvpn</option>
-          </select>
-        </div>
+        <h2>3. Pegar IDs ya en uso</h2>
+        <p class="hint">Igual que arriba, pero para los nodos que ya tienes funcionando en alguna cuenta. Quedan marcados "en uso"; luego los puedes vincular a una cuenta específica desde la pestaña Nodos.</p>
+        <textarea id="used-input" style="min-height:100px" placeholder="0x844e14dd880e&#10;0xa3638a15ac8c&#10;..."></textarea>
         <div class="row">
-          <input type="text" id="api-extra" placeholder="Parámetros extra (opcional), ej: quality_min=1&ip_type=residential" style="flex:1;min-width:200px">
+          <button class="btn primary" id="btn-import-used">Marcar como en uso</button>
         </div>
-        <div class="row">
-          <button class="btn primary" id="btn-fetch">Buscar nodos ahora</button>
-          <button class="btn" id="btn-open-tab">Abrir en pestaña nueva</button>
-        </div>
-        <div class="status-msg" id="fetch-status"></div>
-        <p class="hint" style="margin-top:14px;margin-bottom:0">Los parámetros de país/servicio se le piden a la API, pero además esta app siempre vuelve a filtrar GB y calidad por su cuenta, así que aunque la API ignore un parámetro, el resultado que ves sigue siendo correcto.</p>
+        <div class="status-msg" id="used-status"></div>
       </div>
     </div>
 
     <div class="card" style="margin-top:18px">
       <h2>Actividad reciente</h2>
-      <p class="hint">Últimas 12 acciones realizadas en este equipo.</p>
       <ul class="log-list" id="log-list"><li>Sin actividad todavía.</li></ul>
     </div>
   </section>
@@ -263,11 +246,10 @@
   <!-- ===================== VISTA: DISPONIBLES ===================== -->
   <section class="view" id="view-disponibles">
     <div class="toolbar">
-      <label style="font-size:12.5px;color:var(--muted)">País:</label>
-      <select id="disp-country"></select>
       <input type="text" id="disp-search" placeholder="Buscar por ciudad, ISP o ID...">
-      <button class="btn" id="disp-refresh">↻ Refrescar orden</button>
+      <button class="btn" id="disp-refresh">↻ Refrescar</button>
     </div>
+    <p class="hint" id="disp-note" style="margin:-6px 0 14px"></p>
     <div class="node-grid" id="disp-grid"></div>
   </section>
 
@@ -275,7 +257,7 @@
   <section class="view" id="view-cuentas">
     <div class="card" style="margin-bottom:18px">
       <h2>Nueva cuenta / slot</h2>
-      <p class="hint">Crea una cuenta por cada conexión que manejas (ej: "Cuenta 15"). A cada una le asignas un nodo, y si falla, la reemplazas con un clic.</p>
+      <p class="hint">Crea una cuenta por cada conexión que manejas. A cada una le asignas un nodo, y si falla, la reemplazas con un clic (el anterior queda bloqueado automáticamente).</p>
       <div class="row" style="margin-top:0">
         <input type="text" id="acc-name-input" placeholder="Nombre de la cuenta, ej: Cuenta 15">
         <button class="btn primary" id="btn-add-acc">Crear cuenta</button>
@@ -284,34 +266,24 @@
     <div id="acc-list"></div>
   </section>
 
-  <!-- ===================== VISTA: BLOQUEADOS ===================== -->
-  <section class="view" id="view-bloqueados">
+  <!-- ===================== VISTA: NODOS (control total) ===================== -->
+  <section class="view" id="view-nodos">
+    <div class="chips" id="excluded-chips"></div>
     <div class="toolbar">
-      <input type="text" id="bloq-search" placeholder="Buscar por ciudad, ISP o ID...">
-    </div>
-    <table>
-      <thead><tr><th>ID</th><th>ID búsqueda</th><th>Ubicación</th><th>ISP</th><th>Motivo</th><th>Fecha</th><th>Acción</th></tr></thead>
-      <tbody id="bloq-tbody"></tbody>
-    </table>
-  </section>
-
-  <!-- ===================== VISTA: TODOS ===================== -->
-  <section class="view" id="view-todos">
-    <div class="toolbar">
-      <select id="todos-country"></select>
-      <select id="todos-estado">
+      <select id="nodos-proveedor"></select>
+      <select id="nodos-estado">
         <option value="">Todos los estados</option>
         <option value="disponible">Disponible</option>
         <option value="uso">En uso</option>
         <option value="bloqueado">Bloqueado</option>
       </select>
-      <input type="text" id="todos-search" placeholder="Buscar por ciudad, ISP o ID...">
+      <input type="text" id="nodos-search" placeholder="Buscar por ciudad, ISP o ID...">
     </div>
     <table>
       <thead><tr>
-        <th>ID</th><th>ID búsqueda (Mysterium Dark)</th><th>Ubicación</th><th>ISP</th><th>Uptime</th><th>Latencia</th><th>Pérdida</th><th>Calidad</th><th>Estado</th><th>Acción</th>
+        <th>ID búsqueda</th><th>Ubicación</th><th>Proveedor (ISP)</th><th>Uptime</th><th>Latencia</th><th>Estado</th><th>Cuenta</th><th>Acciones</th>
       </tr></thead>
-      <tbody id="todos-tbody"></tbody>
+      <tbody id="nodos-tbody"></tbody>
     </table>
   </section>
 
@@ -321,10 +293,7 @@
   <div class="modal">
     <h3 id="modal-title">Confirmar</h3>
     <p id="modal-text"></p>
-    <div class="row" style="margin-top:4px">
-      <button class="btn" id="modal-cancel">Cancelar</button>
-      <button class="btn bad" id="modal-confirm">Confirmar</button>
-    </div>
+    <div class="row" style="margin-top:4px" id="modal-buttons"></div>
   </div>
 </div>
 
@@ -332,11 +301,12 @@
 (function(){
   "use strict";
 
-  const STORAGE_KEY = "nodegrid_state_v1";
+  const STORAGE_KEY = "nodegrid_state_v2";
+  const DISPLAY_LIMIT = 20;
 
   /* ---------------- estado ---------------- */
   function defaultState(){
-    return { nodes:{}, blocked:{}, assignments:{}, accounts:[], nextAccId:1, log:[] };
+    return { nodes:{}, status:{}, blockInfo:{}, accountOf:{}, accounts:[], nextAccId:1, excludedProviders:[], log:[] };
   }
   let state = loadState();
 
@@ -344,11 +314,8 @@
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       if(!raw) return defaultState();
-      const parsed = JSON.parse(raw);
-      return Object.assign(defaultState(), parsed);
-    }catch(e){
-      return defaultState();
-    }
+      return Object.assign(defaultState(), JSON.parse(raw));
+    }catch(e){ return defaultState(); }
   }
   function saveState(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -360,33 +327,161 @@
   }
 
   /* ---------------- helpers de datos ---------------- */
+  function searchId(providerId){
+    if(!providerId) return null;
+    return String(providerId).slice(0, 14);
+  }
+  function nodeKeyOf(raw){
+    if(raw && raw.provider_id) return searchId(raw.provider_id);
+    if(raw && raw.id !== undefined && raw.id !== null) return String(raw.id);
+    return null;
+  }
   function isGB(node){
     const c = ((node.location && node.location.country) || "").toUpperCase().trim();
     return c === "GB" || c === "UK" || c === "UNITED KINGDOM" || c === "GREAT BRITAIN";
   }
-  function nodeStatus(id){
-    if(state.blocked[id]) return "bloqueado";
-    if(Object.values(state.assignments).includes(String(id))) return "uso";
-    return "disponible";
-  }
-  function assignedAccountFor(id){
-    for(const accId in state.assignments){
-      if(state.assignments[accId] === String(id)) return accId;
-    }
-    return null;
+  function num(v, fallback){ return (typeof v === "number" && !isNaN(v)) ? v : (fallback === undefined ? 0 : fallback); }
+  function compareNodes(a, b){
+    const qa = a.quality || {}, qb = b.quality || {};
+    const fa = qa.monitoring_failed ? 1 : 0, fb = qb.monitoring_failed ? 1 : 0;
+    if(fa !== fb) return fa - fb;
+    const ua = num(qa.uptime), ub = num(qb.uptime);
+    if(ub !== ua) return ub - ua;
+    const pa = num(qa.packetLoss, 1e9), pb = num(qb.packetLoss, 1e9);
+    if(pa !== pb) return pa - pb;
+    const la = num(qa.latency, 1e9), lb = num(qb.latency, 1e9);
+    if(la !== lb) return la - lb;
+    const qqa = num(qa.quality), qqb = num(qb.quality);
+    if(qqb !== qqa) return qqb - qqa;
+    const ba = num(qa.bandwidth), bb = num(qb.bandwidth);
+    return bb - ba;
   }
   function fmt(v, suffix){
     if(v === undefined || v === null || v === "") return "—";
     return v + (suffix || "");
   }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function ispOf(node){ return ((node && node.location && node.location.isp) || "").trim(); }
+  function ispKey(name){ return String(name||"").trim().toLowerCase(); }
 
-  // El ID que se pega en Mysterium Dark para buscar el nodo: los primeros
-  // 14 caracteres del provider_id (ej: "0x5949a57c9e308ee70e7a3c1ad8ddee663820b6cf" -> "0x5949a57c9e30").
-  function searchId(providerId){
-    if(!providerId) return "—";
-    return String(providerId).slice(0, 14);
+  function statusOf(key){ return state.status[key] || "disponible"; }
+  function isExcludedProvider(node){
+    const key = ispKey(ispOf(node));
+    if(!key) return false;
+    return state.excludedProviders.includes(key);
+  }
+  function accountCurrentNode(accId){
+    accId = String(accId);
+    for(const k in state.accountOf) if(state.accountOf[k] === accId) return k;
+    return null;
+  }
+  function accountName(accId){
+    const acc = state.accounts.find(a => String(a.id) === String(accId));
+    return acc ? acc.name : ("Cuenta #" + accId);
+  }
+  function allKeys(){
+    return Array.from(new Set([...Object.keys(state.nodes), ...Object.keys(state.status)]));
   }
 
+  function parseIdList(text){
+    const raw = String(text || "").split(/\s+/).map(s => s.trim()).filter(Boolean);
+    const normalized = raw.map(searchId).filter(s => s && /^0x[0-9a-fA-F]+$/i.test(s));
+    return Array.from(new Set(normalized));
+  }
+
+  /* ---------------- import de JSON ---------------- */
+  function mergeNodes(arr){
+    if(arr === null || arr === undefined) arr = [];
+    if(!Array.isArray(arr)) throw new Error("El JSON debe ser una lista (array) de nodos, o null.");
+    let added = 0, updated = 0, skipped = 0;
+    arr.forEach(raw => {
+      if(raw === null || typeof raw !== "object") { skipped++; return; }
+      const key = nodeKeyOf(raw);
+      if(!key){ skipped++; return; }
+      if(state.nodes[key]) updated++; else added++;
+      state.nodes[key] = Object.assign({}, raw, { _key: key });
+    });
+    return { added, updated, skipped };
+  }
+
+  function showStatus(el, ok, text){
+    el.textContent = text;
+    el.className = "status-msg show " + (ok ? "ok" : "err");
+  }
+
+  document.getElementById("btn-load").addEventListener("click", () => {
+    const el = document.getElementById("load-status");
+    const raw = document.getElementById("json-input").value.trim();
+    if(!raw){ showStatus(el, false, "Pega o sube un JSON primero."); return; }
+    try{
+      const parsed = JSON.parse(raw);
+      const { added, updated, skipped } = mergeNodes(parsed);
+      addLog(`Import JSON: ${added} nodos nuevos, ${updated} actualizados${skipped ? `, ${skipped} ignorados` : ""}.`);
+      saveState(); renderAll();
+      showStatus(el, true, `Listo: ${added} nuevos, ${updated} actualizados${skipped ? `, ${skipped} sin ID válido` : ""}.`);
+    }catch(e){
+      showStatus(el, false, "El texto no es un JSON válido: " + e.message);
+    }
+  });
+  document.getElementById("btn-clear-input").addEventListener("click", () => {
+    document.getElementById("json-input").value = "";
+  });
+  document.getElementById("btn-clear-json-data").addEventListener("click", () => {
+    const totalNodes = Object.keys(state.nodes).length;
+    if(!totalNodes){ showStatus(document.getElementById("load-status"), true, "Ya no hay datos de JSON cargados."); return; }
+    confirmModal(
+      "Vaciar datos del JSON",
+      `Se borrará la ubicación y calidad de los ${totalNodes} nodos cargados. Tus ${Object.keys(state.status).length} nodos con estado (bloqueados / en uso) NO se tocan — seguirán marcados igual, solo sin detalles hasta que subas el JSON de nuevo.`,
+      [{ label:"Vaciar datos JSON", cls:"bad", onClick: () => {
+        state.nodes = {};
+        addLog(`Datos de JSON vaciados (${totalNodes} nodos). Bloqueados y en uso se mantienen.`);
+        saveState(); renderAll();
+        showStatus(document.getElementById("load-status"), true, "Datos de JSON vaciados. Bloqueados y en uso siguen intactos — sube el JSON cuando quieras.");
+      }}]
+    );
+  });
+  document.getElementById("file-input").addEventListener("change", (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { document.getElementById("json-input").value = reader.result; };
+    reader.onerror = () => showStatus(document.getElementById("load-status"), false, "No se pudo leer el archivo.");
+    reader.readAsText(file);
+  });
+
+  document.getElementById("btn-import-blocked").addEventListener("click", () => {
+    const el = document.getElementById("blocked-status");
+    const keys = parseIdList(document.getElementById("blocked-input").value);
+    if(!keys.length){ showStatus(el, false, "No se detectaron IDs válidos (deben empezar con 0x)."); return; }
+    keys.forEach(k => {
+      state.status[k] = "bloqueado";
+      state.blockInfo[k] = { reason: "Importado en lote", ts: new Date().toISOString() };
+      delete state.accountOf[k];
+    });
+    addLog(`Importados ${keys.length} IDs como bloqueados.`);
+    saveState(); renderAll();
+    showStatus(el, true, `${keys.length} nodos marcados como bloqueados.`);
+    document.getElementById("blocked-input").value = "";
+  });
+
+  document.getElementById("btn-import-used").addEventListener("click", () => {
+    const el = document.getElementById("used-status");
+    const keys = parseIdList(document.getElementById("used-input").value);
+    if(!keys.length){ showStatus(el, false, "No se detectaron IDs válidos (deben empezar con 0x)."); return; }
+    let skippedBlocked = 0;
+    keys.forEach(k => {
+      if(state.status[k] === "bloqueado"){ skippedBlocked++; return; }
+      state.status[k] = "uso";
+    });
+    addLog(`Importados ${keys.length - skippedBlocked} IDs como en uso${skippedBlocked ? ` (${skippedBlocked} ya estaban bloqueados y no se tocaron)` : ""}.`);
+    saveState(); renderAll();
+    showStatus(el, true, `${keys.length - skippedBlocked} nodos marcados como en uso.${skippedBlocked ? ` ${skippedBlocked} ya estaban bloqueados y se dejaron así.` : ""}`);
+    document.getElementById("used-input").value = "";
+  });
+
+  /* ---------------- copiar al portapapeles ---------------- */
   function copyToClipboard(text, btnEl){
     const done = () => {
       if(!btnEl) return;
@@ -403,207 +498,70 @@
   function fallbackCopy(text, done){
     try{
       const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand("copy"); document.body.removeChild(ta);
       done();
-    }catch(e){
-      alert("No se pudo copiar automáticamente. ID: " + text);
+    }catch(e){ alert("No se pudo copiar automáticamente. ID: " + text); }
+  }
+
+  /* ---------------- acciones centrales sobre nodos ---------------- */
+  function setStatusManual(key, newStatus){
+    if(newStatus === "disponible"){
+      delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
+      addLog(`Nodo ${key} vuelve a disponible.`);
+    } else if(newStatus === "bloqueado"){
+      state.status[key] = "bloqueado";
+      state.blockInfo[key] = { reason: "Cambiado manualmente", ts: new Date().toISOString() };
+      delete state.accountOf[key];
+      addLog(`Nodo ${key} bloqueado manualmente.`);
+    } else if(newStatus === "uso"){
+      state.status[key] = "uso";
+      addLog(`Nodo ${key} marcado en uso.`);
     }
   }
 
-  // orden: sin fallo de monitoreo > mayor uptime > menor pérdida > menor latencia > mayor calidad > mayor ancho de banda
-  function compareNodes(a, b){
-    const qa = a.quality || {}, qb = b.quality || {};
-    const fa = qa.monitoring_failed ? 1 : 0, fb = qb.monitoring_failed ? 1 : 0;
-    if(fa !== fb) return fa - fb;
-    const ua = num(qa.uptime), ub = num(qb.uptime);
-    if(ub !== ua) return ub - ua;
-    const pa = num(qa.packetLoss, 1e9), pb = num(qb.packetLoss, 1e9);
-    if(pa !== pb) return pa - pb;
-    const la = num(qa.latency, 1e9), lb = num(qb.latency, 1e9);
-    if(la !== lb) return la - lb;
-    const qqa = num(qa.quality), qqb = num(qb.quality);
-    if(qqb !== qqa) return qqb - qqa;
-    const ba = num(qa.bandwidth), bb = num(qb.bandwidth);
-    return bb - ba;
-  }
-  function num(v, fallback){ return (typeof v === "number" && !isNaN(v)) ? v : (fallback === undefined ? 0 : fallback); }
-
-  function allNodesArr(){
-    return Object.values(state.nodes);
-  }
-  function availableGBSorted(){
-    return allNodesArr()
-      .filter(n => isGB(n) && nodeStatus(n.id) === "disponible")
-      .sort(compareNodes);
-  }
-  function bestAvailableFor(countryFilterFn){
-    const list = allNodesArr().filter(n => nodeStatus(n.id) === "disponible" && countryFilterFn(n)).sort(compareNodes);
-    return list[0] || null;
-  }
-
-  /* ---------------- carga de JSON ---------------- */
-  function mergeNodes(arr){
-    // La API de Mysterium devuelve literalmente "null" cuando no hay nodos que
-    // coincidan con el filtro. Lo tratamos como "cero resultados", no como error.
-    if(arr === null || arr === undefined) arr = [];
-    if(!Array.isArray(arr)) throw new Error("El JSON debe ser una lista (array) de nodos, o null.");
-    let added = 0, updated = 0;
-    arr.forEach(raw => {
-      if(raw === null || typeof raw !== "object" || raw.id === undefined || raw.id === null) return;
-      const id = String(raw.id);
-      if(state.nodes[id]) updated++; else added++;
-      state.nodes[id] = Object.assign({}, raw, { id });
-    });
-    return { added, updated };
-  }
-
-  function showStatus(el, ok, text){
-    el.textContent = text;
-    el.className = "status-msg show " + (ok ? "ok" : "err");
-  }
-
-  document.getElementById("btn-load").addEventListener("click", () => {
-    const el = document.getElementById("load-status");
-    const raw = document.getElementById("json-input").value.trim();
-    if(!raw){ showStatus(el, false, "Pega o sube un JSON primero."); return; }
-    try{
-      const parsed = JSON.parse(raw);
-      const { added, updated } = mergeNodes(parsed);
-      addLog(`Import manual: ${added} nodos nuevos, ${updated} actualizados.`);
-      saveState();
-      renderAll();
-      showStatus(el, true, `Listo: ${added} nodos nuevos, ${updated} actualizados. Total en pool: ${allNodesArr().length}.`);
-    }catch(e){
-      showStatus(el, false, "El texto no es un JSON válido: " + e.message);
-    }
-  });
-
-  document.getElementById("btn-clear-input").addEventListener("click", () => {
-    document.getElementById("json-input").value = "";
-  });
-
-  document.getElementById("file-input").addEventListener("change", (ev) => {
-    const file = ev.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { document.getElementById("json-input").value = reader.result; };
-    reader.onerror = () => { showStatus(document.getElementById("load-status"), false, "No se pudo leer el archivo."); };
-    reader.readAsText(file);
-  });
-
-  const MYST_API_BASE = "https://discovery.mysterium.network/api/v3/proposals";
-
-  function buildMystApiUrl(){
-    const country = document.getElementById("api-country").value.trim();
-    const service = document.getElementById("api-service").value.trim();
-    const extra = document.getElementById("api-extra").value.trim();
-    const params = [];
-    if(country) params.push("location_country=" + encodeURIComponent(country));
-    if(service) params.push("service_type=" + encodeURIComponent(service));
-    params.push("include_monitoring_failed=true");
-    let url = MYST_API_BASE + (params.length ? "?" + params.join("&") : "");
-    if(extra){
-      url += (url.includes("?") ? "&" : "?") + extra.replace(/^[&?]+/, "");
-    }
-    return url;
-  }
-
-  document.getElementById("btn-fetch").addEventListener("click", async () => {
-    const el = document.getElementById("fetch-status");
-    const url = buildMystApiUrl();
-    showStatus(el, true, "Consultando la API de Mysterium...");
-    try{
-      const res = await fetch(url, { method:"GET", headers:{ "Accept":"application/json" } });
-      if(!res.ok) throw new Error("La API respondió con estado " + res.status);
-      const data = await res.json(); // puede ser null si no hay nodos
-      const { added, updated } = mergeNodes(data);
-      const total = Array.isArray(data) ? data.length : 0;
-      addLog(`Import desde API Mysterium: ${added} nodos nuevos, ${updated} actualizados (${total} recibidos).`);
-      saveState();
-      renderAll();
-      showStatus(el, true, total === 0
-        ? "La API no devolvió nodos con estos filtros. Prueba sin país o cambia el servicio."
-        : `Listo: ${added} nuevos, ${updated} actualizados de ${total} recibidos.`);
-    }catch(e){
-      showStatus(el, false, "No se pudo consultar directo (probable bloqueo CORS del servidor). Usa 'Abrir en pestaña nueva', copia el JSON que se muestra y pégalo en el panel de la izquierda. Detalle: " + e.message);
-    }
-  });
-
-  document.getElementById("btn-open-tab").addEventListener("click", () => {
-    window.open(buildMystApiUrl(), "_blank");
-  });
-
-  /* ---------------- acciones de nodos ---------------- */
-  function blockNode(id, reason){
-    id = String(id);
-    // liberar cualquier asignación previa
-    for(const accId in state.assignments){
-      if(state.assignments[accId] === id) delete state.assignments[accId];
-    }
-    state.blocked[id] = { reason: reason || "Bloqueado manualmente", ts: new Date().toISOString() };
-    addLog(`Nodo ${id} bloqueado (${reason || "manual"}).`);
-  }
-  function unblockNode(id){
-    id = String(id);
-    delete state.blocked[id];
-    addLog(`Nodo ${id} desbloqueado.`);
-  }
-  function assignNodeToAccount(nodeId, accId){
-    nodeId = String(nodeId); accId = String(accId);
-    if(state.blocked[nodeId]) return false;
-    // liberar cuenta previa de este nodo si la tenía otra cuenta
-    for(const a in state.assignments){
-      if(state.assignments[a] === nodeId && a !== accId) delete state.assignments[a];
-    }
-    state.assignments[accId] = nodeId;
-    addLog(`Nodo ${nodeId} asignado a ${accountName(accId)}.`);
-    return true;
-  }
-  function unassign(accId){
+  // Devuelve {ok:true} o {ok:false, needsReplaceModal:true, existing:key} si hay que
+  // preguntar qué hacer con el nodo anterior de la cuenta.
+  function assignToAccount(key, accId, replaceAction){
     accId = String(accId);
-    const nodeId = state.assignments[accId];
-    delete state.assignments[accId];
-    if(nodeId) addLog(`Nodo ${nodeId} liberado de ${accountName(accId)} (vuelve a disponibles).`);
-  }
-  function accountName(accId){
-    const acc = state.accounts.find(a => String(a.id) === String(accId));
-    return acc ? acc.name : ("Cuenta #" + accId);
-  }
-
-  /* ---------------- render: barra de pestañas / contadores ---------------- */
-  function renderCounts(){
-    const totalGBdisp = allNodesArr().filter(n => isGB(n) && nodeStatus(n.id) === "disponible").length;
-    const totalUso = Object.keys(state.assignments).length;
-    const totalBloq = Object.keys(state.blocked).length;
-    document.getElementById("cnt-disp").textContent = totalGBdisp;
-    document.getElementById("cnt-acc").textContent = state.accounts.length;
-    document.getElementById("cnt-bloq").textContent = totalBloq;
-    document.getElementById("cnt-todos").textContent = allNodesArr().length;
-
-    document.getElementById("s-total").textContent = allNodesArr().length;
-    document.getElementById("s-disp").textContent = totalGBdisp;
-    document.getElementById("s-uso").textContent = totalUso;
-    document.getElementById("s-bloq").textContent = totalBloq;
+    if(state.status[key] === "bloqueado") return { ok:false, reason:"El nodo está bloqueado." };
+    const existing = accountCurrentNode(accId);
+    if(existing && existing !== key){
+      if(!replaceAction) return { ok:false, needsReplaceModal:true, existing };
+      if(replaceAction === "bloquear"){
+        state.status[existing] = "bloqueado";
+        state.blockInfo[existing] = { reason: `Reemplazado en ${accountName(accId)}`, ts: new Date().toISOString() };
+      } else {
+        delete state.status[existing];
+        delete state.blockInfo[existing];
+      }
+      delete state.accountOf[existing];
+    }
+    state.status[key] = "uso";
+    state.accountOf[key] = accId;
+    addLog(`Nodo ${key} asignado a ${accountName(accId)}.`);
+    return { ok:true };
   }
 
-  function renderLog(){
-    const ul = document.getElementById("log-list");
-    if(!state.log.length){ ul.innerHTML = "<li>Sin actividad todavía.</li>"; return; }
-    ul.innerHTML = state.log.slice(0,12).map(item => {
-      const d = new Date(item.ts);
-      const time = d.toLocaleString();
-      return `<li><span>${time} —</span> ${escapeHtml(item.msg)}</li>`;
-    }).join("");
+  function bestAvailableGB(excludeKey){
+    return allKeys()
+      .filter(k => k !== excludeKey && statusOf(k) === "disponible" && state.nodes[k] && isGB(state.nodes[k]) && !isExcludedProvider(state.nodes[k]))
+      .map(k => state.nodes[k])
+      .sort(compareNodes)[0] || null;
   }
 
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function removeNodeCompletely(key){
+    delete state.nodes[key]; delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
+    addLog(`Nodo ${key} eliminado del pool.`);
+  }
+
+  function toggleExcludeProvider(ispName){
+    const key = ispKey(ispName);
+    if(!key) return;
+    const idx = state.excludedProviders.indexOf(key);
+    if(idx === -1){ state.excludedProviders.push(key); addLog(`Proveedor excluido: ${ispName}.`); }
+    else { state.excludedProviders.splice(idx, 1); addLog(`Proveedor ya no excluido: ${ispName}.`); }
   }
 
   /* ---------------- fingerprint visual ---------------- */
@@ -612,8 +570,7 @@
     const uptime = clamp01(q.uptime);
     const quality = clamp01(q.quality);
     const invLoss = 1 - clamp01(q.packetLoss);
-    const bars = [uptime, quality, invLoss];
-    return bars.map(v => {
+    return [uptime, quality, invLoss].map(v => {
       const h = Math.max(4, Math.round(v*26));
       const color = v > 0.66 ? "var(--good)" : v > 0.4 ? "var(--warn)" : "var(--bad)";
       return `<i style="height:${h}px;background:${color}"></i>`;
@@ -622,50 +579,73 @@
   function clamp01(v){
     if(v === undefined || v === null || isNaN(v)) return 0.4;
     let x = Number(v);
-    if(x > 1) x = x/100; // soporta escalas 0-100 o 0-1
+    if(x > 1) x = x/100;
     return Math.min(1, Math.max(0, x));
   }
 
-  /* ---------------- vista: disponibles ---------------- */
-  function countryList(){
-    const set = new Set();
-    allNodesArr().forEach(n => { const c = (n.location && n.location.country) || ""; if(c) set.add(c); });
-    return Array.from(set).sort();
+  /* ---------------- contadores ---------------- */
+  function renderCounts(){
+    const keys = allKeys();
+    let disp = 0, uso = 0, bloq = 0;
+    keys.forEach(k => {
+      const st = statusOf(k);
+      if(st === "bloqueado") bloq++;
+      else if(st === "uso") uso++;
+      else if(state.nodes[k] && isGB(state.nodes[k]) && !isExcludedProvider(state.nodes[k])) disp++;
+    });
+    document.getElementById("cnt-disp").textContent = Math.min(disp, DISPLAY_LIMIT);
+    document.getElementById("cnt-acc").textContent = state.accounts.length;
+    document.getElementById("cnt-todos").textContent = keys.length;
+    document.getElementById("s-total").textContent = Object.keys(state.nodes).length;
+    document.getElementById("s-disp").textContent = disp;
+    document.getElementById("s-uso").textContent = uso;
+    document.getElementById("s-bloq").textContent = bloq;
   }
-  function fillCountrySelect(sel, includeGBDefault){
-    const current = sel.value;
-    const countries = countryList();
-    let opts = `<option value="">Todos los países</option>`;
-    countries.forEach(c => { opts += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`; });
-    sel.innerHTML = opts;
-    if(current && countries.includes(current)) sel.value = current;
-    else if(includeGBDefault && countries.some(c => c.toUpperCase()==="GB")) sel.value = countries.find(c=>c.toUpperCase()==="GB");
+
+  function renderLog(){
+    const ul = document.getElementById("log-list");
+    if(!state.log.length){ ul.innerHTML = "<li>Sin actividad todavía.</li>"; return; }
+    ul.innerHTML = state.log.slice(0,12).map(item => {
+      const time = new Date(item.ts).toLocaleString();
+      return `<li><span>${time} —</span> ${escapeHtml(item.msg)}</li>`;
+    }).join("");
+  }
+
+  /* ---------------- vista: disponibles (tope 20) ---------------- */
+  function accountSelectOptions(){
+    if(!state.accounts.length) return `<option value="">Sin cuentas — crea una</option>`;
+    return `<option value="">Elegir cuenta...</option>` +
+      state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join("");
   }
 
   function renderDisponibles(){
-    const sel = document.getElementById("disp-country");
-    fillCountrySelect(sel, true);
-    const countryFilter = sel.value;
     const search = document.getElementById("disp-search").value.trim().toLowerCase();
-
-    let list = allNodesArr().filter(n => nodeStatus(n.id) === "disponible");
-    list = list.filter(n => countryFilter ? ((n.location && n.location.country) === countryFilter) : isGB(n));
+    let pool = allKeys()
+      .filter(k => statusOf(k) === "disponible" && state.nodes[k] && isGB(state.nodes[k]) && !isExcludedProvider(state.nodes[k]))
+      .map(k => ({ key:k, node: state.nodes[k] }));
+    const totalDisp = pool.length;
     if(search){
-      list = list.filter(n => {
-        const hay = [n.id, n.location && n.location.city, n.location && n.location.isp].join(" ").toLowerCase();
+      pool = pool.filter(({node}) => {
+        const loc = node.location || {};
+        const hay = [node._key, loc.city, loc.isp].join(" ").toLowerCase();
         return hay.includes(search);
       });
     }
-    list.sort(compareNodes);
+    pool.sort((a,b) => compareNodes(a.node, b.node));
+    const shown = pool.slice(0, DISPLAY_LIMIT);
+
+    document.getElementById("disp-note").textContent = totalDisp > DISPLAY_LIMIT
+      ? `Mostrando los ${Math.min(DISPLAY_LIMIT, shown.length)} mejores candidatos de ${totalDisp} disponibles en total (Reino Unido). Analízalos y decide: asignar o bloquear.`
+      : `${totalDisp} candidatos disponibles en total (Reino Unido).`;
 
     const grid = document.getElementById("disp-grid");
-    if(!list.length){
-      grid.innerHTML = `<div class="empty"><b>No hay nodos disponibles con estos filtros</b>Carga un JSON nuevo o cambia el país / búsqueda.</div>`;
+    if(!shown.length){
+      grid.innerHTML = `<div class="empty"><b>No hay candidatos disponibles</b>Carga un JSON nuevo, revisa proveedores excluidos, o cambia la búsqueda.</div>`;
       return;
     }
     const accOptions = accountSelectOptions();
-    grid.innerHTML = list.map((n, idx) => {
-      const loc = n.location || {}; const q = n.quality || {};
+    grid.innerHTML = shown.map(({key, node}, idx) => {
+      const loc = node.location || {}, q = node.quality || {};
       return `
       <div class="node-card ${idx===0 ? "rank1":""}">
         <div class="node-top">
@@ -673,7 +653,6 @@
             <div class="node-loc">${escapeHtml(loc.city || "Ciudad desconocida")}, ${escapeHtml(loc.country || "?")}</div>
             <div class="node-isp">${escapeHtml(loc.isp || "ISP desconocido")}</div>
           </div>
-          <div class="node-id">#${escapeHtml(n.id)}</div>
         </div>
         <div class="fingerprint">${fingerprintHTML(q)}</div>
         <div class="metrics">
@@ -682,50 +661,61 @@
           <div>Pérdida<b>${fmt(q.packetLoss)}</b></div>
           <div>Ancho<b>${fmt(q.bandwidth)}</b></div>
         </div>
-        <div class="row" style="margin:0 0 10px;gap:6px">
-          <code style="font-family:var(--mono);font-size:12px;background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(searchId(n.provider_id))}</code>
-          <button class="btn small" data-action="copy" data-copy="${escapeHtml(searchId(n.provider_id))}">Copiar ID</button>
+        <div class="idbox">
+          <code>${escapeHtml(key)}</code>
+          <button class="btn small" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button>
         </div>
         <div class="node-actions">
-          <select class="assign-select" data-node="${n.id}">${accOptions}</select>
-          <button class="btn small good" data-action="assign" data-node="${n.id}">Asignar</button>
-          <button class="btn small bad" data-action="block" data-node="${n.id}">Bloquear</button>
+          <select class="assign-select" data-node="${key}">${accOptions}</select>
+          <button class="btn small good" data-action="assign" data-node="${key}">Asignar</button>
+          <button class="btn small bad" data-action="block" data-node="${key}">Bloquear</button>
+          <button class="btn small" data-action="exclude" data-node="${key}" data-isp="${escapeHtml(loc.isp||"")}">Excluir proveedor</button>
         </div>
       </div>`;
     }).join("");
   }
 
-  function accountSelectOptions(){
-    if(!state.accounts.length) return `<option value="">Sin cuentas — crea una</option>`;
-    return `<option value="">Elegir cuenta...</option>` +
-      state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join("");
-  }
-
   document.getElementById("disp-grid").addEventListener("click", (ev) => {
     const btn = ev.target.closest("button[data-action]");
     if(!btn) return;
-    if(btn.dataset.action === "copy"){
-      copyToClipboard(btn.getAttribute("data-copy"), btn);
-      return;
-    }
-    const nodeId = btn.getAttribute("data-node");
-    if(btn.dataset.action === "block"){
-      confirmModal("Bloquear nodo", `¿Bloquear el nodo #${nodeId}? No volverá a aparecer como disponible.`, () => {
-        blockNode(nodeId, "Bloqueado desde el panel de disponibles");
-        saveState(); renderAll();
-      });
-    } else if(btn.dataset.action === "assign"){
-      const card = btn.closest(".node-card");
-      const sel = card.querySelector("select.assign-select");
-      const accId = sel.value;
-      if(!accId){ alert("Elige o crea primero una cuenta."); return; }
-      assignNodeToAccount(nodeId, accId);
+    const key = btn.getAttribute("data-node");
+    const action = btn.dataset.action;
+    if(action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
+    if(action === "block"){
+      confirmModal("Bloquear nodo", `¿Bloquear el nodo ${key}? No volverá a aparecer como disponible.`, [
+        { label:"Bloquear", cls:"bad", onClick: () => { setStatusManual(key, "bloqueado"); saveState(); renderAll(); } }
+      ]);
+    } else if(action === "exclude"){
+      const isp = btn.getAttribute("data-isp");
+      if(!isp){ alert("Este nodo no tiene ISP definido."); return; }
+      toggleExcludeProvider(isp);
       saveState(); renderAll();
+    } else if(action === "assign"){
+      const card = btn.closest(".node-card");
+      const accId = card.querySelector("select.assign-select").value;
+      if(!accId){ alert("Elige o crea primero una cuenta."); return; }
+      doAssign(key, accId);
     }
   });
-  document.getElementById("disp-country").addEventListener("change", renderDisponibles);
   document.getElementById("disp-search").addEventListener("input", renderDisponibles);
   document.getElementById("disp-refresh").addEventListener("click", renderDisponibles);
+
+  function doAssign(key, accId){
+    const res = assignToAccount(key, accId);
+    if(res.ok){ saveState(); renderAll(); return; }
+    if(res.needsReplaceModal){
+      confirmModal(
+        "Esta cuenta ya tiene un nodo",
+        `${accountName(accId)} ya usa el nodo ${res.existing}. ¿Qué hacemos con él?`,
+        [
+          { label:"Bloquear el anterior", cls:"bad", onClick:() => { assignToAccount(key, accId, "bloquear"); saveState(); renderAll(); } },
+          { label:"Liberar el anterior", cls:"good", onClick:() => { assignToAccount(key, accId, "liberar"); saveState(); renderAll(); } },
+        ]
+      );
+    } else {
+      alert(res.reason || "No se pudo asignar el nodo.");
+    }
+  }
 
   /* ---------------- vista: cuentas ---------------- */
   document.getElementById("btn-add-acc").addEventListener("click", () => {
@@ -746,15 +736,16 @@
       return;
     }
     wrap.innerHTML = state.accounts.map(acc => {
-      const nodeId = state.assignments[acc.id];
-      const node = nodeId ? state.nodes[nodeId] : null;
-      let nodeInfo;
-      let copyBtn = "";
-      if(node){
+      const key = accountCurrentNode(acc.id);
+      const node = key ? state.nodes[key] : null;
+      let nodeInfo, copyBtn = "";
+      if(key && node){
         const loc = node.location || {}, q = node.quality || {};
-        const sid = searchId(node.provider_id);
-        nodeInfo = `<b>#${escapeHtml(node.id)}</b> · ${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")} · uptime ${fmt(q.uptime)} · latencia ${fmt(q.latency,"ms")} · ID: <b>${escapeHtml(sid)}</b>`;
-        copyBtn = `<button class="btn small" data-action="copy" data-copy="${escapeHtml(sid)}">Copiar ID</button>`;
+        nodeInfo = `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")} · uptime ${fmt(q.uptime)} · latencia ${fmt(q.latency,"ms")} · ID: <b>${escapeHtml(key)}</b>`;
+        copyBtn = `<button class="btn small" data-action="copy" data-copy="${escapeHtml(key)}">Copiar ID</button>`;
+      } else if(key){
+        nodeInfo = `ID: <b>${escapeHtml(key)}</b> (sin datos — carga el JSON para ver detalles)`;
+        copyBtn = `<button class="btn small" data-action="copy" data-copy="${escapeHtml(key)}">Copiar ID</button>`;
       } else {
         nodeInfo = `Sin nodo asignado`;
       }
@@ -764,7 +755,7 @@
         <div class="acc-node">${nodeInfo}</div>
         <div class="acc-actions">
           ${copyBtn}
-          ${node
+          ${key
             ? `<button class="btn small bad" data-action="damaged" data-acc="${acc.id}">Nodo dañado (bloquear y reemplazar)</button>
                <button class="btn small" data-action="unassign" data-acc="${acc.id}">Liberar</button>`
             : `<button class="btn small good" data-action="auto" data-acc="${acc.id}">Asignar mejor nodo</button>`
@@ -778,184 +769,213 @@
   document.getElementById("acc-list").addEventListener("click", (ev) => {
     const btn = ev.target.closest("button[data-action]");
     if(!btn) return;
-    if(btn.dataset.action === "copy"){
-      copyToClipboard(btn.getAttribute("data-copy"), btn);
-      return;
-    }
+    if(btn.dataset.action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
     const accId = btn.getAttribute("data-acc");
     const action = btn.dataset.action;
 
     if(action === "auto"){
-      const best = bestAvailableFor(isGB);
-      if(!best){ alert("No hay nodos GB disponibles. Carga más nodos o revisa el pool."); return; }
-      assignNodeToAccount(best.id, accId);
-      saveState(); renderAll();
+      const best = bestAvailableGB(null);
+      if(!best){ alert("No hay nodos GB disponibles. Carga más nodos, revisa proveedores excluidos, o desbloquea alguno."); return; }
+      doAssign(best._key, accId);
 
     } else if(action === "damaged"){
-      confirmModal("Marcar nodo como dañado", `Se bloqueará el nodo actual de "${accountName(accId)}" y se asignará automáticamente el siguiente mejor disponible.`, () => {
-        const nodeId = state.assignments[accId];
-        if(nodeId) blockNode(nodeId, `Dañado en ${accountName(accId)}`);
-        const best = bestAvailableFor(isGB);
-        if(best) assignNodeToAccount(best.id, accId);
-        else addLog(`Sin reemplazo disponible para ${accountName(accId)}.`);
-        saveState(); renderAll();
-      });
+      confirmModal("Marcar nodo como dañado", `Se bloqueará el nodo actual de "${accountName(accId)}" y se asignará automáticamente el siguiente mejor disponible.`, [
+        { label:"Confirmar", cls:"bad", onClick: () => {
+          const existing = accountCurrentNode(accId);
+          if(existing){
+            state.status[existing] = "bloqueado";
+            state.blockInfo[existing] = { reason:`Dañado en ${accountName(accId)}`, ts: new Date().toISOString() };
+            delete state.accountOf[existing];
+          }
+          const best = bestAvailableGB(null);
+          if(best){ state.status[best._key] = "uso"; state.accountOf[best._key] = String(accId); addLog(`Reemplazo automático para ${accountName(accId)}.`); }
+          else addLog(`Sin reemplazo disponible para ${accountName(accId)}.`);
+          saveState(); renderAll();
+        }}
+      ]);
 
     } else if(action === "unassign"){
-      unassign(accId);
+      const existing = accountCurrentNode(accId);
+      if(existing){ delete state.status[existing]; delete state.accountOf[existing]; addLog(`Nodo liberado de ${accountName(accId)}.`); }
       saveState(); renderAll();
 
     } else if(action === "delete"){
-      confirmModal("Eliminar cuenta", `Se eliminará "${accountName(accId)}". Su nodo (si tiene) volverá a disponibles.`, () => {
-        unassign(accId);
-        state.accounts = state.accounts.filter(a => String(a.id) !== String(accId));
-        addLog(`Cuenta eliminada.`);
-        saveState(); renderAll();
-      });
+      confirmModal("Eliminar cuenta", `Se eliminará "${accountName(accId)}". Su nodo (si tiene) volverá a disponibles.`, [
+        { label:"Eliminar", cls:"bad", onClick: () => {
+          const existing = accountCurrentNode(accId);
+          if(existing){ delete state.status[existing]; delete state.accountOf[existing]; }
+          state.accounts = state.accounts.filter(a => String(a.id) !== String(accId));
+          addLog(`Cuenta eliminada.`);
+          saveState(); renderAll();
+        }}
+      ]);
     }
   });
 
-  /* ---------------- vista: bloqueados ---------------- */
-  function renderBloqueados(){
-    const search = document.getElementById("bloq-search").value.trim().toLowerCase();
-    const tbody = document.getElementById("bloq-tbody");
-    let ids = Object.keys(state.blocked);
-    if(search){
-      ids = ids.filter(id => {
-        const n = state.nodes[id] || {};
-        const loc = n.location || {};
-        const hay = [id, loc.city, loc.isp].join(" ").toLowerCase();
-        return hay.includes(search);
-      });
-    }
-    if(!ids.length){
-      tbody.innerHTML = `<tr><td colspan="7" class="empty">No hay nodos bloqueados.</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = ids.map(id => {
-      const n = state.nodes[id] || {};
-      const loc = n.location || {};
-      const info = state.blocked[id];
-      const date = info && info.ts ? new Date(info.ts).toLocaleString() : "—";
-      const sid = searchId(n.provider_id);
-      return `<tr>
-        <td class="node-id">#${escapeHtml(id)}</td>
-        <td><code style="font-family:var(--mono);font-size:11.5px">${escapeHtml(sid)}</code></td>
-        <td>${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}</td>
-        <td>${escapeHtml(loc.isp||"—")}</td>
-        <td>${escapeHtml(info ? info.reason : "—")}</td>
-        <td>${date}</td>
-        <td><button class="btn small" data-action="unblock" data-node="${id}">Desbloquear</button></td>
-      </tr>`;
-    }).join("");
+  /* ---------------- vista: nodos (control total) ---------------- */
+  function providerList(){
+    const set = new Set();
+    Object.values(state.nodes).forEach(n => { const isp = ispOf(n); if(isp) set.add(isp); });
+    return Array.from(set).sort((a,b) => a.localeCompare(b));
   }
-  document.getElementById("bloq-tbody").addEventListener("click", (ev) => {
-    const btn = ev.target.closest("button[data-action='unblock']");
+  function fillProviderSelect(){
+    const sel = document.getElementById("nodos-proveedor");
+    const current = sel.value;
+    const providers = providerList();
+    sel.innerHTML = `<option value="">Todos los proveedores</option>` +
+      providers.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}${state.excludedProviders.includes(ispKey(p)) ? " (excluido)" : ""}</option>`).join("");
+    if(providers.includes(current)) sel.value = current;
+  }
+
+  function renderExcludedChips(){
+    const wrap = document.getElementById("excluded-chips");
+    if(!state.excludedProviders.length){ wrap.innerHTML = ""; return; }
+    wrap.innerHTML = state.excludedProviders.map(p => `
+      <div class="chip">Excluido: ${escapeHtml(p)}<button data-provider="${escapeHtml(p)}" title="Quitar exclusión">×</button></div>
+    `).join("");
+  }
+  document.getElementById("excluded-chips").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-provider]");
     if(!btn) return;
-    unblockNode(btn.getAttribute("data-node"));
+    const idx = state.excludedProviders.indexOf(btn.getAttribute("data-provider"));
+    if(idx !== -1) state.excludedProviders.splice(idx, 1);
     saveState(); renderAll();
   });
-  document.getElementById("bloq-search").addEventListener("input", renderBloqueados);
 
-  /* ---------------- vista: todos ---------------- */
-  function renderTodos(){
-    fillCountrySelect(document.getElementById("todos-country"), false);
-    const country = document.getElementById("todos-country").value;
-    const estado = document.getElementById("todos-estado").value;
-    const search = document.getElementById("todos-search").value.trim().toLowerCase();
+  function renderNodos(){
+    fillProviderSelect();
+    renderExcludedChips();
+    const providerFilter = document.getElementById("nodos-proveedor").value;
+    const estadoFilter = document.getElementById("nodos-estado").value;
+    const search = document.getElementById("nodos-search").value.trim().toLowerCase();
 
-    let list = allNodesArr();
-    if(country) list = list.filter(n => (n.location && n.location.country) === country);
-    if(estado) list = list.filter(n => nodeStatus(n.id) === (estado === "uso" ? "uso" : estado));
+    let keys = allKeys();
+    if(providerFilter) keys = keys.filter(k => state.nodes[k] && ispOf(state.nodes[k]) === providerFilter);
+    if(estadoFilter) keys = keys.filter(k => statusOf(k) === estadoFilter);
     if(search){
-      list = list.filter(n => {
+      keys = keys.filter(k => {
+        const n = state.nodes[k] || {};
         const loc = n.location || {};
-        const hay = [n.id, loc.city, loc.isp].join(" ").toLowerCase();
+        const hay = [k, loc.city, loc.isp].join(" ").toLowerCase();
         return hay.includes(search);
       });
     }
-    list.sort(compareNodes);
+    keys.sort((a,b) => {
+      const na = state.nodes[a], nb = state.nodes[b];
+      if(na && nb) return compareNodes(na, nb);
+      if(na) return -1;
+      if(nb) return 1;
+      return a.localeCompare(b);
+    });
 
-    const tbody = document.getElementById("todos-tbody");
-    if(!list.length){
-      tbody.innerHTML = `<tr><td colspan="10" class="empty">Sin resultados. Carga un JSON o ajusta los filtros.</td></tr>`;
+    const tbody = document.getElementById("nodos-tbody");
+    if(!keys.length){
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin resultados. Carga un JSON o ajusta los filtros.</td></tr>`;
       return;
     }
-    tbody.innerHTML = list.map(n => {
-      const loc = n.location || {}, q = n.quality || {};
-      const st = nodeStatus(n.id);
-      const badge = st === "disponible" ? `<span class="badge disp">Disponible</span>`
-                  : st === "uso" ? `<span class="badge uso">${escapeHtml(accountName(assignedAccountFor(n.id)))}</span>`
-                  : `<span class="badge bloq">Bloqueado</span>`;
-      let action = "";
-      if(st === "disponible"){
-        action = `<button class="btn small bad" data-action="block" data-node="${n.id}">Bloquear</button>`;
-      } else if(st === "bloqueado"){
-        action = `<button class="btn small" data-action="unblock" data-node="${n.id}">Desbloquear</button>`;
+    const accOptionsHtml = accountSelectOptions();
+    tbody.innerHTML = keys.map(key => {
+      const n = state.nodes[key];
+      const loc = (n && n.location) || {};
+      const q = (n && n.quality) || {};
+      const st = statusOf(key);
+      const accId = state.accountOf[key];
+
+      let cuentaCell;
+      if(st === "uso" && accId){
+        cuentaCell = escapeHtml(accountName(accId));
+      } else if(st === "uso"){
+        cuentaCell = `<div class="row" style="margin:0;gap:4px;flex-wrap:nowrap">
+            <select class="assign-select" data-node="${key}" style="font-size:11.5px;padding:4px 6px">${accOptionsHtml}</select>
+            <button class="btn small good" data-action="linkacc" data-node="${key}">Vincular</button>
+          </div>`;
       } else {
-        action = `<button class="btn small" data-action="unassign2" data-node="${n.id}">Liberar</button>`;
+        cuentaCell = "—";
       }
-      const sid = searchId(n.provider_id);
+
+      const providerBtn = ispOf(n||{})
+        ? `<button class="btn small" data-action="toggle-exclude" data-isp="${escapeHtml(ispOf(n))}">${isExcludedProvider(n||{}) ? "Incluir" : "Excluir"}</button>`
+        : "";
+
       return `<tr>
-        <td class="node-id">#${escapeHtml(n.id)}</td>
         <td>
           <div class="row" style="margin:0;gap:6px;flex-wrap:nowrap">
-            <code style="font-family:var(--mono);font-size:11.5px">${escapeHtml(sid)}</code>
-            <button class="btn small" data-action="copy" data-copy="${escapeHtml(sid)}">Copiar</button>
+            <code style="font-size:11.5px">${escapeHtml(key)}</code>
+            <button class="btn small" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button>
           </div>
         </td>
-        <td>${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}</td>
-        <td>${escapeHtml(loc.isp||"—")}</td>
+        <td>${n ? `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}` : `<span style="color:var(--muted)">sin datos</span>`}</td>
+        <td>${escapeHtml(ispOf(n||{}) || "—")}</td>
         <td>${fmt(q.uptime)}</td>
         <td>${fmt(q.latency,"ms")}</td>
-        <td>${fmt(q.packetLoss)}</td>
-        <td>${fmt(q.quality)}</td>
-        <td>${badge}</td>
-        <td>${action}</td>
+        <td>
+          <select class="status-select ${st}" data-action="setstatus" data-node="${key}">
+            <option value="disponible" ${st==="disponible"?"selected":""}>Disponible</option>
+            <option value="uso" ${st==="uso"?"selected":""}>En uso</option>
+            <option value="bloqueado" ${st==="bloqueado"?"selected":""}>Bloqueado</option>
+          </select>
+        </td>
+        <td>${cuentaCell}</td>
+        <td>
+          <div class="row" style="margin:0;gap:6px">
+            ${providerBtn}
+            <button class="btn small bad" data-action="remove" data-node="${key}">Eliminar</button>
+          </div>
+        </td>
       </tr>`;
     }).join("");
   }
-  document.getElementById("todos-tbody").addEventListener("click", (ev) => {
+
+  document.getElementById("nodos-tbody").addEventListener("change", (ev) => {
+    const sel = ev.target.closest("select[data-action='setstatus']");
+    if(!sel) return;
+    setStatusManual(sel.getAttribute("data-node"), sel.value);
+    saveState(); renderAll();
+  });
+  document.getElementById("nodos-tbody").addEventListener("click", (ev) => {
     const btn = ev.target.closest("button[data-action]");
     if(!btn) return;
-    if(btn.dataset.action === "copy"){
-      copyToClipboard(btn.getAttribute("data-copy"), btn);
+    const key = btn.getAttribute("data-node");
+    const action = btn.dataset.action;
+    if(action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
+    if(action === "toggle-exclude"){ toggleExcludeProvider(btn.getAttribute("data-isp")); saveState(); renderAll(); return; }
+    if(action === "remove"){
+      confirmModal("Eliminar nodo del pool", `Se eliminará por completo el nodo ${key} (datos, estado y asignación). Esta acción no se puede deshacer.`, [
+        { label:"Eliminar", cls:"bad", onClick: () => { removeNodeCompletely(key); saveState(); renderAll(); } }
+      ]);
       return;
     }
-    const nodeId = btn.getAttribute("data-node");
-    if(btn.dataset.action === "block"){
-      confirmModal("Bloquear nodo", `¿Bloquear el nodo #${nodeId}?`, () => {
-        blockNode(nodeId, "Bloqueado desde el panel general"); saveState(); renderAll();
-      });
-    } else if(btn.dataset.action === "unblock"){
-      unblockNode(nodeId); saveState(); renderAll();
-    } else if(btn.dataset.action === "unassign2"){
-      const accId = assignedAccountFor(nodeId);
-      if(accId) unassign(accId);
-      saveState(); renderAll();
+    if(action === "linkacc"){
+      const row = btn.closest("tr");
+      const accId = row.querySelector("select.assign-select").value;
+      if(!accId){ alert("Elige primero una cuenta."); return; }
+      doAssign(key, accId);
+      return;
     }
   });
-  document.getElementById("todos-country").addEventListener("change", renderTodos);
-  document.getElementById("todos-estado").addEventListener("change", renderTodos);
-  document.getElementById("todos-search").addEventListener("input", renderTodos);
+  document.getElementById("nodos-proveedor").addEventListener("change", renderNodos);
+  document.getElementById("nodos-estado").addEventListener("change", renderNodos);
+  document.getElementById("nodos-search").addEventListener("input", renderNodos);
 
-  /* ---------------- modal de confirmación ---------------- */
-  let pendingConfirm = null;
-  function confirmModal(title, text, onConfirm){
+  /* ---------------- modal de confirmación (genérico, N botones) ---------------- */
+  function confirmModal(title, text, actions){
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-text").textContent = text;
-    pendingConfirm = onConfirm;
+    const btnWrap = document.getElementById("modal-buttons");
+    btnWrap.innerHTML = "";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "btn"; cancelBtn.textContent = "Cancelar";
+    cancelBtn.onclick = () => document.getElementById("modal-overlay").classList.remove("show");
+    btnWrap.appendChild(cancelBtn);
+    actions.forEach(a => {
+      const b = document.createElement("button");
+      b.className = "btn " + (a.cls || "primary");
+      b.textContent = a.label;
+      b.onclick = () => { document.getElementById("modal-overlay").classList.remove("show"); a.onClick(); };
+      btnWrap.appendChild(b);
+    });
     document.getElementById("modal-overlay").classList.add("show");
   }
-  document.getElementById("modal-cancel").addEventListener("click", () => {
-    document.getElementById("modal-overlay").classList.remove("show");
-    pendingConfirm = null;
-  });
-  document.getElementById("modal-confirm").addEventListener("click", () => {
-    document.getElementById("modal-overlay").classList.remove("show");
-    if(pendingConfirm) pendingConfirm();
-    pendingConfirm = null;
-  });
 
   /* ---------------- navegación de pestañas ---------------- */
   document.querySelectorAll("nav.tabs button").forEach(btn => {
@@ -973,8 +993,7 @@
     renderLog();
     renderDisponibles();
     renderCuentas();
-    renderBloqueados();
-    renderTodos();
+    renderNodos();
   }
 
   renderAll();

@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <!--
   NodeGrid — control de nodos dVPN
-  Archivo único, sin dependencias. Optimizado para GitHub Pages.
+  Archivo único, sin dependencias de pago, sin build. Para publicarlo gratis:
+  1) Sube este archivo a un repositorio de GitHub (puedes renombrarlo a index.html).
+  2) Ve a Settings → Pages → Deploy from branch → main → / (root).
+  3) Listo, queda en https://tuusuario.github.io/turepo/
+  Todo el estado (nodos, bloqueados, en uso, cuentas) se guarda en el navegador
+  donde lo abras (localStorage). No se envía nada a ningún servidor.
 -->
 <html lang="es">
 <head>
@@ -12,165 +17,195 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#05070D;
-    --panel:#0E1321;
-    --panel-2:#151B2B;
-    --border:#242D42;
-    --border-soft:#1C2333;
-    --text:#F0F4FF;
-    --muted:#94A0BA;
-    --muted-2:#626F8D;
-    --good:#2DD4BF;
-    --warn:#FBBF24;
-    --bad:#F87171;
-    --accent:#60A5FA;
+    --bg:#080B14;
+    --panel:#0E1526;
+    --panel-2:#0A101E;
+    --border:#1C2438;
+    --border-soft:#161D30;
+    --text:#E9EDF7;
+    --muted:#8590AC;
+    --muted-2:#57617D;
+    --good:#31D6A6;
+    --warn:#E8AC4C;
+    --bad:#F1596A;
+    --accent:#5A86F5;
     --mono:'IBM Plex Mono', monospace;
     --display:'Space Grotesk', sans-serif;
-    --radius:12px;
+    --radius:10px;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:var(--display);-webkit-font-smoothing:antialiased;}
   code{font-family:var(--mono);}
-  ::selection{background:#60A5FA40;}
+  ::selection{background:#5A86F540;}
 
   header.topbar{
-    position:sticky;top:0;z-index:20;background:rgba(5, 7, 13, 0.85);backdrop-filter:blur(8px);
-    border-bottom:1px solid var(--border);padding:20px 26px 0;
+    position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding:16px 26px 0;
   }
-  .brand{display:flex;align-items:center;gap:12px;}
+  .brand{display:flex;align-items:center;gap:11px;}
   .brand-mark{
-    width:34px;height:34px;border-radius:10px;background:var(--accent);color:#000;
-    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;
+    width:30px;height:30px;border-radius:8px;background:var(--accent);color:#060B16;
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:12px;
   }
-  .brand h1{font-size:18px;margin:0;font-weight:600; letter-spacing:-0.5px;}
-  .brand p{margin:2px 0 0;font-size:12.5px;color:var(--muted-2);font-family:var(--mono);}
-  nav.tabs{display:flex;gap:8px;margin-top:18px;overflow-x:auto;}
+  .brand h1{font-size:16.5px;margin:0;font-weight:600;}
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--muted-2);font-family:var(--mono);}
+  nav.tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto;}
   nav.tabs button{
     appearance:none;border:none;background:transparent;color:var(--muted);
-    font-family:var(--display);font-size:14px;font-weight:500;
-    padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
-    display:flex;align-items:center;gap:8px;transition:color 0.2s;
+    font-family:var(--display);font-size:13.5px;font-weight:500;
+    padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
+    display:flex;align-items:center;gap:7px;
   }
-  nav.tabs button .count{font-family:var(--mono);font-size:11px;color:var(--muted-2);background:var(--panel-2);padding:2px 6px;border-radius:20px;}
+  nav.tabs button .count{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
   nav.tabs button:hover{color:var(--text);}
-  nav.tabs button.active{color:var(--accent);border-bottom-color:var(--accent);}
-  nav.tabs button.active .count{color:var(--accent); background:rgba(96, 165, 250, 0.15);}
+  nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent);}
 
-  main{max-width:1180px;margin:0 auto;padding:30px 26px 90px;}
+  main{max-width:1180px;margin:0 auto;padding:24px 26px 90px;}
   .view{display:none;}
-  .view.active{display:block;animation:fade .25s ease;}
-  @keyframes fade{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}
+  .view.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
 
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media(max-width:860px){.grid-2{grid-template-columns:1fr;}}
 
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;}
-  .card + .card{margin-top:20px;}
-  .card h2{margin:0 0 6px;font-size:15px;font-weight:600; color:var(--text);}
-  .card .hint{color:var(--muted);font-size:12.5px;margin:0 0 16px;line-height:1.6;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+  .card + .card{margin-top:16px;}
+  .card h2{margin:0 0 4px;font-size:14px;font-weight:600;}
+  .card .hint{color:var(--muted);font-size:12px;margin:0 0 14px;line-height:1.55;}
 
   textarea{
-    width:100%;min-height:120px;background:var(--bg);border:1px solid var(--border);
-    border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:12px;resize:vertical;
-    transition:border-color 0.2s;
+    width:100%;min-height:110px;background:var(--panel-2);border:1px solid var(--border);
+    border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:11px;resize:vertical;
   }
-  textarea:focus, input:focus, select:focus{outline:none;border-color:var(--accent); box-shadow:0 0 0 3px rgba(96,165,250,0.1);}
+  textarea:focus, input:focus, select:focus{outline:none;border-color:var(--accent);}
 
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:11px;}
   input[type=text], input[type=number], select{
-    background:var(--bg);border:1px solid var(--border);color:var(--text);
-    border-radius:8px;padding:9px 12px;font-family:var(--display);font-size:13px;
+    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    border-radius:7px;padding:8px 10px;font-family:var(--display);font-size:12.5px;
   }
-  label.file-btn{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;color:var(--muted);transition:all 0.2s;font-weight:500;}
+  label.file-btn{background:var(--panel-2);border:1px solid var(--border);border-radius:7px;padding:8px 13px;font-size:12.5px;cursor:pointer;color:var(--muted);}
   label.file-btn:hover{color:var(--text);border-color:var(--accent);}
   input[type=file]{display:none;}
 
   button.btn{
     appearance:none;border:1px solid var(--border);background:transparent;color:var(--text);
-    padding:9px 16px;border-radius:8px;font-family:var(--display);font-weight:500;font-size:13px;cursor:pointer;
-    transition:all .15s ease; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:8px 14px;border-radius:7px;font-family:var(--display);font-weight:500;font-size:12.5px;cursor:pointer;
+    transition:border-color .12s, background .12s;
   }
-  button.btn:hover{border-color:var(--muted);}
-  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600;}
-  button.btn.primary:hover{filter:brightness(1.1); border-color:transparent;}
+  button.btn:hover{border-color:var(--accent);}
+  button.btn.primary{background:var(--accent);border-color:var(--accent);color:#060B16;font-weight:600;}
+  button.btn.primary:hover{filter:brightness(1.07);}
   button.btn.success{color:var(--good);border-color:var(--good);}
-  button.btn.success:hover{background:rgba(45, 212, 191, 0.1);}
+  button.btn.success:hover{background:#31D6A61a;}
   button.btn.danger{color:var(--bad);border-color:var(--bad);}
-  button.btn.danger:hover{background:rgba(248, 113, 113, 0.1);}
+  button.btn.danger:hover{background:#F1596A1a;}
   button.btn.ghost{color:var(--muted);border-color:transparent;background:var(--panel-2);}
-  button.btn.ghost:hover{color:var(--text); background:var(--border);}
-  button.btn.small{padding:6px 10px;font-size:11.5px;}
-  button.btn:disabled{opacity:.4;cursor:not-allowed;}
-  
-  .backup-zone { background: rgba(96, 165, 250, 0.05); border: 1px dashed var(--accent); padding: 16px; border-radius: 8px; margin-top: 20px;}
+  button.btn.ghost:hover{color:var(--text);}
+  button.btn.small{padding:5px 9px;font-size:11px;}
+  button.btn.iconbtn{padding:6px 9px;}
+  button.btn:disabled{opacity:.35;cursor:not-allowed;}
+  button.btn:disabled:hover{border-color:var(--border);background:none;}
 
-  .status-msg{margin-top:12px;font-family:var(--mono);font-size:12px;padding:10px 14px;border-radius:8px;display:none;}
+  .status-msg{margin-top:10px;font-family:var(--mono);font-size:11.5px;padding:8px 11px;border-radius:7px;display:none;}
   .status-msg.show{display:block;}
-  .status-msg.ok{background:rgba(45,212,191,0.1);color:var(--good); border:1px solid rgba(45,212,191,0.2);}
-  .status-msg.err{background:rgba(248,113,113,0.1);color:var(--bad); border:1px solid rgba(248,113,113,0.2);}
+  .status-msg.ok{background:#31D6A614;color:var(--good);}
+  .status-msg.err{background:#F1596A14;color:var(--bad);}
 
-  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
   @media(max-width:700px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
-  .stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
-  .stat .num{font-family:var(--mono);font-size:24px;font-weight:600; margin-bottom:4px;}
-  .stat .lbl{font-size:12px;color:var(--muted); font-weight:500;}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;}
+  .stat .num{font-family:var(--mono);font-size:21px;font-weight:600;}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
   .stat.good .num{color:var(--good);}
   .stat.accent .num{color:var(--accent);}
   .stat.bad .num{color:var(--bad);}
 
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px; background:var(--panel); padding:12px; border-radius:var(--radius); border:1px solid var(--border);}
-  .toolbar input[type=text]{min-width:160px; flex:1;}
-  
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-  .chip{display:flex;align-items:center;gap:6px;background:rgba(248,113,113,0.1);color:var(--bad);border:1px solid rgba(248,113,113,0.3);border-radius:20px;padding:4px 8px 4px 12px;font-size:12px;font-family:var(--mono);}
-  .chip button{background:none;border:none;color:var(--bad);cursor:pointer;font-size:16px;line-height:1;padding:0 4px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .toolbar input[type=text]{min-width:140px;}
+  .toolbar .spacer{flex:1;}
+  .view-toggle{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+  .view-toggle button{border:none;border-radius:0;background:var(--panel-2);color:var(--muted);padding:8px 11px;font-size:12px;cursor:pointer;}
+  .view-toggle button.active{background:var(--accent);color:#060B16;font-weight:600;}
 
-  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
-  .node-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative; transition:transform 0.2s;}
-  .node-card:hover{transform:translateY(-2px); border-color:var(--border-soft);}
-  .node-card.rank1{border-color:var(--good); box-shadow:0 4px 20px rgba(45,212,191,0.05);}
-  .top-badge{position:absolute;top:-10px;right:16px;background:var(--good);color:#000;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:3px 10px;border-radius:20px;letter-spacing:.05em;}
-  .node-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-  .node-loc{font-weight:600;font-size:14.5px; color:var(--text);}
-  .node-isp{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:4px;}
-  
-  .fingerprint{display:flex;gap:4px;align-items:flex-end;height:24px;margin:16px 0 12px;}
-  .fingerprint i{flex:1;background:var(--border);border-radius:3px;opacity:.9; transition:height 0.3s;}
-  
-  .metricline{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:16px; background:var(--bg); padding:10px; border-radius:8px;}
-  .metricline span{display:flex; flex-direction:column; gap:2px;}
-  .metricline b{color:var(--text);font-weight:600; font-size:13px;}
-  
-  .node-actions{display:flex;gap:8px;flex-wrap:wrap;}
-  select.assign-select{flex:1;min-width:110px;}
-  .idbox{display:flex;gap:8px;align-items:center;margin:0 0 14px;}
-  .idbox code{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px; color:var(--muted-2);}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .chip{display:flex;align-items:center;gap:6px;background:#F1596A14;color:var(--bad);border:1px solid #F1596A55;border-radius:20px;padding:4px 6px 4px 11px;font-size:11.5px;font-family:var(--mono);}
+  .chip button{background:none;border:none;color:var(--bad);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;}
 
-  table{width:100%;border-collapse:separate; border-spacing: 0; font-size:13px;}
-  th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:12px 14px;border-bottom:1px solid var(--border);white-space:nowrap; background:var(--panel-2);}
-  th:first-child{border-top-left-radius:8px;} th:last-child{border-top-right-radius:8px;}
-  td{padding:12px 14px;border-bottom:1px solid var(--border-soft);vertical-align:middle; background:var(--panel);}
-  tbody tr:hover td{background:var(--panel-2);}
-  select.status-select{font-size:12px;padding:6px 10px; font-weight:500;}
-  
-  .empty{text-align:center;padding:60px 20px;color:var(--muted); background:var(--panel); border:1px dashed var(--border); border-radius:var(--radius);}
-  .empty b{color:var(--text);display:block;margin-bottom:8px;font-size:15px;}
+  .pagenote{color:var(--muted);font-size:12px;margin:-2px 0 14px;font-family:var(--mono);}
 
-  .acc-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap; transition:border-color 0.2s;}
-  .acc-card:hover{border-color:var(--accent);}
-  .acc-name{font-weight:600;font-size:15px;min-width:140px;}
-  .acc-node{flex:1;min-width:240px;font-family:var(--mono);font-size:12px;color:var(--muted); background:var(--bg); padding:10px 14px; border-radius:8px;}
-  .acc-node b{color:var(--accent);font-family:var(--mono);}
-  
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:80;padding:20px;}
+  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:11px;}
+  .node-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 15px;position:relative;}
+  .node-card.rank1{border-color:var(--good);}
+  .top-badge{position:absolute;top:-8px;right:12px;background:var(--good);color:#062018;font-size:10px;font-weight:700;font-family:var(--mono);padding:1px 7px;border-radius:20px;letter-spacing:.03em;}
+  .node-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .node-loc{font-weight:600;font-size:13.5px;}
+  .node-isp{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+  .fingerprint{display:flex;gap:3px;align-items:flex-end;height:20px;margin:11px 0 9px;}
+  .fingerprint i{flex:1;background:var(--border);border-radius:2px;opacity:.85;}
+  .metricline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:11px;}
+  .metricline b{color:var(--text);font-weight:500;}
+  .node-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  select.assign-select{flex:1;min-width:100px;}
+  .idbox{display:flex;gap:6px;align-items:center;margin:0 0 10px;}
+  .idbox code{flex:1;background:var(--panel-2);border:1px solid var(--border-soft);border-radius:6px;padding:4px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;}
+
+  .list-row{
+    display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--border);
+    border-radius:8px;padding:10px 14px;margin-bottom:7px;flex-wrap:wrap;
+  }
+  .list-row .lr-loc{min-width:160px;font-weight:600;font-size:13px;}
+  .list-row .lr-isp{min-width:110px;color:var(--muted);font-size:11.5px;font-family:var(--mono);}
+  .list-row .lr-metrics{display:flex;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted);min-width:220px;}
+  .list-row .lr-metrics b{color:var(--text);font-weight:500;}
+  .list-row .lr-id{font-family:var(--mono);font-size:11px;color:var(--muted-2);min-width:120px;}
+  .list-row .lr-actions{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.3px;}
+  th{text-align:left;color:var(--muted);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  th.sortable{cursor:pointer;user-select:none;}
+  th.sortable:hover{color:var(--text);}
+  th .arrow{font-size:9px;margin-left:3px;color:var(--accent);}
+  td{padding:8px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  tbody tr:hover td{background:#0C1425;}
+  select.status-select{font-size:11px;padding:4px 6px;}
+  select.status-select.disponible{color:var(--good);border-color:var(--good);}
+  select.status-select.uso{color:var(--accent);border-color:var(--accent);}
+  select.status-select.bloqueado{color:var(--bad);border-color:var(--bad);}
+
+  .empty{text-align:center;padding:36px 20px;color:var(--muted);}
+  .empty b{color:var(--text);display:block;margin-bottom:4px;font-size:13.5px;}
+
+  .acc-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .acc-name{font-weight:600;font-size:13.5px;min-width:120px;}
+  .acc-node{flex:1;min-width:220px;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .acc-node b{color:var(--text);font-family:var(--display);}
+  .acc-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
+  footer.log{max-width:1180px;margin:0 auto;padding:0 26px 30px;}
+  .log-list{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11px;color:var(--muted-2);}
+  .log-list li{padding:5px 0;border-bottom:1px solid var(--border-soft);}
+  .log-list li span{color:var(--muted);}
+
+  .deploy-note{max-width:1180px;margin:0 auto;padding:0 26px 50px;color:var(--muted-2);font-size:11.5px;font-family:var(--mono);}
+  .deploy-note code{background:var(--panel-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;}
+
+  .modal-overlay{position:fixed;inset:0;background:#02040ac2;backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:80;padding:20px;}
   .modal-overlay.show{display:flex;}
-  .modal{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:400px;width:100%; box-shadow:0 20px 40px rgba(0,0,0,0.4);}
-  
-  #toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:100;max-width:340px;}
-  .toast{background:var(--panel-2);border:1px solid var(--border);border-left:4px solid var(--muted-2);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--text);box-shadow:0 10px 25px rgba(0,0,0,0.5);opacity:0;transform:translateX(20px);transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:380px;width:100%;}
+  .modal h3{margin:0 0 6px;font-size:14.5px;}
+  .modal p{color:var(--muted);font-size:12px;margin:0 0 14px;line-height:1.55;}
+
+  #toast-container{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:100;max-width:320px;}
+  .toast{
+    background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--muted-2);
+    border-radius:8px;padding:10px 13px;font-size:12px;color:var(--text);box-shadow:0 8px 20px -8px #00000080;
+    opacity:0;transform:translateX(12px);transition:opacity .22s ease, transform .22s ease;
+  }
   .toast.show{opacity:1;transform:none;}
   .toast.toast-success{border-left-color:var(--good);}
   .toast.toast-danger{border-left-color:var(--bad);}
+  .toast.toast-warn{border-left-color:var(--warn);}
+  .toast.toast-info{border-left-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -178,91 +213,98 @@
 <header class="topbar">
   <div class="brand">
     <div class="brand-mark">NG</div>
-    <div><h1>NodeGrid</h1><p>Control de nodos dVPN · Storage Local</p></div>
+    <div><h1>NodeGrid</h1><p>Control de nodos dVPN · datos guardados solo en este navegador</p></div>
   </div>
   <nav class="tabs">
-    <button data-view="cargar" class="active">Configuración</button>
+    <button data-view="cargar" class="active">Cargar</button>
     <button data-view="disponibles">Disponibles <span class="count" id="cnt-disp">0</span></button>
     <button data-view="cuentas">Cuentas <span class="count" id="cnt-acc">0</span></button>
-    <button data-view="nodos">Base de Datos <span class="count" id="cnt-todos">0</span></button>
+    <button data-view="nodos">Nodos <span class="count" id="cnt-todos">0</span></button>
   </nav>
 </header>
 
 <main>
-  <!-- VISTA: CARGAR / CONFIGURACIÓN -->
+
+  <!-- ===================== VISTA: CARGAR ===================== -->
   <section class="view active" id="view-cargar">
     <div class="stat-grid">
-      <div class="stat accent"><div class="num" id="s-total">0</div><div class="lbl">Total Cargados</div></div>
-      <div class="stat good"><div class="num" id="s-disp">0</div><div class="lbl">Disponibles (Filtro)</div></div>
-      <div class="stat"><div class="num" id="s-uso">0</div><div class="lbl">En Uso</div></div>
+      <div class="stat accent"><div class="num" id="s-total">0</div><div class="lbl">Nodos con datos cargados</div></div>
+      <div class="stat good"><div class="num" id="s-disp">0</div><div class="lbl">Disponibles (GB, filtrados)</div></div>
+      <div class="stat"><div class="num" id="s-uso">0</div><div class="lbl">En uso</div></div>
       <div class="stat bad"><div class="num" id="s-bloq">0</div><div class="lbl">Bloqueados</div></div>
-    </div>
-    
-    <!-- NUEVA SECCIÓN DE BACKUP -->
-    <div class="card backup-zone">
-      <h2>💾 Copia de Seguridad (¡Importante!)</h2>
-      <p class="hint">Si borras el historial de tu navegador, perderás todos tus datos. Exporta tu progreso regularmente.</p>
-      <div class="row">
-        <button class="btn primary" id="btn-export-backup">⬇️ Exportar Backup (.json)</button>
-        <label class="file-btn">⬆️ Importar Backup<input type="file" id="backup-input" accept=".json"></label>
-      </div>
     </div>
 
     <div class="card">
-      <h2>1. Actualizar Pool de Nodos (API JSON)</h2>
-      <p class="hint">Pega el JSON de los nodos. El sistema reconoce los ya bloqueados y en uso automáticamente.</p>
-      <textarea id="json-input" placeholder="[ { &quot;provider_id&quot;: &quot;0x...&quot; } ]"></textarea>
+      <h2>1. Pegar el JSON de la API</h2>
+      <p class="hint">Cada nodo se identifica por los primeros 14 caracteres de su <code>provider_id</code>. Puedes recargar el JSON las veces que quieras: nunca se te repiten ni se te reactivan los nodos que ya bloqueaste o pusiste en uso.</p>
+      <textarea id="json-input" placeholder="[ { &quot;provider_id&quot;: &quot;0x...&quot;, &quot;location&quot;: {...}, &quot;quality&quot;: {...} }, ... ]"></textarea>
       <div class="row">
-        <label class="file-btn">Subir archivo .json<input type="file" id="file-input" accept=".json"></label>
-        <button class="btn success" id="btn-load">Cargar Data</button>
-        <button class="btn ghost" id="btn-clear-input">Limpiar</button>
-        <button class="btn danger" id="btn-clear-json-data" style="margin-left:auto;">Vaciar Base</button>
+        <label class="file-btn">Subir archivo .json<input type="file" id="file-input" accept="application/json,.json"></label>
+        <button class="btn primary" id="btn-load">Cargar / actualizar pool</button>
+        <button class="btn ghost" id="btn-clear-input">Limpiar campo</button>
+        <button class="btn danger" id="btn-clear-json-data">Vaciar datos JSON cargados</button>
       </div>
+      <p class="hint" style="margin:10px 0 0">"Vaciar datos JSON" borra ubicación/calidad de todos los nodos, pero no toca tus bloqueados ni tus en uso.</p>
       <div class="status-msg" id="load-status"></div>
     </div>
 
     <div class="grid-2">
       <div class="card">
-        <h2>2. Importar Bloqueados Históricos</h2>
-        <textarea id="blocked-input" style="min-height:90px" placeholder="0x1652..."></textarea>
-        <div class="row"><button class="btn danger" id="btn-import-blocked">Bloquear IDs</button></div>
+        <h2>2. Pegar IDs ya bloqueados</h2>
+        <p class="hint">Sepáralos por espacios, tabs o saltos de línea. Cualquier largo sirve, la app siempre toma los primeros 14 caracteres.</p>
+        <textarea id="blocked-input" style="min-height:90px" placeholder="0x16526d1c4107  0x8569a8273767  ..."></textarea>
+        <div class="row"><button class="btn danger" id="btn-import-blocked">Marcar como bloqueados</button></div>
         <div class="status-msg" id="blocked-status"></div>
       </div>
       <div class="card">
-        <h2>3. Importar En Uso Históricos</h2>
-        <textarea id="used-input" style="min-height:90px" placeholder="0x844e..."></textarea>
-        <div class="row"><button class="btn accent" id="btn-import-used" style="background:var(--accent);color:#000;">Marcar en uso</button></div>
+        <h2>3. Pegar IDs ya en uso</h2>
+        <p class="hint">Quedan como "en uso, sin cuenta"; los vinculas a una cuenta después desde la pestaña Nodos.</p>
+        <textarea id="used-input" style="min-height:90px" placeholder="0x844e14dd880e&#10;0xa3638a15ac8c&#10;..."></textarea>
+        <div class="row"><button class="btn primary" id="btn-import-used">Marcar como en uso</button></div>
         <div class="status-msg" id="used-status"></div>
       </div>
     </div>
+
+    <div class="card">
+      <h2>Actividad reciente</h2>
+      <ul class="log-list" id="log-list"><li>Sin actividad todavía.</li></ul>
+    </div>
   </section>
 
-  <!-- VISTA: DISPONIBLES -->
+  <!-- ===================== VISTA: DISPONIBLES ===================== -->
   <section class="view" id="view-disponibles">
     <div class="toolbar">
-      <input type="text" id="disp-city" placeholder="Ciudad (ej: London)">
-      <select id="disp-isp"><option value="">Cualquier ISP</option></select>
-      <input type="number" id="disp-minbw" value="30" min="0" step="5" style="width:100px" title="Min Mbps">
-      <span style="font-size:13px;color:var(--muted)">Mbps mín.</span>
-      <input type="text" id="disp-search" placeholder="Buscar ID...">
-      <button class="btn ghost small" id="disp-clear-filters">Limpiar</button>
-    </div>
-    <div id="disp-container" class="node-grid"></div>
-  </section>
-
-  <!-- VISTA: CUENTAS -->
-  <section class="view" id="view-cuentas">
-    <div class="card">
-      <h2>Gestión de Slots</h2>
-      <div class="row" style="margin-top:0">
-        <input type="text" id="acc-name-input" placeholder="Nombre (ej: Cuenta 1)">
-        <button class="btn primary" id="btn-add-acc">Crear Slot</button>
+      <input type="text" id="disp-city" placeholder="Ciudad (ej: London)" list="city-datalist" style="width:150px">
+      <datalist id="city-datalist"></datalist>
+      <select id="disp-isp"><option value="">Cualquier proveedor</option></select>
+      <input type="number" id="disp-minbw" value="30" min="0" step="5" style="width:90px" title="Ancho de banda mínimo (Mbps)">
+      <label style="font-size:11.5px;color:var(--muted)">Mbps mín.</label>
+      <input type="text" id="disp-search" placeholder="Buscar ID / ISP / ciudad..." style="flex:1;min-width:140px">
+      <button class="btn ghost small" id="disp-clear-filters">Limpiar filtros</button>
+      <div class="view-toggle">
+        <button data-mode="grid" class="active" id="btn-view-grid" title="Vista cuadrícula">▦ Cuadrícula</button>
+        <button data-mode="list" id="btn-view-list" title="Vista lista">☰ Lista</button>
       </div>
     </div>
-    <div id="acc-list" style="margin-top:20px"></div>
+    <p class="pagenote" id="disp-note"></p>
+    <div id="disp-container"></div>
+    <div class="row" id="disp-pagination" style="justify-content:center;margin-top:16px"></div>
   </section>
 
-  <!-- VISTA: NODOS -->
+  <!-- ===================== VISTA: CUENTAS ===================== -->
+  <section class="view" id="view-cuentas">
+    <div class="card">
+      <h2>Nueva cuenta / slot</h2>
+      <p class="hint">A cada cuenta le asignas un nodo. Si falla, la reemplazas con un clic — el anterior se bloquea solo.</p>
+      <div class="row" style="margin-top:0">
+        <input type="text" id="acc-name-input" placeholder="Nombre de la cuenta, ej: Cuenta 15">
+        <button class="btn primary" id="btn-add-acc">Crear cuenta</button>
+      </div>
+    </div>
+    <div id="acc-list" style="margin-top:16px"></div>
+  </section>
+
+  <!-- ===================== VISTA: NODOS (control total) ===================== -->
   <section class="view" id="view-nodos">
     <div class="chips" id="excluded-chips"></div>
     <div class="toolbar">
@@ -273,141 +315,886 @@
         <option value="uso">En uso</option>
         <option value="bloqueado">Bloqueado</option>
       </select>
-      <input type="text" id="nodos-search" placeholder="Buscar ID, ciudad...">
+      <input type="text" id="nodos-search" placeholder="Buscar por ciudad, ISP o ID..." style="flex:1;min-width:160px">
     </div>
-    <div style="overflow-x:auto;">
-      <table>
-        <thead><tr>
-          <th>ID</th><th>Ubicación</th><th>ISP</th><th>Uptime</th><th>Ping</th><th>Estado</th><th>Slot</th><th>Acciones</th>
-        </tr></thead>
-        <tbody id="nodos-tbody"></tbody>
-      </table>
-    </div>
+    <table>
+      <thead><tr>
+        <th class="sortable" data-sort="id">ID búsqueda</th>
+        <th class="sortable" data-sort="city">Ubicación</th>
+        <th class="sortable" data-sort="isp">Proveedor</th>
+        <th class="sortable" data-sort="uptime">Uptime</th>
+        <th class="sortable" data-sort="latency">Latencia</th>
+        <th class="sortable" data-sort="status">Estado</th>
+        <th>Cuenta</th>
+        <th>Acciones</th>
+      </tr></thead>
+      <tbody id="nodos-tbody"></tbody>
+    </table>
   </section>
+
 </main>
+
+<footer class="deploy-note">
+  Publica esto gratis: sube el archivo a un repo de GitHub (puedes llamarlo <code>index.html</code>) y activa GitHub Pages en Settings → Pages. Todo el estado vive en el navegador (localStorage), no hay backend ni costos.
+</footer>
 
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <h3 id="modal-title">Confirmar</h3>
-    <p id="modal-text" style="color:var(--muted); font-size:14px; margin-bottom:20px; line-height:1.5;"></p>
-    <div class="row" style="justify-content:flex-end;" id="modal-buttons"></div>
+    <p id="modal-text"></p>
+    <div class="row" style="margin-top:4px" id="modal-buttons"></div>
   </div>
 </div>
+
 <div id="toast-container"></div>
 
 <script>
 (function(){
   "use strict";
-  const STORAGE_KEY = "nodegrid_state_v3";
-  let state = loadState();
 
+  const STORAGE_KEY = "nodegrid_state_v3";
+  const DISPLAY_LIMIT = 20;
+
+  /* ---------------- estado ---------------- */
   function defaultState(){
-    return { nodes:{}, status:{}, blockInfo:{}, accountOf:{}, accounts:[], nextAccId:1, excludedProviders:[], log:[], dispFilters:{ city:"", isp:"", minBandwidth:30 } };
+    return {
+      nodes:{}, status:{}, blockInfo:{}, accountOf:{}, accounts:[], nextAccId:1,
+      excludedProviders:[], log:[], viewMode:"grid",
+      dispFilters:{ city:"", isp:"", minBandwidth:30 }
+    };
   }
+  let state = loadState();
+  let dispPage = 0;
+  let nodosSort = { key:null, dir:1 };
+
   function loadState(){
-    try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState(); }
-    catch(e){ return defaultState(); }
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      const merged = Object.assign(defaultState(), parsed);
+      merged.dispFilters = Object.assign(defaultState().dispFilters, parsed.dispFilters || {});
+      return merged;
+    }catch(e){ return defaultState(); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){ console.error(e); }
+    enforceInvariants();
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("No se pudo guardar el estado:", e); }
   }
 
-  // --- NUEVA LÓGICA DE BACKUP ---
-  document.getElementById("btn-export-backup").addEventListener("click", () => {
-    const dataStr = JSON.stringify(state, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `nodegrid_backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast("Backup descargado correctamente.", "success");
-  });
+  // Red de seguridad: garantiza que un nodo nunca quede bloqueado-y-en-uso a la vez,
+  // ni ligado a dos cuentas distintas al mismo tiempo.
+  function enforceInvariants(){
+    Object.keys(state.accountOf).forEach(k => {
+      if(state.status[k] === "bloqueado") delete state.accountOf[k];
+    });
+    const seenAcc = {};
+    Object.keys(state.accountOf).forEach(k => {
+      const acc = state.accountOf[k];
+      if(seenAcc[acc] !== undefined) delete state.accountOf[seenAcc[acc]];
+      seenAcc[acc] = k;
+    });
+  }
 
-  document.getElementById("backup-input").addEventListener("change", (ev) => {
-    const file = ev.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const importedState = JSON.parse(reader.result);
-        if(importedState.nodes && typeof importedState.nodes === 'object') {
-          state = Object.assign(defaultState(), importedState);
-          saveState(); renderAll();
-          toast("Backup restaurado con éxito.", "success");
-        } else throw new Error("Formato inválido");
-      } catch(e) { toast("Error al leer el backup.", "danger"); }
-    };
-    reader.readAsText(file);
-    ev.target.value = ""; // reset
-  });
-  // ------------------------------
+  function addLog(msg, type){
+    state.log.unshift({ ts: new Date().toISOString(), msg });
+    state.log = state.log.slice(0, 40);
+    toast(msg, type || "info");
+  }
 
+  /* ---------------- toasts (alertas) ---------------- */
   function toast(msg, type){
     const container = document.getElementById("toast-container");
     const el = document.createElement("div");
-    el.className = `toast toast-${type || "info"}`; el.textContent = msg;
+    el.className = "toast toast-" + (type || "info");
+    el.textContent = msg;
     container.appendChild(el);
     requestAnimationFrame(() => el.classList.add("show"));
-    setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 300); }, 3000);
+    setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => el.remove(), 250);
+    }, 3400);
   }
 
-  function searchId(id){ return id ? String(id).slice(0, 14) : null; }
-  function isGB(n){ const c = ((n.location && n.location.country) || "").toUpperCase().trim(); return ["GB","UK","UNITED KINGDOM","GREAT BRITAIN"].includes(c); }
-  function num(v, fb=0){ return (typeof v==="number" && !isNaN(v)) ? v : fb; }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-  function ispOf(n){ return ((n && n.location && n.location.isp) || "").trim(); }
-  function allKeys(){ return Array.from(new Set([...Object.keys(state.nodes), ...Object.keys(state.status)])); }
-
+  /* ---------------- helpers de datos ---------------- */
+  function searchId(providerId){ return providerId ? String(providerId).slice(0, 14) : null; }
+  function nodeKeyOf(raw){
+    if(raw && raw.provider_id) return searchId(raw.provider_id);
+    if(raw && raw.id !== undefined && raw.id !== null) return String(raw.id);
+    return null;
+  }
+  function isGB(node){
+    const c = ((node.location && node.location.country) || "").toUpperCase().trim();
+    return c === "GB" || c === "UK" || c === "UNITED KINGDOM" || c === "GREAT BRITAIN";
+  }
+  function num(v, fallback){ return (typeof v === "number" && !isNaN(v)) ? v : (fallback === undefined ? 0 : fallback); }
   function compareNodes(a, b){
     const qa = a.quality || {}, qb = b.quality || {};
-    return (qb.monitoring_failed?1:0)-(qa.monitoring_failed?1:0) || num(qb.uptime)-num(qa.uptime) || num(qa.packetLoss)-num(qb.packetLoss) || num(qa.latency)-num(qb.latency) || num(qb.bandwidth)-num(qa.bandwidth);
+    const fa = qa.monitoring_failed ? 1 : 0, fb = qb.monitoring_failed ? 1 : 0;
+    if(fa !== fb) return fa - fb;
+    const ua = num(qa.uptime), ub = num(qb.uptime);
+    if(ub !== ua) return ub - ua;
+    const pa = num(qa.packetLoss, 1e9), pb = num(qb.packetLoss, 1e9);
+    if(pa !== pb) return pa - pb;
+    const la = num(qa.latency, 1e9), lb = num(qb.latency, 1e9);
+    if(la !== lb) return la - lb;
+    const qqa = num(qa.quality), qqb = num(qb.quality);
+    if(qqb !== qqa) return qqb - qqa;
+    const ba = num(qa.bandwidth), bb = num(qb.bandwidth);
+    return bb - ba;
+  }
+  function fmt(v, suffix){ return (v === undefined || v === null || v === "") ? "—" : v + (suffix || ""); }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function ispOf(node){ return ((node && node.location && node.location.isp) || "").trim(); }
+  function ispKey(name){ return String(name || "").trim().toLowerCase(); }
+  function statusOf(key){ return state.status[key] || "disponible"; }
+  function isExcludedProvider(node){
+    const key = ispKey(ispOf(node));
+    return key ? state.excludedProviders.includes(key) : false;
+  }
+  function accountCurrentNode(accId){
+    accId = String(accId);
+    for(const k in state.accountOf) if(state.accountOf[k] === accId) return k;
+    return null;
+  }
+  function accountName(accId){
+    const acc = state.accounts.find(a => String(a.id) === String(accId));
+    return acc ? acc.name : ("Cuenta #" + accId);
+  }
+  function allKeys(){ return Array.from(new Set([...Object.keys(state.nodes), ...Object.keys(state.status)])); }
+  function parseIdList(text){
+    const raw = String(text || "").split(/\s+/).map(s => s.trim()).filter(Boolean);
+    return Array.from(new Set(raw.map(searchId).filter(s => s && /^0x[0-9a-fA-F]+$/i.test(s))));
+  }
+
+  // Un nodo cumple para "Disponibles" solo si: tiene datos, es GB, está realmente
+  // disponible (nunca bloqueado ni en uso ni ligado a cuenta), su proveedor no está
+  // excluido, y su ancho de banda supera el mínimo exigido (nunca 0).
+  function isEligibleForDisponibles(key){
+    const node = state.nodes[key];
+    if(!node) return false;
+    if(statusOf(key) !== "disponible") return false;
+    if(!isGB(node)) return false;
+    if(isExcludedProvider(node)) return false;
+    const bw = num(node.quality && node.quality.bandwidth, 0);
+    const minBw = num(state.dispFilters.minBandwidth, 0);
+    if(bw <= 0) return false;
+    if(minBw > 0 && bw < minBw) return false;
+    return true;
+  }
+  function passesUserFilters(node){
+    const f = state.dispFilters;
+    if(f.isp && ispOf(node) !== f.isp) return false;
+    if(f.city){
+      const city = ((node.location && node.location.city) || "").toLowerCase();
+      if(!city.includes(f.city.toLowerCase())) return false;
+    }
+    return true;
+  }
+
+  /* ---------------- import de JSON ---------------- */
+  function mergeNodes(arr){
+    if(arr === null || arr === undefined) arr = [];
+    if(!Array.isArray(arr)) throw new Error("El JSON debe ser una lista (array) de nodos, o null.");
+    let added = 0, updated = 0, skipped = 0;
+    arr.forEach(raw => {
+      if(raw === null || typeof raw !== "object"){ skipped++; return; }
+      const key = nodeKeyOf(raw);
+      if(!key){ skipped++; return; }
+      if(state.nodes[key]) updated++; else added++;
+      state.nodes[key] = Object.assign({}, raw, { _key: key });
+    });
+    return { added, updated, skipped };
+  }
+  function showStatus(el, ok, text){
+    el.textContent = text;
+    el.className = "status-msg show " + (ok ? "ok" : "err");
   }
 
   document.getElementById("btn-load").addEventListener("click", () => {
+    const el = document.getElementById("load-status");
+    const raw = document.getElementById("json-input").value.trim();
+    if(!raw){ showStatus(el, false, "Pega o sube un JSON primero."); return; }
     try{
-      const parsed = JSON.parse(document.getElementById("json-input").value);
-      parsed.forEach(raw => {
-        const key = searchId(raw.provider_id || raw.id);
-        if(key) state.nodes[key] = Object.assign({}, raw, { _key: key });
-      });
-      saveState(); renderAll(); toast("Datos actualizados", "success");
-    } catch(e){ toast("JSON inválido", "danger"); }
+      const parsed = JSON.parse(raw);
+      const { added, updated, skipped } = mergeNodes(parsed);
+      addLog(`Import JSON: ${added} nuevos, ${updated} actualizados${skipped ? `, ${skipped} ignorados` : ""}.`, "success");
+      saveState(); renderAll();
+      showStatus(el, true, `Listo: ${added} nuevos, ${updated} actualizados${skipped ? `, ${skipped} sin ID válido` : ""}.`);
+    }catch(e){
+      showStatus(el, false, "El texto no es un JSON válido: " + e.message);
+      toast("JSON inválido: " + e.message, "danger");
+    }
   });
-
+  document.getElementById("btn-clear-input").addEventListener("click", () => {
+    document.getElementById("json-input").value = "";
+  });
   document.getElementById("btn-clear-json-data").addEventListener("click", () => {
-    state.nodes = {}; saveState(); renderAll(); toast("Base de datos limpiada", "info");
+    const totalNodes = Object.keys(state.nodes).length;
+    if(!totalNodes){ showStatus(document.getElementById("load-status"), true, "Ya no hay datos de JSON cargados."); return; }
+    confirmModal(
+      "Vaciar datos del JSON",
+      `Se borrará la ubicación y calidad de los ${totalNodes} nodos cargados. Tus ${Object.keys(state.status).length} nodos con estado (bloqueados / en uso) NO se tocan.`,
+      [{ label:"Vaciar datos JSON", cls:"danger", onClick: () => {
+        state.nodes = {};
+        addLog(`Datos de JSON vaciados (${totalNodes} nodos). Bloqueados y en uso se mantienen.`, "warn");
+        saveState(); renderAll();
+        showStatus(document.getElementById("load-status"), true, "Datos de JSON vaciados. Bloqueados y en uso siguen intactos.");
+      }}]
+    );
+  });
+  document.getElementById("file-input").addEventListener("change", (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { document.getElementById("json-input").value = reader.result; };
+    reader.onerror = () => showStatus(document.getElementById("load-status"), false, "No se pudo leer el archivo.");
+    reader.readAsText(file);
   });
 
+  document.getElementById("btn-import-blocked").addEventListener("click", () => {
+    const el = document.getElementById("blocked-status");
+    const keys = parseIdList(document.getElementById("blocked-input").value);
+    if(!keys.length){ showStatus(el, false, "No se detectaron IDs válidos (deben empezar con 0x)."); return; }
+    keys.forEach(k => {
+      state.status[k] = "bloqueado";
+      state.blockInfo[k] = { reason:"Importado en lote", ts:new Date().toISOString() };
+      delete state.accountOf[k];
+    });
+    addLog(`Importados ${keys.length} IDs como bloqueados.`, "danger");
+    saveState(); renderAll();
+    showStatus(el, true, `${keys.length} nodos marcados como bloqueados.`);
+    document.getElementById("blocked-input").value = "";
+  });
+  document.getElementById("btn-import-used").addEventListener("click", () => {
+    const el = document.getElementById("used-status");
+    const keys = parseIdList(document.getElementById("used-input").value);
+    if(!keys.length){ showStatus(el, false, "No se detectaron IDs válidos (deben empezar con 0x)."); return; }
+    let skippedBlocked = 0;
+    keys.forEach(k => {
+      if(state.status[k] === "bloqueado"){ skippedBlocked++; return; }
+      state.status[k] = "uso";
+    });
+    const n = keys.length - skippedBlocked;
+    addLog(`Importados ${n} IDs como en uso${skippedBlocked ? ` (${skippedBlocked} ya bloqueados, sin tocar)` : ""}.`, "info");
+    saveState(); renderAll();
+    showStatus(el, true, `${n} nodos marcados como en uso.${skippedBlocked ? ` ${skippedBlocked} ya estaban bloqueados.` : ""}`);
+    document.getElementById("used-input").value = "";
+  });
+
+  /* ---------------- copiar al portapapeles ---------------- */
+  function copyToClipboard(text, btnEl){
+    const done = () => {
+      if(!btnEl) return;
+      const original = btnEl.textContent;
+      btnEl.textContent = "✓";
+      setTimeout(() => { btnEl.textContent = original; }, 1100);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else fallbackCopy(text, done);
+  }
+  function fallbackCopy(text, done){
+    try{
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand("copy"); document.body.removeChild(ta);
+      done();
+    }catch(e){ toast("No se pudo copiar. ID: " + text, "warn"); }
+  }
+
+  /* ---------------- acciones centrales sobre nodos ---------------- */
+  function setStatusManual(key, newStatus){
+    if(state.status[key] === "bloqueado"){
+      toast(`El nodo ${key} está bloqueado permanentemente y no se puede reactivar.`, "danger");
+      return;
+    }
+    if(newStatus === "disponible"){
+      delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
+      addLog(`Nodo ${key} vuelve a disponible.`, "success");
+    } else if(newStatus === "bloqueado"){
+      state.status[key] = "bloqueado";
+      state.blockInfo[key] = { reason:"Cambiado manualmente", ts:new Date().toISOString() };
+      delete state.accountOf[key];
+      addLog(`Nodo ${key} bloqueado manualmente.`, "danger");
+    } else if(newStatus === "uso"){
+      state.status[key] = "uso";
+      addLog(`Nodo ${key} marcado en uso.`, "info");
+    }
+  }
+
+  function assignToAccount(key, accId, replaceAction){
+    accId = String(accId);
+    if(state.status[key] === "bloqueado") return { ok:false, reason:"Ese nodo está bloqueado y no se puede asignar." };
+    const existing = accountCurrentNode(accId);
+    if(existing && existing !== key){
+      if(!replaceAction) return { ok:false, needsReplaceModal:true, existing };
+      if(replaceAction === "bloquear"){
+        state.status[existing] = "bloqueado";
+        state.blockInfo[existing] = { reason:`Reemplazado en ${accountName(accId)}`, ts:new Date().toISOString() };
+      } else {
+        delete state.status[existing];
+        delete state.blockInfo[existing];
+      }
+      delete state.accountOf[existing];
+    }
+    state.status[key] = "uso";
+    state.accountOf[key] = accId;
+    addLog(`Nodo ${key} asignado a ${accountName(accId)}.`, "success");
+    return { ok:true };
+  }
+
+  function bestAvailableGB(){
+    return allKeys()
+      .filter(k => isEligibleForDisponibles(k) && passesUserFilters(state.nodes[k]))
+      .map(k => state.nodes[k])
+      .sort(compareNodes)[0] || null;
+  }
+
+  function removeNodeCompletely(key){
+    delete state.nodes[key]; delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
+    addLog(`Nodo ${key} eliminado del pool.`, "danger");
+  }
+  function toggleExcludeProvider(ispName){
+    const key = ispKey(ispName);
+    if(!key) return;
+    const idx = state.excludedProviders.indexOf(key);
+    if(idx === -1){ state.excludedProviders.push(key); addLog(`Proveedor excluido: ${ispName}.`, "warn"); }
+    else { state.excludedProviders.splice(idx, 1); addLog(`Proveedor ya no excluido: ${ispName}.`, "success"); }
+  }
+
+  function doAssign(key, accId){
+    const label = accountName(accId);
+    confirmModal("Asignar nodo", `¿Asignar el nodo ${key} a "${label}"?`, [
+      { label:"Asignar", cls:"success", onClick: () => {
+        const res = assignToAccount(key, accId);
+        if(res.ok){ saveState(); renderAll(); return; }
+        if(res.needsReplaceModal){
+          confirmModal("Esta cuenta ya tiene un nodo", `"${label}" ya usa el nodo ${res.existing}. ¿Qué hacemos con él?`, [
+            { label:"Bloquear el anterior", cls:"danger", onClick:() => { assignToAccount(key, accId, "bloquear"); saveState(); renderAll(); } },
+            { label:"Liberar el anterior", cls:"success", onClick:() => { assignToAccount(key, accId, "liberar"); saveState(); renderAll(); } },
+          ]);
+        } else {
+          toast(res.reason || "No se pudo asignar el nodo.", "danger");
+        }
+      }}
+    ]);
+  }
+
+  /* ---------------- fingerprint visual ---------------- */
+  function fingerprintHTML(q){
+    q = q || {};
+    const bars = [clamp01(q.uptime), clamp01(q.quality), 1 - clamp01(q.packetLoss)];
+    return bars.map(v => {
+      const h = Math.max(4, Math.round(v*20));
+      const color = v > 0.66 ? "var(--good)" : v > 0.4 ? "var(--warn)" : "var(--bad)";
+      return `<i style="height:${h}px;background:${color}"></i>`;
+    }).join("");
+  }
+  function clamp01(v){
+    if(v === undefined || v === null || isNaN(v)) return 0.4;
+    let x = Number(v); if(x > 1) x = x/100;
+    return Math.min(1, Math.max(0, x));
+  }
+
+  /* ---------------- contadores ---------------- */
+  function renderCounts(){
+    const keys = allKeys();
+    let disp = 0, uso = 0, bloq = 0;
+    keys.forEach(k => {
+      const st = statusOf(k);
+      if(st === "bloqueado") bloq++;
+      else if(st === "uso") uso++;
+    });
+    keys.forEach(k => { if(isEligibleForDisponibles(k) && passesUserFilters(state.nodes[k])) disp++; });
+    document.getElementById("cnt-disp").textContent = disp;
+    document.getElementById("cnt-acc").textContent = state.accounts.length;
+    document.getElementById("cnt-todos").textContent = keys.length;
+    document.getElementById("s-total").textContent = Object.keys(state.nodes).length;
+    document.getElementById("s-disp").textContent = disp;
+    document.getElementById("s-uso").textContent = uso;
+    document.getElementById("s-bloq").textContent = bloq;
+  }
+  function renderLog(){
+    const ul = document.getElementById("log-list");
+    if(!state.log.length){ ul.innerHTML = "<li>Sin actividad todavía.</li>"; return; }
+    ul.innerHTML = state.log.slice(0,12).map(item => {
+      const time = new Date(item.ts).toLocaleString();
+      return `<li><span>${time} —</span> ${escapeHtml(item.msg)}</li>`;
+    }).join("");
+  }
+
+  /* ---------------- vista: disponibles ---------------- */
+  function accountSelectOptions(){
+    if(!state.accounts.length) return `<option value="">Sin cuentas — crea una</option>`;
+    return `<option value="">Elegir cuenta...</option>` + state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join("");
+  }
+  function fillDispFilterControls(){
+    const ispSel = document.getElementById("disp-isp");
+    const current = ispSel.value;
+    const isps = Array.from(new Set(Object.values(state.nodes).filter(isGB).map(ispOf).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    ispSel.innerHTML = `<option value="">Cualquier proveedor</option>` + isps.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join("");
+    if(isps.includes(current)) ispSel.value = current; else ispSel.value = state.dispFilters.isp && isps.includes(state.dispFilters.isp) ? state.dispFilters.isp : "";
+
+    const cities = Array.from(new Set(Object.values(state.nodes).filter(isGB).map(n => n.location && n.location.city).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    document.getElementById("city-datalist").innerHTML = cities.map(c => `<option value="${escapeHtml(c)}">`).join("");
+  }
+
+  function readDispFiltersFromUI(){
+    state.dispFilters.city = document.getElementById("disp-city").value.trim();
+    state.dispFilters.isp = document.getElementById("disp-isp").value;
+    state.dispFilters.minBandwidth = num(parseFloat(document.getElementById("disp-minbw").value), 0);
+  }
+
+  function renderDisponibles(){
+    fillDispFilterControls();
+    document.getElementById("disp-city").value = state.dispFilters.city;
+    document.getElementById("disp-minbw").value = state.dispFilters.minBandwidth;
+
+    const search = document.getElementById("disp-search").value.trim().toLowerCase();
+    let pool = allKeys()
+      .filter(k => isEligibleForDisponibles(k))
+      .map(k => ({ key:k, node: state.nodes[k] }))
+      .filter(({node}) => passesUserFilters(node));
+
+    if(search){
+      pool = pool.filter(({node,key}) => {
+        const loc = node.location || {};
+        return [key, loc.city, loc.isp].join(" ").toLowerCase().includes(search);
+      });
+    }
+    pool.sort((a,b) => compareNodes(a.node, b.node));
+
+    const totalFiltered = pool.length;
+    const maxPage = Math.max(0, Math.ceil(totalFiltered / DISPLAY_LIMIT) - 1);
+    if(dispPage > maxPage) dispPage = maxPage;
+    const start = dispPage * DISPLAY_LIMIT;
+    const shown = pool.slice(start, start + DISPLAY_LIMIT);
+
+    document.getElementById("disp-note").textContent = totalFiltered
+      ? `Mostrando ${start+1}–${start+shown.length} de ${totalFiltered} candidatos que cumplen tus filtros (Reino Unido).`
+      : `Ningún nodo cumple estos filtros ahora mismo.`;
+
+    const container = document.getElementById("disp-container");
+    if(!shown.length){
+      container.innerHTML = `<div class="empty"><b>No hay candidatos con estos filtros</b>Baja el mínimo de Mbps, quita el proveedor/ciudad, o carga más nodos.</div>`;
+    } else if(state.viewMode === "list"){
+      container.innerHTML = shown.map((item, idx) => renderListRow(item, idx)).join("");
+    } else {
+      container.innerHTML = shown.map((item, idx) => renderCard(item, idx)).join("");
+    }
+    renderDispPagination(totalFiltered, maxPage);
+  }
+
+  function renderCard({key, node}, idx){
+    const loc = node.location || {}, q = node.quality || {};
+    return `
+    <div class="node-card ${idx===0 && dispPage===0 ? "rank1":""}">
+      ${idx===0 && dispPage===0 ? '<div class="top-badge">MEJOR</div>' : ""}
+      <div class="node-top">
+        <div>
+          <div class="node-loc">${escapeHtml(loc.city || "Ciudad desconocida")}, ${escapeHtml(loc.country || "?")}</div>
+          <div class="node-isp">${escapeHtml(loc.isp || "ISP desconocido")}</div>
+        </div>
+      </div>
+      <div class="fingerprint">${fingerprintHTML(q)}</div>
+      <div class="metricline">
+        <span>↑ <b>${fmt(q.uptime)}</b></span>
+        <span>ping <b>${fmt(q.latency,"ms")}</b></span>
+        <span>pérdida <b>${fmt(q.packetLoss)}</b></span>
+        <span>ancho <b>${fmt(q.bandwidth,"Mbps")}</b></span>
+      </div>
+      <div class="idbox">
+        <code>${escapeHtml(key)}</code>
+        <button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button>
+      </div>
+      <div class="node-actions">
+        <select class="assign-select" data-node="${key}">${accountSelectOptions()}</select>
+        <button class="btn small success" data-action="assign" data-node="${key}">Asignar</button>
+        <button class="btn small danger" data-action="block" data-node="${key}">Bloquear</button>
+        <button class="btn small ghost" data-action="exclude" data-node="${key}" data-isp="${escapeHtml(loc.isp||"")}">Excluir proveedor</button>
+      </div>
+    </div>`;
+  }
+  function renderListRow({key, node}, idx){
+    const loc = node.location || {}, q = node.quality || {};
+    return `
+    <div class="list-row">
+      <div class="lr-loc">${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}</div>
+      <div class="lr-isp">${escapeHtml(loc.isp||"—")}</div>
+      <div class="lr-metrics">
+        <span>↑<b>${fmt(q.uptime)}</b></span><span>ping<b>${fmt(q.latency,"ms")}</b></span><span><b>${fmt(q.bandwidth,"Mbps")}</b></span>
+      </div>
+      <div class="lr-id">
+        <code>${escapeHtml(key)}</code>
+        <button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button>
+      </div>
+      <div class="lr-actions">
+        <select class="assign-select" data-node="${key}" style="min-width:120px">${accountSelectOptions()}</select>
+        <button class="btn small success" data-action="assign" data-node="${key}">Asignar</button>
+        <button class="btn small danger" data-action="block" data-node="${key}">Bloquear</button>
+        <button class="btn small ghost" data-action="exclude" data-node="${key}" data-isp="${escapeHtml(loc.isp||"")}">Excluir</button>
+      </div>
+    </div>`;
+  }
+  function renderDispPagination(total, maxPage){
+    const wrap = document.getElementById("disp-pagination");
+    if(total <= DISPLAY_LIMIT){ wrap.innerHTML = ""; return; }
+    wrap.innerHTML = `
+      <button class="btn ghost" id="pg-prev" ${dispPage===0?"disabled":""}>◀ Anteriores 20</button>
+      <span style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:0 6px">Página ${dispPage+1} de ${maxPage+1}</span>
+      <button class="btn ghost" id="pg-next" ${dispPage>=maxPage?"disabled":""}>Siguientes 20 ▶</button>
+      <button class="btn" id="pg-top">🔝 Volver a los mejores</button>
+    `;
+    const prev = document.getElementById("pg-prev"), next = document.getElementById("pg-next"), top = document.getElementById("pg-top");
+    if(prev) prev.addEventListener("click", () => { dispPage = Math.max(0, dispPage-1); renderDisponibles(); });
+    if(next) next.addEventListener("click", () => { dispPage = dispPage+1; renderDisponibles(); });
+    if(top) top.addEventListener("click", () => { dispPage = 0; renderDisponibles(); });
+  }
+
+  document.getElementById("disp-container").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if(!btn) return;
+    const key = btn.getAttribute("data-node");
+    const action = btn.dataset.action;
+    if(action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
+    if(action === "block"){
+      confirmModal("Bloquear nodo", `¿Bloquear el nodo ${key}? No volverá a aparecer como disponible.`, [
+        { label:"Bloquear", cls:"danger", onClick: () => { setStatusManual(key, "bloqueado"); saveState(); renderAll(); } }
+      ]);
+    } else if(action === "exclude"){
+      const isp = btn.getAttribute("data-isp");
+      if(!isp){ toast("Este nodo no tiene ISP definido.", "warn"); return; }
+      toggleExcludeProvider(isp);
+      saveState(); renderAll();
+    } else if(action === "assign"){
+      const row = btn.closest(".node-card, .list-row");
+      const accId = row.querySelector("select.assign-select").value;
+      if(!accId){ toast("Elige o crea primero una cuenta.", "warn"); return; }
+      doAssign(key, accId);
+    }
+  });
+
+  function resetDispPageAndRender(){ dispPage = 0; readDispFiltersFromUI(); saveState(); renderDisponibles(); }
+  document.getElementById("disp-search").addEventListener("input", () => { dispPage = 0; renderDisponibles(); });
+  document.getElementById("disp-city").addEventListener("input", resetDispPageAndRender);
+  document.getElementById("disp-isp").addEventListener("change", resetDispPageAndRender);
+  document.getElementById("disp-minbw").addEventListener("input", resetDispPageAndRender);
+  document.getElementById("disp-clear-filters").addEventListener("click", () => {
+    document.getElementById("disp-city").value = "";
+    document.getElementById("disp-isp").value = "";
+    document.getElementById("disp-minbw").value = 30;
+    document.getElementById("disp-search").value = "";
+    state.dispFilters = { city:"", isp:"", minBandwidth:30 };
+    dispPage = 0; saveState(); renderAll();
+  });
+  document.getElementById("btn-view-grid").addEventListener("click", () => { state.viewMode = "grid"; setViewToggle(); saveState(); renderDisponibles(); });
+  document.getElementById("btn-view-list").addEventListener("click", () => { state.viewMode = "list"; setViewToggle(); saveState(); renderDisponibles(); });
+  function setViewToggle(){
+    document.getElementById("btn-view-grid").classList.toggle("active", state.viewMode === "grid");
+    document.getElementById("btn-view-list").classList.toggle("active", state.viewMode === "list");
+  }
+
+  /* ---------------- vista: cuentas ---------------- */
+  document.getElementById("btn-add-acc").addEventListener("click", () => {
+    const input = document.getElementById("acc-name-input");
+    const name = input.value.trim();
+    if(!name){ toast("Escribe un nombre para la cuenta.", "warn"); return; }
+    const id = state.nextAccId++;
+    state.accounts.push({ id, name });
+    addLog(`Cuenta creada: ${name}.`, "success");
+    input.value = "";
+    saveState(); renderAll();
+  });
+
+  function renderCuentas(){
+    const wrap = document.getElementById("acc-list");
+    if(!state.accounts.length){
+      wrap.innerHTML = `<div class="empty"><b>Aún no tienes cuentas</b>Crea una arriba para empezar a asignar nodos.</div>`;
+      return;
+    }
+    wrap.innerHTML = state.accounts.map(acc => {
+      const key = accountCurrentNode(acc.id);
+      const node = key ? state.nodes[key] : null;
+      let nodeInfo, copyBtn = "";
+      if(key && node){
+        const loc = node.location || {}, q = node.quality || {};
+        nodeInfo = `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")} · uptime ${fmt(q.uptime)} · latencia ${fmt(q.latency,"ms")} · <b>${escapeHtml(key)}</b>`;
+        copyBtn = `<button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar ID</button>`;
+      } else if(key){
+        nodeInfo = `<b>${escapeHtml(key)}</b> (sin datos — carga el JSON para ver detalles)`;
+        copyBtn = `<button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar ID</button>`;
+      } else {
+        nodeInfo = `Sin nodo asignado`;
+      }
+      return `
+      <div class="acc-card">
+        <div class="acc-name">${escapeHtml(acc.name)}</div>
+        <div class="acc-node">${nodeInfo}</div>
+        <div class="acc-actions">
+          ${copyBtn}
+          ${key
+            ? `<button class="btn small danger" data-action="damaged" data-acc="${acc.id}">Nodo dañado</button>
+               <button class="btn small ghost" data-action="unassign" data-acc="${acc.id}">Liberar</button>`
+            : `<button class="btn small success" data-action="auto" data-acc="${acc.id}">Asignar mejor nodo</button>`
+          }
+          <button class="btn small ghost" data-action="delete" data-acc="${acc.id}">Eliminar cuenta</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  document.getElementById("acc-list").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if(!btn) return;
+    if(btn.dataset.action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
+    const accId = btn.getAttribute("data-acc");
+    const action = btn.dataset.action;
+
+    if(action === "auto"){
+      const best = bestAvailableGB();
+      if(!best){ toast("No hay nodos GB disponibles con los filtros actuales.", "warn"); return; }
+      confirmModal("Asignar mejor nodo", `Se asignará el nodo ${best._key} (${(best.location||{}).city||"?"}) a "${accountName(accId)}".`, [
+        { label:"Asignar", cls:"success", onClick:() => { assignToAccount(best._key, accId); saveState(); renderAll(); } }
+      ]);
+
+    } else if(action === "damaged"){
+      confirmModal("Marcar nodo como dañado", `Se bloqueará el nodo actual de "${accountName(accId)}" y se asignará automáticamente el siguiente mejor disponible.`, [
+        { label:"Confirmar", cls:"danger", onClick: () => {
+          const existing = accountCurrentNode(accId);
+          if(existing){
+            state.status[existing] = "bloqueado";
+            state.blockInfo[existing] = { reason:`Dañado en ${accountName(accId)}`, ts:new Date().toISOString() };
+            delete state.accountOf[existing];
+          }
+          const best = bestAvailableGB();
+          if(best){ state.status[best._key] = "uso"; state.accountOf[best._key] = String(accId); addLog(`Reemplazo automático para ${accountName(accId)}.`, "success"); }
+          else addLog(`Sin reemplazo disponible para ${accountName(accId)}.`, "warn");
+          saveState(); renderAll();
+        }}
+      ]);
+
+    } else if(action === "unassign"){
+      confirmModal("Liberar nodo", `El nodo de "${accountName(accId)}" volverá a disponibles.`, [
+        { label:"Liberar", cls:"success", onClick: () => {
+          const existing = accountCurrentNode(accId);
+          if(existing){ delete state.status[existing]; delete state.accountOf[existing]; addLog(`Nodo liberado de ${accountName(accId)}.`, "success"); }
+          saveState(); renderAll();
+        }}
+      ]);
+
+    } else if(action === "delete"){
+      confirmModal("Eliminar cuenta", `Se eliminará "${accountName(accId)}". Su nodo (si tiene) volverá a disponibles.`, [
+        { label:"Eliminar", cls:"danger", onClick: () => {
+          const existing = accountCurrentNode(accId);
+          if(existing){ delete state.status[existing]; delete state.accountOf[existing]; }
+          state.accounts = state.accounts.filter(a => String(a.id) !== String(accId));
+          addLog(`Cuenta eliminada.`, "warn");
+          saveState(); renderAll();
+        }}
+      ]);
+    }
+  });
+
+  /* ---------------- vista: nodos (control total, ordenable) ---------------- */
+  function fillProviderSelect(){
+    const sel = document.getElementById("nodos-proveedor");
+    const current = sel.value;
+    const providers = Array.from(new Set(Object.values(state.nodes).map(ispOf).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = `<option value="">Todos los proveedores</option>` +
+      providers.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}${state.excludedProviders.includes(ispKey(p)) ? " (excluido)" : ""}</option>`).join("");
+    if(providers.includes(current)) sel.value = current;
+  }
+  function renderExcludedChips(){
+    const wrap = document.getElementById("excluded-chips");
+    if(!state.excludedProviders.length){ wrap.innerHTML = ""; return; }
+    wrap.innerHTML = state.excludedProviders.map(p => `<div class="chip">Excluido: ${escapeHtml(p)}<button data-provider="${escapeHtml(p)}" title="Quitar exclusión">×</button></div>`).join("");
+  }
+  document.getElementById("excluded-chips").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-provider]");
+    if(!btn) return;
+    const idx = state.excludedProviders.indexOf(btn.getAttribute("data-provider"));
+    if(idx !== -1){ state.excludedProviders.splice(idx,1); addLog("Exclusión de proveedor eliminada.", "success"); }
+    saveState(); renderAll();
+  });
+
+  function sortValueFor(key, sortKey){
+    const n = state.nodes[key];
+    switch(sortKey){
+      case "id": return key;
+      case "city": return n && n.location ? (n.location.city||"") : "";
+      case "isp": return n ? ispOf(n) : "";
+      case "uptime": return n && n.quality ? num(n.quality.uptime) : -1;
+      case "latency": return n && n.quality ? num(n.quality.latency, 1e9) : 1e9;
+      case "status": return statusOf(key);
+      default: return "";
+    }
+  }
+
+  function renderNodos(){
+    fillProviderSelect();
+    renderExcludedChips();
+    document.querySelectorAll("#view-nodos th.sortable .arrow").forEach(a => a.remove());
+    if(nodosSort.key){
+      const th = document.querySelector(`#view-nodos th[data-sort="${nodosSort.key}"]`);
+      if(th){ const arrow = document.createElement("span"); arrow.className="arrow"; arrow.textContent = nodosSort.dir===1 ? "▲" : "▼"; th.appendChild(arrow); }
+    }
+
+    const providerFilter = document.getElementById("nodos-proveedor").value;
+    const estadoFilter = document.getElementById("nodos-estado").value;
+    const search = document.getElementById("nodos-search").value.trim().toLowerCase();
+
+    let keys = allKeys();
+    if(providerFilter) keys = keys.filter(k => state.nodes[k] && ispOf(state.nodes[k]) === providerFilter);
+    if(estadoFilter) keys = keys.filter(k => statusOf(k) === estadoFilter);
+    if(search){
+      keys = keys.filter(k => {
+        const n = state.nodes[k] || {}; const loc = n.location || {};
+        return [k, loc.city, loc.isp].join(" ").toLowerCase().includes(search);
+      });
+    }
+
+    if(nodosSort.key){
+      keys.sort((a,b) => {
+        const va = sortValueFor(a, nodosSort.key), vb = sortValueFor(b, nodosSort.key);
+        if(typeof va === "number" && typeof vb === "number") return (va-vb) * nodosSort.dir;
+        return String(va).localeCompare(String(vb)) * nodosSort.dir;
+      });
+    } else {
+      keys.sort((a,b) => {
+        const na = state.nodes[a], nb = state.nodes[b];
+        if(na && nb) return compareNodes(na, nb);
+        if(na) return -1; if(nb) return 1;
+        return a.localeCompare(b);
+      });
+    }
+
+    const tbody = document.getElementById("nodos-tbody");
+    if(!keys.length){ tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin resultados. Carga un JSON o ajusta los filtros.</td></tr>`; return; }
+    const accOptionsHtml = accountSelectOptions();
+    tbody.innerHTML = keys.map(key => {
+      const n = state.nodes[key];
+      const loc = (n && n.location) || {};
+      const q = (n && n.quality) || {};
+      const st = statusOf(key);
+      const accId = state.accountOf[key];
+      let cuentaCell;
+      if(st === "uso" && accId) cuentaCell = escapeHtml(accountName(accId));
+      else if(st === "uso") cuentaCell = `<div class="row" style="margin:0;gap:4px;flex-wrap:nowrap"><select class="assign-select" data-node="${key}" style="font-size:11px;padding:4px 6px">${accOptionsHtml}</select><button class="btn small success" data-action="linkacc" data-node="${key}">Vincular</button></div>`;
+      else cuentaCell = "—";
+      const providerBtn = ispOf(n||{}) ? `<button class="btn small ghost" data-action="toggle-exclude" data-isp="${escapeHtml(ispOf(n))}">${isExcludedProvider(n||{}) ? "Incluir" : "Excluir"}</button>` : "";
+
+      const estadoCell = st === "bloqueado"
+        ? `<span class="status-select bloqueado" style="display:inline-block;border:1px solid var(--bad);color:var(--bad);border-radius:6px;padding:4px 8px;font-size:11px" title="Los nodos bloqueados son permanentes: nunca se pueden reactivar desde aquí.">🔒 Bloqueado</span>`
+        : `<select class="status-select ${st}" data-action="setstatus" data-node="${key}">
+          <option value="disponible" ${st==="disponible"?"selected":""}>Disponible</option>
+          <option value="uso" ${st==="uso"?"selected":""}>En uso</option>
+          <option value="bloqueado">Bloqueado</option>
+        </select>`;
+
+      const accionesCell = st === "bloqueado"
+        ? `<span style="color:var(--muted-2);font-size:11px">Sin acciones — bloqueo permanente</span>`
+        : `<div class="row" style="margin:0;gap:6px">${providerBtn}<button class="btn small danger" data-action="remove" data-node="${key}">Eliminar</button></div>`;
+
+      return `<tr>
+        <td><div class="row" style="margin:0;gap:6px;flex-wrap:nowrap"><code style="font-size:11px">${escapeHtml(key)}</code><button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button></div></td>
+        <td>${n ? `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}` : `<span style="color:var(--muted)">sin datos</span>`}</td>
+        <td>${escapeHtml(ispOf(n||{}) || "—")}</td>
+        <td>${fmt(q.uptime)}</td>
+        <td>${fmt(q.latency,"ms")}</td>
+        <td>${estadoCell}</td>
+        <td>${cuentaCell}</td>
+        <td>${accionesCell}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  document.querySelectorAll("#view-nodos th.sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const key = th.getAttribute("data-sort");
+      if(nodosSort.key === key) nodosSort.dir *= -1;
+      else { nodosSort.key = key; nodosSort.dir = 1; }
+      renderNodos();
+    });
+  });
+  document.getElementById("nodos-tbody").addEventListener("change", (ev) => {
+    const sel = ev.target.closest("select[data-action='setstatus']");
+    if(!sel) return;
+    confirmModal("Cambiar estado", `¿Cambiar el nodo ${sel.getAttribute("data-node")} a "${sel.value}"?`, [
+      { label:"Confirmar", cls: sel.value==="bloqueado" ? "danger" : "success", onClick: () => { setStatusManual(sel.getAttribute("data-node"), sel.value); saveState(); renderAll(); } }
+    ]);
+  });
+  document.getElementById("nodos-tbody").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-action]");
+    if(!btn) return;
+    const key = btn.getAttribute("data-node");
+    const action = btn.dataset.action;
+    if(action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
+    if(action === "toggle-exclude"){ toggleExcludeProvider(btn.getAttribute("data-isp")); saveState(); renderAll(); return; }
+    if(action === "remove"){
+      confirmModal("Eliminar nodo del pool", `Se eliminará por completo el nodo ${key}. Esta acción no se puede deshacer.`, [
+        { label:"Eliminar", cls:"danger", onClick: () => { removeNodeCompletely(key); saveState(); renderAll(); } }
+      ]);
+      return;
+    }
+    if(action === "linkacc"){
+      const row = btn.closest("tr");
+      const accId = row.querySelector("select.assign-select").value;
+      if(!accId){ toast("Elige primero una cuenta.", "warn"); return; }
+      doAssign(key, accId);
+    }
+  });
+  document.getElementById("nodos-proveedor").addEventListener("change", renderNodos);
+  document.getElementById("nodos-estado").addEventListener("change", renderNodos);
+  document.getElementById("nodos-search").addEventListener("input", renderNodos);
+
+  /* ---------------- modal de confirmación ---------------- */
+  function confirmModal(title, text, actions){
+    document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal-text").textContent = text;
+    const btnWrap = document.getElementById("modal-buttons");
+    btnWrap.innerHTML = "";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "btn ghost"; cancelBtn.textContent = "Cancelar";
+    cancelBtn.onclick = () => document.getElementById("modal-overlay").classList.remove("show");
+    btnWrap.appendChild(cancelBtn);
+    actions.forEach(a => {
+      const b = document.createElement("button");
+      b.className = "btn " + (a.cls || "primary");
+      b.textContent = a.label;
+      b.onclick = () => { document.getElementById("modal-overlay").classList.remove("show"); a.onClick(); };
+      btnWrap.appendChild(b);
+    });
+    document.getElementById("modal-overlay").classList.add("show");
+  }
+
+  /* ---------------- navegación de pestañas ---------------- */
   document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("nav.tabs button, .view").forEach(el => el.classList.remove("active"));
-      btn.classList.add("active"); document.getElementById("view-" + btn.dataset.view).classList.add("active");
+      document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("view-" + btn.dataset.view).classList.add("active");
     });
   });
 
-  function renderDisponibles(){
-    const f = state.dispFilters;
-    let pool = allKeys().filter(k => state.status[k]!=="bloqueado" && state.status[k]!=="uso" && isGB(state.nodes[k]))
-               .map(k => ({key:k, node:state.nodes[k]}));
-    
-    document.getElementById("disp-container").innerHTML = pool.slice(0, 30).map((item, idx) => {
-      const q = item.node.quality || {}, loc = item.node.location || {};
-      return `<div class="node-card">
-        <div class="node-loc">${escapeHtml(loc.city)}</div>
-        <div class="metricline"><span>Ping <b>${num(q.latency)}ms</b></span><span>Ancho <b>${num(q.bandwidth)}Mbps</b></span></div>
-        <code>${item.key}</code>
-      </div>`;
-    }).join("") || '<div class="empty"><b>Sin resultados</b></div>';
-  }
-
+  /* ---------------- render maestro ---------------- */
   function renderAll(){
-    document.getElementById("s-total").textContent = Object.keys(state.nodes).length;
-    document.getElementById("cnt-todos").textContent = Object.keys(state.nodes).length;
+    renderCounts();
+    renderLog();
     renderDisponibles();
+    renderCuentas();
+    renderNodos();
   }
 
+  // inicializar controles con los valores guardados
+  document.getElementById("disp-city").value = state.dispFilters.city;
+  document.getElementById("disp-minbw").value = state.dispFilters.minBandwidth;
+  setViewToggle();
   renderAll();
 })();
 </script>

@@ -38,23 +38,13 @@
   code{font-family:var(--mono);}
   ::selection{background:#5A86F540;}
 
-  header.topbar{
-    position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding:16px 26px 0;
-  }
+  header.topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding:16px 26px 0;}
   .brand{display:flex;align-items:center;gap:11px;}
-  .brand-mark{
-    width:30px;height:30px;border-radius:8px;background:var(--accent);color:#060B16;
-    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:12px;
-  }
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:var(--accent);color:#060B16;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:12px;}
   .brand h1{font-size:16.5px;margin:0;font-weight:600;}
   .brand p{margin:1px 0 0;font-size:12px;color:var(--muted-2);font-family:var(--mono);}
   nav.tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto;}
-  nav.tabs button{
-    appearance:none;border:none;background:transparent;color:var(--muted);
-    font-family:var(--display);font-size:13.5px;font-weight:500;
-    padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;
-    display:flex;align-items:center;gap:7px;
-  }
+  nav.tabs button{appearance:none;border:none;background:transparent;color:var(--muted);font-family:var(--display);font-size:13.5px;font-weight:500;padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:7px;}
   nav.tabs button .count{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);}
   nav.tabs button:hover{color:var(--text);}
   nav.tabs button.active{color:var(--text);border-bottom-color:var(--accent);}
@@ -63,6 +53,7 @@
   .view{display:none;}
   .view.active{display:block;animation:fade .2s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
+  .view-intro{color:var(--muted);font-size:12.5px;margin:-6px 0 16px;line-height:1.5;}
 
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
   @media(max-width:860px){.grid-2{grid-template-columns:1fr;}}
@@ -72,26 +63,16 @@
   .card h2{margin:0 0 4px;font-size:14px;font-weight:600;}
   .card .hint{color:var(--muted);font-size:12px;margin:0 0 14px;line-height:1.55;}
 
-  textarea{
-    width:100%;min-height:110px;background:var(--panel-2);border:1px solid var(--border);
-    border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:11px;resize:vertical;
-  }
+  textarea{width:100%;min-height:110px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:11px;resize:vertical;}
   textarea:focus, input:focus, select:focus{outline:none;border-color:var(--accent);}
 
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:11px;}
-  input[type=text], input[type=number], select{
-    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
-    border-radius:7px;padding:8px 10px;font-family:var(--display);font-size:12.5px;
-  }
+  input[type=text], input[type=number], select{background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:8px 10px;font-family:var(--display);font-size:12.5px;}
   label.file-btn{background:var(--panel-2);border:1px solid var(--border);border-radius:7px;padding:8px 13px;font-size:12.5px;cursor:pointer;color:var(--muted);}
   label.file-btn:hover{color:var(--text);border-color:var(--accent);}
   input[type=file]{display:none;}
 
-  button.btn{
-    appearance:none;border:1px solid var(--border);background:transparent;color:var(--text);
-    padding:8px 14px;border-radius:7px;font-family:var(--display);font-weight:500;font-size:12.5px;cursor:pointer;
-    transition:border-color .12s, background .12s;
-  }
+  button.btn{appearance:none;border:1px solid var(--border);background:transparent;color:var(--text);padding:8px 14px;border-radius:7px;font-family:var(--display);font-weight:500;font-size:12.5px;cursor:pointer;transition:border-color .12s, background .12s;}
   button.btn:hover{border-color:var(--accent);}
   button.btn.primary{background:var(--accent);border-color:var(--accent);color:#060B16;font-weight:600;}
   button.btn.primary:hover{filter:brightness(1.07);}
@@ -102,7 +83,6 @@
   button.btn.ghost{color:var(--muted);border-color:transparent;background:var(--panel-2);}
   button.btn.ghost:hover{color:var(--text);}
   button.btn.small{padding:5px 9px;font-size:11px;}
-  button.btn.iconbtn{padding:6px 9px;}
   button.btn:disabled{opacity:.35;cursor:not-allowed;}
   button.btn:disabled:hover{border-color:var(--border);background:none;}
 
@@ -120,9 +100,25 @@
   .stat.accent .num{color:var(--accent);}
   .stat.bad .num{color:var(--bad);}
 
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
-  .toolbar input[type=text]{min-width:140px;}
-  .toolbar .spacer{flex:1;}
+  /* ---- estructura unificada de Nodos: pestañas de estado + barra de filtros ---- */
+  .status-tabs{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;}
+  .status-tabs button{
+    border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:20px;
+    padding:8px 16px;font-family:var(--display);font-size:12.5px;font-weight:500;cursor:pointer;
+    display:flex;align-items:center;gap:7px;
+  }
+  .status-tabs button .n{font-family:var(--mono);font-size:11px;color:var(--muted-2);}
+  .status-tabs button:hover{border-color:var(--muted-2);}
+  .status-tabs button.active{color:var(--text);}
+  .status-tabs button[data-status="disponible"].active{border-color:var(--good);background:#31D6A614;}
+  .status-tabs button[data-status="uso"].active{border-color:var(--accent);background:#5A86F514;}
+  .status-tabs button[data-status="bloqueado"].active{border-color:var(--bad);background:#F1596A14;}
+  .status-tabs button[data-status=""].active{border-color:var(--text);background:var(--panel-2);}
+  .status-tabs button.active .n{color:inherit;}
+
+  .filterbar{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:14px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .filterbar-group{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+  .filterbar label.fb-lbl{font-size:11px;color:var(--muted-2);margin-right:-3px;}
   .view-toggle{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;}
   .view-toggle button{border:none;border-radius:0;background:var(--panel-2);color:var(--muted);padding:8px 11px;font-size:12px;cursor:pointer;}
   .view-toggle button.active{background:var(--accent);color:#060B16;font-weight:600;}
@@ -133,32 +129,38 @@
 
   .pagenote{color:var(--muted);font-size:12px;margin:-2px 0 14px;font-family:var(--mono);}
 
-  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:11px;}
+  /* ---- toggle de estado por nodo (candadito reversible) ---- */
+  .status-toggle{display:inline-flex;gap:2px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:2px;}
+  .st-btn{border:none;background:transparent;color:var(--muted-2);font-size:11px;padding:5px 9px;border-radius:6px;cursor:pointer;font-family:var(--display);white-space:nowrap;}
+  .st-btn:hover:not(.active){color:var(--text);}
+  .st-btn.active.st-good{background:var(--good);color:#062018;font-weight:600;}
+  .st-btn.active.st-accent{background:var(--accent);color:#060B16;font-weight:600;}
+  .st-btn.active.st-bad{background:var(--bad);color:#2b0508;font-weight:600;}
+
+  .node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px;}
   .node-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px 15px;position:relative;}
   .node-card.rank1{border-color:var(--good);}
   .top-badge{position:absolute;top:-8px;right:12px;background:var(--good);color:#062018;font-size:10px;font-weight:700;font-family:var(--mono);padding:1px 7px;border-radius:20px;letter-spacing:.03em;}
-  .node-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .node-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:2px;}
   .node-loc{font-weight:600;font-size:13.5px;}
   .node-isp{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
   .fingerprint{display:flex;gap:3px;align-items:flex-end;height:20px;margin:11px 0 9px;}
   .fingerprint i{flex:1;background:var(--border);border-radius:2px;opacity:.85;}
-  .metricline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:11px;}
+  .metricline{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);margin:0 0 11px;}
   .metricline b{color:var(--text);font-weight:500;}
-  .node-actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .node-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center;}
   select.assign-select{flex:1;min-width:100px;}
-  .idbox{display:flex;gap:6px;align-items:center;margin:0 0 10px;}
+  .idbox{display:flex;gap:6px;align-items:center;margin:10px 0 0;}
   .idbox code{flex:1;background:var(--panel-2);border:1px solid var(--border-soft);border-radius:6px;padding:4px 7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;}
+  .block-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:8px;}
 
-  .list-row{
-    display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--border);
-    border-radius:8px;padding:10px 14px;margin-bottom:7px;flex-wrap:wrap;
-  }
-  .list-row .lr-loc{min-width:160px;font-weight:600;font-size:13px;}
-  .list-row .lr-isp{min-width:110px;color:var(--muted);font-size:11.5px;font-family:var(--mono);}
-  .list-row .lr-metrics{display:flex;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted);min-width:220px;}
+  .list-row{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:7px;flex-wrap:wrap;}
+  .list-row .lr-loc{min-width:150px;font-weight:600;font-size:13px;}
+  .list-row .lr-isp{min-width:100px;color:var(--muted);font-size:11.5px;font-family:var(--mono);}
+  .list-row .lr-metrics{display:flex;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted);min-width:180px;}
   .list-row .lr-metrics b{color:var(--text);font-weight:500;}
-  .list-row .lr-id{font-family:var(--mono);font-size:11px;color:var(--muted-2);min-width:120px;}
-  .list-row .lr-actions{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;}
+  .list-row .lr-id{font-family:var(--mono);font-size:11px;color:var(--muted-2);min-width:110px;display:flex;gap:5px;align-items:center;}
+  .list-row .lr-actions{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center;}
 
   table{width:100%;border-collapse:collapse;font-size:12.3px;}
   th{text-align:left;color:var(--muted);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
@@ -167,10 +169,6 @@
   th .arrow{font-size:9px;margin-left:3px;color:var(--accent);}
   td{padding:8px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
   tbody tr:hover td{background:#0C1425;}
-  select.status-select{font-size:11px;padding:4px 6px;}
-  select.status-select.disponible{color:var(--good);border-color:var(--good);}
-  select.status-select.uso{color:var(--accent);border-color:var(--accent);}
-  select.status-select.bloqueado{color:var(--bad);border-color:var(--bad);}
 
   .empty{text-align:center;padding:36px 20px;color:var(--muted);}
   .empty b{color:var(--text);display:block;margin-bottom:4px;font-size:13.5px;}
@@ -195,17 +193,15 @@
   .modal h3{margin:0 0 6px;font-size:14.5px;}
   .modal p{color:var(--muted);font-size:12px;margin:0 0 14px;line-height:1.55;}
 
-  #toast-container{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:100;max-width:320px;}
-  .toast{
-    background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--muted-2);
-    border-radius:8px;padding:10px 13px;font-size:12px;color:var(--text);box-shadow:0 8px 20px -8px #00000080;
-    opacity:0;transform:translateX(12px);transition:opacity .22s ease, transform .22s ease;
-  }
+  #toast-container{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:100;max-width:340px;}
+  .toast{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--muted-2);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--text);box-shadow:0 8px 20px -8px #00000080;opacity:0;transform:translateX(12px);transition:opacity .22s ease, transform .22s ease;display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .toast.show{opacity:1;transform:none;}
   .toast.toast-success{border-left-color:var(--good);}
   .toast.toast-danger{border-left-color:var(--bad);}
   .toast.toast-warn{border-left-color:var(--warn);}
   .toast.toast-info{border-left-color:var(--accent);}
+  .toast-undo{background:none;border:1px solid currentColor;color:inherit;border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;flex-shrink:0;}
+  .toast-undo:hover{background:currentColor;color:var(--bg)!important;}
 </style>
 </head>
 <body>
@@ -217,9 +213,8 @@
   </div>
   <nav class="tabs">
     <button data-view="cargar" class="active">Cargar</button>
-    <button data-view="disponibles">Disponibles <span class="count" id="cnt-disp">0</span></button>
-    <button data-view="cuentas">Cuentas <span class="count" id="cnt-acc">0</span></button>
     <button data-view="nodos">Nodos <span class="count" id="cnt-todos">0</span></button>
+    <button data-view="cuentas">Cuentas <span class="count" id="cnt-acc">0</span></button>
   </nav>
 </header>
 
@@ -236,7 +231,7 @@
 
     <div class="card">
       <h2>1. Pegar el JSON de la API</h2>
-      <p class="hint">Cada nodo se identifica por los primeros 14 caracteres de su <code>provider_id</code>. Puedes recargar el JSON las veces que quieras: nunca se te repiten ni se te reactivan los nodos que ya bloqueaste o pusiste en uso.</p>
+      <p class="hint">Cada nodo se identifica por los primeros 14 caracteres de su <code>provider_id</code>. Puedes recargar el JSON las veces que quieras: nunca se te repiten ni se te reactivan solos los nodos que ya bloqueaste o pusiste en uso.</p>
       <textarea id="json-input" placeholder="[ { &quot;provider_id&quot;: &quot;0x...&quot;, &quot;location&quot;: {...}, &quot;quality&quot;: {...} }, ... ]"></textarea>
       <div class="row">
         <label class="file-btn">Subir archivo .json<input type="file" id="file-input" accept="application/json,.json"></label>
@@ -271,24 +266,49 @@
     </div>
   </section>
 
-  <!-- ===================== VISTA: DISPONIBLES ===================== -->
-  <section class="view" id="view-disponibles">
-    <div class="toolbar">
-      <input type="text" id="disp-city" placeholder="Ciudad (ej: London)" list="city-datalist" style="width:150px">
-      <datalist id="city-datalist"></datalist>
-      <select id="disp-isp"><option value="">Cualquier proveedor</option></select>
-      <input type="number" id="disp-minbw" value="30" min="0" step="5" style="width:90px" title="Ancho de banda mínimo (Mbps)">
-      <label style="font-size:11.5px;color:var(--muted)">Mbps mín.</label>
-      <input type="text" id="disp-search" placeholder="Buscar ID / ISP / ciudad..." style="flex:1;min-width:140px">
-      <button class="btn ghost small" id="disp-clear-filters">Limpiar filtros</button>
-      <div class="view-toggle">
-        <button data-mode="grid" class="active" id="btn-view-grid" title="Vista cuadrícula">▦ Cuadrícula</button>
-        <button data-mode="list" id="btn-view-list" title="Vista lista">☰ Lista</button>
+  <!-- ===================== VISTA: NODOS (unificada) ===================== -->
+  <section class="view" id="view-nodos">
+    <p class="view-intro">Un solo lugar para todo: cambia de pestaña según el estado, y los filtros de abajo funcionan igual sin importar cuál estés viendo.</p>
+
+    <div class="status-tabs" id="status-tabs">
+      <button data-status="disponible" class="active">Disponibles <span class="n" id="st-cnt-disponible">0</span></button>
+      <button data-status="uso">En uso <span class="n" id="st-cnt-uso">0</span></button>
+      <button data-status="bloqueado">Bloqueados <span class="n" id="st-cnt-bloqueado">0</span></button>
+      <button data-status="">Todos <span class="n" id="st-cnt-todos">0</span></button>
+    </div>
+
+    <div class="filterbar">
+      <div class="filterbar-group">
+        <select id="f-provider"><option value="">Cualquier proveedor</option></select>
+        <input type="text" id="f-city" list="city-datalist" placeholder="Ciudad (ej: London)" style="width:150px">
+        <datalist id="city-datalist"></datalist>
+        <label class="fb-lbl">Mbps mín.</label>
+        <input type="number" id="f-minbw" value="30" min="0" step="5" style="width:80px" title="Ancho de banda mínimo (Mbps)">
+        <input type="text" id="f-search" placeholder="Buscar ID / ISP / ciudad..." style="min-width:160px">
+        <button class="btn ghost small" id="f-clear">Limpiar filtros</button>
+      </div>
+      <div class="filterbar-group">
+        <select id="f-sort">
+          <option value="best">Ordenar: mejor calidad</option>
+          <option value="city">Ordenar: ciudad</option>
+          <option value="isp">Ordenar: proveedor</option>
+          <option value="uptime">Ordenar: uptime</option>
+          <option value="latency">Ordenar: latencia</option>
+          <option value="bandwidth">Ordenar: ancho de banda</option>
+        </select>
+        <button class="btn ghost small" id="f-sort-dir" title="Invertir orden">↓</button>
+        <div class="view-toggle">
+          <button data-mode="cards" class="active" id="btn-view-cards" title="Vista tarjetas">▦</button>
+          <button data-mode="list" id="btn-view-list" title="Vista lista">☰</button>
+          <button data-mode="table" id="btn-view-table" title="Vista tabla">▤</button>
+        </div>
       </div>
     </div>
-    <p class="pagenote" id="disp-note"></p>
-    <div id="disp-container"></div>
-    <div class="row" id="disp-pagination" style="justify-content:center;margin-top:16px"></div>
+
+    <div class="chips" id="excluded-chips"></div>
+    <p class="pagenote" id="nodos-note"></p>
+    <div id="nodos-container"></div>
+    <div class="row" id="nodos-pagination" style="justify-content:center;margin-top:6px"></div>
   </section>
 
   <!-- ===================== VISTA: CUENTAS ===================== -->
@@ -301,35 +321,10 @@
         <button class="btn primary" id="btn-add-acc">Crear cuenta</button>
       </div>
     </div>
-    <div id="acc-list" style="margin-top:16px"></div>
-  </section>
-
-  <!-- ===================== VISTA: NODOS (control total) ===================== -->
-  <section class="view" id="view-nodos">
-    <div class="chips" id="excluded-chips"></div>
-    <div class="toolbar">
-      <select id="nodos-proveedor"></select>
-      <select id="nodos-estado">
-        <option value="">Todos los estados</option>
-        <option value="disponible">Disponible</option>
-        <option value="uso">En uso</option>
-        <option value="bloqueado">Bloqueado</option>
-      </select>
-      <input type="text" id="nodos-search" placeholder="Buscar por ciudad, ISP o ID..." style="flex:1;min-width:160px">
+    <div class="row" style="margin:16px 0 10px">
+      <input type="text" id="acc-search" placeholder="Buscar cuenta por nombre..." style="flex:1;min-width:200px">
     </div>
-    <table>
-      <thead><tr>
-        <th class="sortable" data-sort="id">ID búsqueda</th>
-        <th class="sortable" data-sort="city">Ubicación</th>
-        <th class="sortable" data-sort="isp">Proveedor</th>
-        <th class="sortable" data-sort="uptime">Uptime</th>
-        <th class="sortable" data-sort="latency">Latencia</th>
-        <th class="sortable" data-sort="status">Estado</th>
-        <th>Cuenta</th>
-        <th>Acciones</th>
-      </tr></thead>
-      <tbody id="nodos-tbody"></tbody>
-    </table>
+    <div id="acc-list"></div>
   </section>
 
 </main>
@@ -352,20 +347,21 @@
 (function(){
   "use strict";
 
-  const STORAGE_KEY = "nodegrid_state_v3";
+  const STORAGE_KEY = "nodegrid_state_v4";
   const DISPLAY_LIMIT = 20;
+  const DESC_BY_DEFAULT = ["uptime","bandwidth"]; // al elegir estos, el primer orden natural es "mayor primero"
 
   /* ---------------- estado ---------------- */
   function defaultState(){
     return {
       nodes:{}, status:{}, blockInfo:{}, accountOf:{}, accounts:[], nextAccId:1,
-      excludedProviders:[], log:[], viewMode:"grid",
-      dispFilters:{ city:"", isp:"", minBandwidth:30 }
+      excludedProviders:[], log:[],
+      viewMode:"cards", statusTab:"disponible", page:0,
+      filters:{ provider:"", city:"", minBandwidth:30, search:"" },
+      sort:{ key:"best", dir:1 }
     };
   }
   let state = loadState();
-  let dispPage = 0;
-  let nodosSort = { key:null, dir:1 };
 
   function loadState(){
     try{
@@ -373,7 +369,8 @@
       if(!raw) return defaultState();
       const parsed = JSON.parse(raw);
       const merged = Object.assign(defaultState(), parsed);
-      merged.dispFilters = Object.assign(defaultState().dispFilters, parsed.dispFilters || {});
+      merged.filters = Object.assign(defaultState().filters, parsed.filters || {});
+      merged.sort = Object.assign(defaultState().sort, parsed.sort || {});
       return merged;
     }catch(e){ return defaultState(); }
   }
@@ -383,7 +380,7 @@
     catch(e){ console.error("No se pudo guardar el estado:", e); }
   }
 
-  // Red de seguridad: garantiza que un nodo nunca quede bloqueado-y-en-uso a la vez,
+  // Red de seguridad: un nodo nunca queda bloqueado-y-en-uso a la vez,
   // ni ligado a dos cuentas distintas al mismo tiempo.
   function enforceInvariants(){
     Object.keys(state.accountOf).forEach(k => {
@@ -403,18 +400,37 @@
     toast(msg, type || "info");
   }
 
-  /* ---------------- toasts (alertas) ---------------- */
-  function toast(msg, type){
+  /* ---------------- toasts (alertas), con Deshacer opcional ---------------- */
+  function toast(msg, type, undoFn){
     const container = document.getElementById("toast-container");
     const el = document.createElement("div");
     el.className = "toast toast-" + (type || "info");
-    el.textContent = msg;
+    const span = document.createElement("span");
+    span.textContent = msg;
+    el.appendChild(span);
+    if(undoFn){
+      const btn = document.createElement("button");
+      btn.className = "toast-undo";
+      btn.textContent = "Deshacer";
+      btn.onclick = () => { undoFn(); el.remove(); };
+      el.appendChild(btn);
+    }
     container.appendChild(el);
     requestAnimationFrame(() => el.classList.add("show"));
-    setTimeout(() => {
-      el.classList.remove("show");
-      setTimeout(() => el.remove(), 250);
-    }, 3400);
+    setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 250); }, undoFn ? 5500 : 3400);
+  }
+
+  // Ejecuta una acción reversible: toma una foto del estado, aplica el cambio,
+  // y ofrece "Deshacer" en el toast para restaurarlo exactamente.
+  function withUndo(msg, type, mutateFn){
+    const snapshot = JSON.stringify(state);
+    mutateFn();
+    saveState(); renderAll();
+    toast(msg, type, () => {
+      state = JSON.parse(snapshot);
+      saveState(); renderAll();
+      toast("Acción deshecha.", "info");
+    });
   }
 
   /* ---------------- helpers de datos ---------------- */
@@ -470,29 +486,82 @@
     return Array.from(new Set(raw.map(searchId).filter(s => s && /^0x[0-9a-fA-F]+$/i.test(s))));
   }
 
-  // Un nodo cumple para "Disponibles" solo si: tiene datos, es GB, está realmente
-  // disponible (nunca bloqueado ni en uso ni ligado a cuenta), su proveedor no está
-  // excluido, y su ancho de banda supera el mínimo exigido (nunca 0).
-  function isEligibleForDisponibles(key){
+  /* ---------------- filtros unificados (mismos en todas las pestañas de estado) ---------------- */
+  // La regla dura "nunca bandwidth 0/ausente" SOLO aplica a la pestaña Disponibles,
+  // porque ahí es donde se decide qué es un candidato real. En Uso/Bloqueados/Todos
+  // se ve todo, aunque falte el dato (por ejemplo, IDs importados en lote sin JSON).
+  function passesQualityGate(key, tab){
+    if(tab !== "disponible") return true;
     const node = state.nodes[key];
     if(!node) return false;
-    if(statusOf(key) !== "disponible") return false;
     if(!isGB(node)) return false;
     if(isExcludedProvider(node)) return false;
     const bw = num(node.quality && node.quality.bandwidth, 0);
-    const minBw = num(state.dispFilters.minBandwidth, 0);
     if(bw <= 0) return false;
-    if(minBw > 0 && bw < minBw) return false;
     return true;
   }
-  function passesUserFilters(node){
-    const f = state.dispFilters;
-    if(f.isp && ispOf(node) !== f.isp) return false;
+  function passesCommonFilters(key){
+    const node = state.nodes[key];
+    const f = state.filters;
+    if(f.provider){ if(!node || ispOf(node) !== f.provider) return false; }
     if(f.city){
-      const city = ((node.location && node.location.city) || "").toLowerCase();
-      if(!city.includes(f.city.toLowerCase())) return false;
+      const city = node && node.location ? (node.location.city || "") : "";
+      if(!city.toLowerCase().includes(f.city.toLowerCase())) return false;
+    }
+    if(f.minBandwidth > 0 && node && node.quality && node.quality.bandwidth !== undefined && node.quality.bandwidth !== null){
+      if(num(node.quality.bandwidth, 0) < f.minBandwidth) return false;
+    }
+    if(f.search){
+      const loc = node ? (node.location || {}) : {};
+      const hay = [key, loc.city, loc.isp].filter(Boolean).join(" ").toLowerCase();
+      if(!hay.includes(f.search.toLowerCase())) return false;
     }
     return true;
+  }
+  function eligibleForTab(key, tab){
+    if(tab === "") return true;
+    return statusOf(key) === tab;
+  }
+  function keysForTab(tab){
+    return allKeys().filter(k => eligibleForTab(k, tab) && passesQualityGate(k, tab) && passesCommonFilters(k));
+  }
+  function computeTabCounts(){
+    const c = { disponible:0, uso:0, bloqueado:0, todos:0 };
+    allKeys().forEach(k => {
+      if(!passesCommonFilters(k)) return;
+      const st = statusOf(k);
+      if(st === "disponible" && passesQualityGate(k, "disponible")) c.disponible++;
+      if(st === "uso") c.uso++;
+      if(st === "bloqueado") c.bloqueado++;
+      c.todos++;
+    });
+    return c;
+  }
+  function sortKeysList(keys){
+    const { key, dir } = state.sort;
+    if(!key || key === "best"){
+      return keys.sort((a,b) => {
+        const na = state.nodes[a], nb = state.nodes[b];
+        if(na && nb) return compareNodes(na, nb) * dir;
+        if(na) return -1; if(nb) return 1;
+        return a.localeCompare(b);
+      });
+    }
+    function val(k){
+      const n = state.nodes[k];
+      if(!n) return (key === "city" || key === "isp") ? "" : -1;
+      if(key === "city") return (n.location && n.location.city) || "";
+      if(key === "isp") return ispOf(n);
+      if(key === "uptime") return num(n.quality && n.quality.uptime, -1);
+      if(key === "latency") return num(n.quality && n.quality.latency, 1e9);
+      if(key === "bandwidth") return num(n.quality && n.quality.bandwidth, -1);
+      return "";
+    }
+    return keys.sort((a,b) => {
+      const va = val(a), vb = val(b);
+      if(typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+      return String(va).localeCompare(String(vb)) * dir;
+    });
   }
 
   /* ---------------- import de JSON ---------------- */
@@ -509,10 +578,7 @@
     });
     return { added, updated, skipped };
   }
-  function showStatus(el, ok, text){
-    el.textContent = text;
-    el.className = "status-msg show " + (ok ? "ok" : "err");
-  }
+  function showStatus(el, ok, text){ el.textContent = text; el.className = "status-msg show " + (ok ? "ok" : "err"); }
 
   document.getElementById("btn-load").addEventListener("click", () => {
     const el = document.getElementById("load-status");
@@ -529,9 +595,7 @@
       toast("JSON inválido: " + e.message, "danger");
     }
   });
-  document.getElementById("btn-clear-input").addEventListener("click", () => {
-    document.getElementById("json-input").value = "";
-  });
+  document.getElementById("btn-clear-input").addEventListener("click", () => { document.getElementById("json-input").value = ""; });
   document.getElementById("btn-clear-json-data").addEventListener("click", () => {
     const totalNodes = Object.keys(state.nodes).length;
     if(!totalNodes){ showStatus(document.getElementById("load-status"), true, "Ya no hay datos de JSON cargados."); return; }
@@ -554,7 +618,6 @@
     reader.onerror = () => showStatus(document.getElementById("load-status"), false, "No se pudo leer el archivo.");
     reader.readAsText(file);
   });
-
   document.getElementById("btn-import-blocked").addEventListener("click", () => {
     const el = document.getElementById("blocked-status");
     const keys = parseIdList(document.getElementById("blocked-input").value);
@@ -607,24 +670,29 @@
     }catch(e){ toast("No se pudo copiar. ID: " + text, "warn"); }
   }
 
-  /* ---------------- acciones centrales sobre nodos ---------------- */
-  function setStatusManual(key, newStatus){
-    if(state.status[key] === "bloqueado"){
-      toast(`El nodo ${key} está bloqueado permanentemente y no se puede reactivar.`, "danger");
-      return;
-    }
+  /* ---------------- mutaciones puras de estado (sin toast propio; withUndo se encarga) ---------------- */
+  function setStatusCore(key, newStatus){
     if(newStatus === "disponible"){
       delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
-      addLog(`Nodo ${key} vuelve a disponible.`, "success");
     } else if(newStatus === "bloqueado"){
       state.status[key] = "bloqueado";
-      state.blockInfo[key] = { reason:"Cambiado manualmente", ts:new Date().toISOString() };
+      state.blockInfo[key] = { reason:"Bloqueado manualmente", ts:new Date().toISOString() };
       delete state.accountOf[key];
-      addLog(`Nodo ${key} bloqueado manualmente.`, "danger");
     } else if(newStatus === "uso"){
       state.status[key] = "uso";
-      addLog(`Nodo ${key} marcado en uso.`, "info");
     }
+  }
+  function labelForStatus(s){ return s === "disponible" ? "disponible" : s === "uso" ? "en uso" : "bloqueado"; }
+  function typeForStatus(s){ return s === "bloqueado" ? "danger" : s === "disponible" ? "success" : "info"; }
+
+  function handleStatusPillClick(key){
+    return function(ev){
+      const btn = ev.target.closest("button[data-action='pill']");
+      if(!btn) return;
+      const newStatus = btn.getAttribute("data-status");
+      if(newStatus === statusOf(key)) return;
+      withUndo(`Nodo ${key} → ${labelForStatus(newStatus)}.`, typeForStatus(newStatus), () => setStatusCore(key, newStatus));
+    };
   }
 
   function assignToAccount(key, accId, replaceAction){
@@ -637,8 +705,7 @@
         state.status[existing] = "bloqueado";
         state.blockInfo[existing] = { reason:`Reemplazado en ${accountName(accId)}`, ts:new Date().toISOString() };
       } else {
-        delete state.status[existing];
-        delete state.blockInfo[existing];
+        delete state.status[existing]; delete state.blockInfo[existing];
       }
       delete state.accountOf[existing];
     }
@@ -647,17 +714,8 @@
     addLog(`Nodo ${key} asignado a ${accountName(accId)}.`, "success");
     return { ok:true };
   }
-
   function bestAvailableGB(){
-    return allKeys()
-      .filter(k => isEligibleForDisponibles(k) && passesUserFilters(state.nodes[k]))
-      .map(k => state.nodes[k])
-      .sort(compareNodes)[0] || null;
-  }
-
-  function removeNodeCompletely(key){
-    delete state.nodes[key]; delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
-    addLog(`Nodo ${key} eliminado del pool.`, "danger");
+    return keysForTab("disponible").map(k => state.nodes[k]).sort(compareNodes)[0] || null;
   }
   function toggleExcludeProvider(ispName){
     const key = ispKey(ispName);
@@ -666,7 +724,6 @@
     if(idx === -1){ state.excludedProviders.push(key); addLog(`Proveedor excluido: ${ispName}.`, "warn"); }
     else { state.excludedProviders.splice(idx, 1); addLog(`Proveedor ya no excluido: ${ispName}.`, "success"); }
   }
-
   function doAssign(key, accId){
     const label = accountName(accId);
     confirmModal("Asignar nodo", `¿Asignar el nodo ${key} a "${label}"?`, [
@@ -678,9 +735,7 @@
             { label:"Bloquear el anterior", cls:"danger", onClick:() => { assignToAccount(key, accId, "bloquear"); saveState(); renderAll(); } },
             { label:"Liberar el anterior", cls:"success", onClick:() => { assignToAccount(key, accId, "liberar"); saveState(); renderAll(); } },
           ]);
-        } else {
-          toast(res.reason || "No se pudo asignar el nodo.", "danger");
-        }
+        } else { toast(res.reason || "No se pudo asignar el nodo.", "danger"); }
       }}
     ]);
   }
@@ -701,21 +756,15 @@
     return Math.min(1, Math.max(0, x));
   }
 
-  /* ---------------- contadores ---------------- */
+  /* ---------------- contadores generales (Cargar) ---------------- */
   function renderCounts(){
     const keys = allKeys();
-    let disp = 0, uso = 0, bloq = 0;
-    keys.forEach(k => {
-      const st = statusOf(k);
-      if(st === "bloqueado") bloq++;
-      else if(st === "uso") uso++;
-    });
-    keys.forEach(k => { if(isEligibleForDisponibles(k) && passesUserFilters(state.nodes[k])) disp++; });
-    document.getElementById("cnt-disp").textContent = disp;
-    document.getElementById("cnt-acc").textContent = state.accounts.length;
+    let uso = 0, bloq = 0;
+    keys.forEach(k => { const st = statusOf(k); if(st === "bloqueado") bloq++; else if(st === "uso") uso++; });
+    const dispReal = keys.filter(k => statusOf(k) === "disponible" && passesQualityGate(k, "disponible")).length;
     document.getElementById("cnt-todos").textContent = keys.length;
     document.getElementById("s-total").textContent = Object.keys(state.nodes).length;
-    document.getElementById("s-disp").textContent = disp;
+    document.getElementById("s-disp").textContent = dispReal;
     document.getElementById("s-uso").textContent = uso;
     document.getElementById("s-bloq").textContent = bloq;
   }
@@ -728,176 +777,303 @@
     }).join("");
   }
 
-  /* ---------------- vista: disponibles ---------------- */
+  /* ---------------- vista unificada: NODOS ---------------- */
   function accountSelectOptions(){
     if(!state.accounts.length) return `<option value="">Sin cuentas — crea una</option>`;
     return `<option value="">Elegir cuenta...</option>` + state.accounts.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join("");
   }
-  function fillDispFilterControls(){
-    const ispSel = document.getElementById("disp-isp");
-    const current = ispSel.value;
-    const isps = Array.from(new Set(Object.values(state.nodes).filter(isGB).map(ispOf).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-    ispSel.innerHTML = `<option value="">Cualquier proveedor</option>` + isps.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join("");
-    if(isps.includes(current)) ispSel.value = current; else ispSel.value = state.dispFilters.isp && isps.includes(state.dispFilters.isp) ? state.dispFilters.isp : "";
+  function fillFilterControls(){
+    const provSel = document.getElementById("f-provider");
+    const currentProv = provSel.value;
+    const isps = Array.from(new Set(Object.values(state.nodes).map(ispOf).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    provSel.innerHTML = `<option value="">Cualquier proveedor</option>` + isps.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}${state.excludedProviders.includes(ispKey(i)) ? " (excluido)" : ""}</option>`).join("");
+    provSel.value = isps.includes(currentProv) ? currentProv : (isps.includes(state.filters.provider) ? state.filters.provider : "");
 
-    const cities = Array.from(new Set(Object.values(state.nodes).filter(isGB).map(n => n.location && n.location.city).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
+    const cities = Array.from(new Set(Object.values(state.nodes).map(n => n.location && n.location.city).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
     document.getElementById("city-datalist").innerHTML = cities.map(c => `<option value="${escapeHtml(c)}">`).join("");
   }
-
-  function readDispFiltersFromUI(){
-    state.dispFilters.city = document.getElementById("disp-city").value.trim();
-    state.dispFilters.isp = document.getElementById("disp-isp").value;
-    state.dispFilters.minBandwidth = num(parseFloat(document.getElementById("disp-minbw").value), 0);
+  function renderStatusTabs(counts){
+    document.getElementById("st-cnt-disponible").textContent = counts.disponible;
+    document.getElementById("st-cnt-uso").textContent = counts.uso;
+    document.getElementById("st-cnt-bloqueado").textContent = counts.bloqueado;
+    document.getElementById("st-cnt-todos").textContent = counts.todos;
+    document.querySelectorAll("#status-tabs button").forEach(b => b.classList.toggle("active", b.getAttribute("data-status") === state.statusTab));
+  }
+  function renderExcludedChips(){
+    const wrap = document.getElementById("excluded-chips");
+    if(!state.excludedProviders.length){ wrap.innerHTML = ""; return; }
+    wrap.innerHTML = state.excludedProviders.map(p => `<div class="chip">Excluido: ${escapeHtml(p)}<button data-provider="${escapeHtml(p)}" title="Quitar exclusión">×</button></div>`).join("");
   }
 
-  function renderDisponibles(){
-    fillDispFilterControls();
-    document.getElementById("disp-city").value = state.dispFilters.city;
-    document.getElementById("disp-minbw").value = state.dispFilters.minBandwidth;
-
-    const search = document.getElementById("disp-search").value.trim().toLowerCase();
-    let pool = allKeys()
-      .filter(k => isEligibleForDisponibles(k))
-      .map(k => ({ key:k, node: state.nodes[k] }))
-      .filter(({node}) => passesUserFilters(node));
-
-    if(search){
-      pool = pool.filter(({node,key}) => {
-        const loc = node.location || {};
-        return [key, loc.city, loc.isp].join(" ").toLowerCase().includes(search);
-      });
-    }
-    pool.sort((a,b) => compareNodes(a.node, b.node));
-
-    const totalFiltered = pool.length;
-    const maxPage = Math.max(0, Math.ceil(totalFiltered / DISPLAY_LIMIT) - 1);
-    if(dispPage > maxPage) dispPage = maxPage;
-    const start = dispPage * DISPLAY_LIMIT;
-    const shown = pool.slice(start, start + DISPLAY_LIMIT);
-
-    document.getElementById("disp-note").textContent = totalFiltered
-      ? `Mostrando ${start+1}–${start+shown.length} de ${totalFiltered} candidatos que cumplen tus filtros (Reino Unido).`
-      : `Ningún nodo cumple estos filtros ahora mismo.`;
-
-    const container = document.getElementById("disp-container");
-    if(!shown.length){
-      container.innerHTML = `<div class="empty"><b>No hay candidatos con estos filtros</b>Baja el mínimo de Mbps, quita el proveedor/ciudad, o carga más nodos.</div>`;
-    } else if(state.viewMode === "list"){
-      container.innerHTML = shown.map((item, idx) => renderListRow(item, idx)).join("");
-    } else {
-      container.innerHTML = shown.map((item, idx) => renderCard(item, idx)).join("");
-    }
-    renderDispPagination(totalFiltered, maxPage);
+  function statusToggleHTML(key){
+    const st = statusOf(key);
+    const lockTitle = st === "bloqueado" ? "Click para desbloquear" : "Bloquear";
+    return `<div class="status-toggle">
+      <button class="st-btn ${st==='disponible'?'active st-good':''}" data-action="pill" data-status="disponible" data-node="${key}">Disponible</button>
+      <button class="st-btn ${st==='uso'?'active st-accent':''}" data-action="pill" data-status="uso" data-node="${key}">En uso</button>
+      <button class="st-btn ${st==='bloqueado'?'active st-bad':''}" data-action="pill" data-status="bloqueado" data-node="${key}" title="${lockTitle}">🔒</button>
+    </div>`;
+  }
+  function cuentaInfoHTML(key){
+    const st = statusOf(key);
+    if(st !== "uso") return "";
+    const accId = state.accountOf[key];
+    if(accId) return `<div class="block-meta">Cuenta: <b style="color:var(--text)">${escapeHtml(accountName(accId))}</b></div>`;
+    return `<div class="node-actions">
+      <select class="assign-select" data-node="${key}" style="font-size:11px">${accountSelectOptions()}</select>
+      <button class="btn small success" data-action="linkacc" data-node="${key}">Vincular a cuenta</button>
+    </div>`;
+  }
+  function blockMetaHTML(key){
+    const st = statusOf(key);
+    if(st !== "bloqueado") return "";
+    const info = state.blockInfo[key];
+    if(!info) return "";
+    return `<div class="block-meta">${escapeHtml(info.reason || "Bloqueado")} · ${new Date(info.ts).toLocaleString()}</div>`;
   }
 
-  function renderCard({key, node}, idx){
-    const loc = node.location || {}, q = node.quality || {};
+  function renderCard(key, idx, isFirstOverall){
+    const node = state.nodes[key];
+    const loc = (node && node.location) || {}, q = (node && node.quality) || {};
+    const st = statusOf(key);
+    const showAssign = st === "disponible";
     return `
-    <div class="node-card ${idx===0 && dispPage===0 ? "rank1":""}">
-      ${idx===0 && dispPage===0 ? '<div class="top-badge">MEJOR</div>' : ""}
+    <div class="node-card ${isFirstOverall ? "rank1":""}">
+      ${isFirstOverall ? '<div class="top-badge">MEJOR</div>' : ""}
       <div class="node-top">
         <div>
-          <div class="node-loc">${escapeHtml(loc.city || "Ciudad desconocida")}, ${escapeHtml(loc.country || "?")}</div>
-          <div class="node-isp">${escapeHtml(loc.isp || "ISP desconocido")}</div>
+          <div class="node-loc">${node ? `${escapeHtml(loc.city || "Ciudad desconocida")}, ${escapeHtml(loc.country || "?")}` : `<span style="color:var(--muted)">Sin datos — carga el JSON</span>`}</div>
+          ${node ? `<div class="node-isp">${escapeHtml(loc.isp || "ISP desconocido")}</div>` : ""}
         </div>
       </div>
-      <div class="fingerprint">${fingerprintHTML(q)}</div>
+      ${node ? `<div class="fingerprint">${fingerprintHTML(q)}</div>
       <div class="metricline">
-        <span>↑ <b>${fmt(q.uptime)}</b></span>
-        <span>ping <b>${fmt(q.latency,"ms")}</b></span>
-        <span>pérdida <b>${fmt(q.packetLoss)}</b></span>
-        <span>ancho <b>${fmt(q.bandwidth,"Mbps")}</b></span>
-      </div>
+        <span>↑ <b>${fmt(q.uptime)}</b></span><span>ping <b>${fmt(q.latency,"ms")}</b></span>
+        <span>pérdida <b>${fmt(q.packetLoss)}</b></span><span>ancho <b>${fmt(q.bandwidth,"Mbps")}</b></span>
+      </div>` : ""}
       <div class="idbox">
         <code>${escapeHtml(key)}</code>
         <button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button>
       </div>
-      <div class="node-actions">
+      ${statusToggleHTML(key)}
+      ${cuentaInfoHTML(key)}
+      ${blockMetaHTML(key)}
+      ${showAssign ? `<div class="node-actions">
         <select class="assign-select" data-node="${key}">${accountSelectOptions()}</select>
         <button class="btn small success" data-action="assign" data-node="${key}">Asignar</button>
-        <button class="btn small danger" data-action="block" data-node="${key}">Bloquear</button>
-        <button class="btn small ghost" data-action="exclude" data-node="${key}" data-isp="${escapeHtml(loc.isp||"")}">Excluir proveedor</button>
-      </div>
+        ${loc.isp ? `<button class="btn small ghost" data-action="exclude" data-node="${key}" data-isp="${escapeHtml(loc.isp)}">Excluir proveedor</button>` : ""}
+      </div>` : ""}
     </div>`;
   }
-  function renderListRow({key, node}, idx){
-    const loc = node.location || {}, q = node.quality || {};
+  function renderListRow(key){
+    const node = state.nodes[key];
+    const loc = (node && node.location) || {}, q = (node && node.quality) || {};
+    const st = statusOf(key);
     return `
     <div class="list-row">
-      <div class="lr-loc">${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}</div>
-      <div class="lr-isp">${escapeHtml(loc.isp||"—")}</div>
-      <div class="lr-metrics">
-        <span>↑<b>${fmt(q.uptime)}</b></span><span>ping<b>${fmt(q.latency,"ms")}</b></span><span><b>${fmt(q.bandwidth,"Mbps")}</b></span>
-      </div>
-      <div class="lr-id">
-        <code>${escapeHtml(key)}</code>
-        <button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button>
-      </div>
+      <div class="lr-loc">${node ? `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}` : `<span style="color:var(--muted)">sin datos</span>`}</div>
+      <div class="lr-isp">${escapeHtml(ispOf(node||{}) || "—")}</div>
+      <div class="lr-metrics">${node ? `<span>↑<b>${fmt(q.uptime)}</b></span><span>ping<b>${fmt(q.latency,"ms")}</b></span><span><b>${fmt(q.bandwidth,"Mbps")}</b></span>` : ""}</div>
+      <div class="lr-id"><code>${escapeHtml(key)}</code><button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button></div>
+      ${statusToggleHTML(key)}
       <div class="lr-actions">
-        <select class="assign-select" data-node="${key}" style="min-width:120px">${accountSelectOptions()}</select>
-        <button class="btn small success" data-action="assign" data-node="${key}">Asignar</button>
-        <button class="btn small danger" data-action="block" data-node="${key}">Bloquear</button>
-        <button class="btn small ghost" data-action="exclude" data-node="${key}" data-isp="${escapeHtml(loc.isp||"")}">Excluir</button>
+        ${st === "disponible" ? `<select class="assign-select" data-node="${key}" style="min-width:110px">${accountSelectOptions()}</select><button class="btn small success" data-action="assign" data-node="${key}">Asignar</button>` : ""}
+        ${st === "uso" && !state.accountOf[key] ? `<select class="assign-select" data-node="${key}" style="min-width:110px">${accountSelectOptions()}</select><button class="btn small success" data-action="linkacc" data-node="${key}">Vincular</button>` : ""}
+        ${st === "uso" && state.accountOf[key] ? `<span style="font-size:11.5px;color:var(--muted)">${escapeHtml(accountName(state.accountOf[key]))}</span>` : ""}
       </div>
     </div>`;
   }
-  function renderDispPagination(total, maxPage){
-    const wrap = document.getElementById("disp-pagination");
-    if(total <= DISPLAY_LIMIT){ wrap.innerHTML = ""; return; }
-    wrap.innerHTML = `
-      <button class="btn ghost" id="pg-prev" ${dispPage===0?"disabled":""}>◀ Anteriores 20</button>
-      <span style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:0 6px">Página ${dispPage+1} de ${maxPage+1}</span>
-      <button class="btn ghost" id="pg-next" ${dispPage>=maxPage?"disabled":""}>Siguientes 20 ▶</button>
-      <button class="btn" id="pg-top">🔝 Volver a los mejores</button>
-    `;
-    const prev = document.getElementById("pg-prev"), next = document.getElementById("pg-next"), top = document.getElementById("pg-top");
-    if(prev) prev.addEventListener("click", () => { dispPage = Math.max(0, dispPage-1); renderDisponibles(); });
-    if(next) next.addEventListener("click", () => { dispPage = dispPage+1; renderDisponibles(); });
-    if(top) top.addEventListener("click", () => { dispPage = 0; renderDisponibles(); });
+  function renderTableRow(key){
+    const node = state.nodes[key];
+    const loc = (node && node.location) || {}, q = (node && node.quality) || {};
+    const st = statusOf(key);
+    let cuentaCell = "—";
+    if(st === "uso" && state.accountOf[key]) cuentaCell = escapeHtml(accountName(state.accountOf[key]));
+    else if(st === "uso") cuentaCell = `<div class="row" style="margin:0;gap:4px;flex-wrap:nowrap"><select class="assign-select" data-node="${key}" style="font-size:11px;padding:4px 6px">${accountSelectOptions()}</select><button class="btn small success" data-action="linkacc" data-node="${key}">Vincular</button></div>`;
+    const providerBtn = ispOf(node||{}) ? `<button class="btn small ghost" data-action="toggle-exclude" data-isp="${escapeHtml(ispOf(node))}">${isExcludedProvider(node||{}) ? "Incluir" : "Excluir"}</button>` : "";
+    return `<tr>
+      <td><div class="row" style="margin:0;gap:6px;flex-wrap:nowrap"><code style="font-size:11px">${escapeHtml(key)}</code><button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button></div></td>
+      <td>${node ? `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}` : `<span style="color:var(--muted)">sin datos</span>`}</td>
+      <td>${escapeHtml(ispOf(node||{}) || "—")}</td>
+      <td>${fmt(q.uptime)}</td>
+      <td>${fmt(q.latency,"ms")}</td>
+      <td>${fmt(q.bandwidth,"Mbps")}</td>
+      <td>${statusToggleHTML(key)}</td>
+      <td>${cuentaCell}</td>
+      <td><div class="row" style="margin:0;gap:6px">${providerBtn}<button class="btn small danger" data-action="remove" data-node="${key}">Eliminar</button></div></td>
+    </tr>`;
   }
 
-  document.getElementById("disp-container").addEventListener("click", (ev) => {
+  function updateSortDirButton(){
+    document.getElementById("f-sort-dir").textContent = state.sort.dir === 1 ? "↓" : "↑";
+  }
+
+  function renderNodosView(){
+    fillFilterControls();
+    const counts = computeTabCounts();
+    renderStatusTabs(counts);
+    renderExcludedChips();
+
+    let keys = keysForTab(state.statusTab);
+    keys = sortKeysList(keys);
+    const total = keys.length;
+    const maxPage = Math.max(0, Math.ceil(total / DISPLAY_LIMIT) - 1);
+    if(state.page > maxPage) state.page = maxPage;
+    const start = state.page * DISPLAY_LIMIT;
+    const shown = keys.slice(start, start + DISPLAY_LIMIT);
+
+    document.getElementById("nodos-note").textContent = total
+      ? `Mostrando ${start+1}–${start+shown.length} de ${total} nodos en "${tabLabel(state.statusTab)}" con los filtros actuales.`
+      : `Ningún nodo en "${tabLabel(state.statusTab)}" cumple estos filtros ahora mismo.`;
+
+    const container = document.getElementById("nodos-container");
+    const bestKey = state.statusTab === "disponible" && state.page === 0 ? keys[0] : null;
+    if(!shown.length){
+      container.innerHTML = `<div class="empty"><b>Sin resultados</b>Ajusta los filtros, cambia de pestaña, o carga/actualiza el JSON.</div>`;
+    } else if(state.viewMode === "table"){
+      container.innerHTML = `<table>
+        <thead><tr>
+          <th class="sortable" data-sort="id">ID búsqueda</th>
+          <th class="sortable" data-sort="city">Ubicación</th>
+          <th class="sortable" data-sort="isp">Proveedor</th>
+          <th class="sortable" data-sort="uptime">Uptime</th>
+          <th class="sortable" data-sort="latency">Latencia</th>
+          <th class="sortable" data-sort="bandwidth">Ancho</th>
+          <th>Estado</th><th>Cuenta</th><th>Acciones</th>
+        </tr></thead>
+        <tbody>${shown.map(k => renderTableRow(k)).join("")}</tbody>
+      </table>`;
+      document.querySelectorAll("#nodos-container th.sortable .arrow").forEach(a => a.remove());
+      if(state.sort.key && state.sort.key !== "best"){
+        const th = document.querySelector(`#nodos-container th[data-sort="${state.sort.key}"]`);
+        if(th){ const arrow = document.createElement("span"); arrow.className = "arrow"; arrow.textContent = state.sort.dir === 1 ? "▲" : "▼"; th.appendChild(arrow); }
+      }
+    } else if(state.viewMode === "list"){
+      container.innerHTML = shown.map(k => renderListRow(k)).join("");
+    } else {
+      container.innerHTML = shown.map(k => renderCard(k, 0, k === bestKey)).join("");
+    }
+    renderPagination(total, maxPage);
+  }
+  function tabLabel(tab){ return tab === "disponible" ? "Disponibles" : tab === "uso" ? "En uso" : tab === "bloqueado" ? "Bloqueados" : "Todos"; }
+
+  function renderPagination(total, maxPage){
+    const wrap = document.getElementById("nodos-pagination");
+    if(total <= DISPLAY_LIMIT){ wrap.innerHTML = ""; return; }
+    wrap.innerHTML = `
+      <button class="btn ghost" id="pg-prev" ${state.page===0?"disabled":""}>◀ Anteriores 20</button>
+      <span style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:0 6px">Página ${state.page+1} de ${maxPage+1}</span>
+      <button class="btn ghost" id="pg-next" ${state.page>=maxPage?"disabled":""}>Siguientes 20 ▶</button>
+      <button class="btn" id="pg-top">🔝 Volver arriba</button>
+    `;
+    const prev = document.getElementById("pg-prev"), next = document.getElementById("pg-next"), top = document.getElementById("pg-top");
+    if(prev) prev.addEventListener("click", () => { state.page = Math.max(0, state.page-1); saveState(); renderNodosView(); });
+    if(next) next.addEventListener("click", () => { state.page = state.page+1; saveState(); renderNodosView(); });
+    if(top) top.addEventListener("click", () => { state.page = 0; saveState(); renderNodosView(); });
+  }
+
+  // Delegación de eventos: un solo listener para tarjetas, lista y tabla.
+  document.getElementById("nodos-container").addEventListener("click", (ev) => {
+    const pillBtn = ev.target.closest("button[data-action='pill']");
+    if(pillBtn){
+      const key = pillBtn.getAttribute("data-node");
+      handleStatusPillClick(key)(ev);
+      return;
+    }
     const btn = ev.target.closest("button[data-action]");
     if(!btn) return;
     const key = btn.getAttribute("data-node");
     const action = btn.dataset.action;
     if(action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
-    if(action === "block"){
-      confirmModal("Bloquear nodo", `¿Bloquear el nodo ${key}? No volverá a aparecer como disponible.`, [
-        { label:"Bloquear", cls:"danger", onClick: () => { setStatusManual(key, "bloqueado"); saveState(); renderAll(); } }
-      ]);
-    } else if(action === "exclude"){
+    if(action === "toggle-exclude"){ toggleExcludeProvider(btn.getAttribute("data-isp")); saveState(); renderAll(); return; }
+    if(action === "exclude"){
       const isp = btn.getAttribute("data-isp");
       if(!isp){ toast("Este nodo no tiene ISP definido.", "warn"); return; }
-      toggleExcludeProvider(isp);
-      saveState(); renderAll();
-    } else if(action === "assign"){
-      const row = btn.closest(".node-card, .list-row");
-      const accId = row.querySelector("select.assign-select").value;
+      toggleExcludeProvider(isp); saveState(); renderAll(); return;
+    }
+    if(action === "remove"){
+      const node = state.nodes[key];
+      withUndo(`Nodo ${key} eliminado del pool.`, "danger", () => {
+        delete state.nodes[key]; delete state.status[key]; delete state.accountOf[key]; delete state.blockInfo[key];
+      });
+      return;
+    }
+    if(action === "assign"){
+      const scope = btn.closest(".node-card, .list-row, tr");
+      const accId = scope.querySelector("select.assign-select").value;
       if(!accId){ toast("Elige o crea primero una cuenta.", "warn"); return; }
       doAssign(key, accId);
+      return;
+    }
+    if(action === "linkacc"){
+      const scope = btn.closest(".node-card, .list-row, tr");
+      const accId = scope.querySelector("select.assign-select").value;
+      if(!accId){ toast("Elige primero una cuenta.", "warn"); return; }
+      doAssign(key, accId);
+      return;
     }
   });
 
-  function resetDispPageAndRender(){ dispPage = 0; readDispFiltersFromUI(); saveState(); renderDisponibles(); }
-  document.getElementById("disp-search").addEventListener("input", () => { dispPage = 0; renderDisponibles(); });
-  document.getElementById("disp-city").addEventListener("input", resetDispPageAndRender);
-  document.getElementById("disp-isp").addEventListener("change", resetDispPageAndRender);
-  document.getElementById("disp-minbw").addEventListener("input", resetDispPageAndRender);
-  document.getElementById("disp-clear-filters").addEventListener("click", () => {
-    document.getElementById("disp-city").value = "";
-    document.getElementById("disp-isp").value = "";
-    document.getElementById("disp-minbw").value = 30;
-    document.getElementById("disp-search").value = "";
-    state.dispFilters = { city:"", isp:"", minBandwidth:30 };
-    dispPage = 0; saveState(); renderAll();
+  document.querySelectorAll("#status-tabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.statusTab = btn.getAttribute("data-status");
+      state.page = 0;
+      saveState(); renderNodosView();
+    });
   });
-  document.getElementById("btn-view-grid").addEventListener("click", () => { state.viewMode = "grid"; setViewToggle(); saveState(); renderDisponibles(); });
-  document.getElementById("btn-view-list").addEventListener("click", () => { state.viewMode = "list"; setViewToggle(); saveState(); renderDisponibles(); });
-  function setViewToggle(){
-    document.getElementById("btn-view-grid").classList.toggle("active", state.viewMode === "grid");
-    document.getElementById("btn-view-list").classList.toggle("active", state.viewMode === "list");
+  document.querySelectorAll("#nodos-container").length; // noop guard (delegación ya cubre tabla)
+  document.getElementById("nodos-container").addEventListener("click", (ev) => {
+    const th = ev.target.closest("th.sortable");
+    if(!th) return;
+    const k = th.getAttribute("data-sort");
+    if(state.sort.key === k) state.sort.dir *= -1;
+    else { state.sort.key = k; state.sort.dir = DESC_BY_DEFAULT.includes(k) ? -1 : 1; }
+    document.getElementById("f-sort").value = k;
+    updateSortDirButton();
+    saveState(); renderNodosView();
+  });
+
+  function readFilterInputs(){
+    state.filters.provider = document.getElementById("f-provider").value;
+    state.filters.city = document.getElementById("f-city").value.trim();
+    state.filters.minBandwidth = num(parseFloat(document.getElementById("f-minbw").value), 0);
+    state.filters.search = document.getElementById("f-search").value.trim();
+    state.page = 0;
   }
+  ["f-provider","f-minbw"].forEach(id => document.getElementById(id).addEventListener("change", () => { readFilterInputs(); saveState(); renderNodosView(); }));
+  ["f-city","f-search"].forEach(id => document.getElementById(id).addEventListener("input", () => { readFilterInputs(); saveState(); renderNodosView(); }));
+  document.getElementById("f-clear").addEventListener("click", () => {
+    document.getElementById("f-provider").value = "";
+    document.getElementById("f-city").value = "";
+    document.getElementById("f-minbw").value = 30;
+    document.getElementById("f-search").value = "";
+    state.filters = { provider:"", city:"", minBandwidth:30, search:"" };
+    state.page = 0; saveState(); renderNodosView();
+  });
+  document.getElementById("f-sort").addEventListener("change", () => {
+    const k = document.getElementById("f-sort").value;
+    state.sort.key = k;
+    state.sort.dir = DESC_BY_DEFAULT.includes(k) ? -1 : 1;
+    updateSortDirButton();
+    saveState(); renderNodosView();
+  });
+  document.getElementById("f-sort-dir").addEventListener("click", () => {
+    state.sort.dir *= -1; updateSortDirButton(); saveState(); renderNodosView();
+  });
+  ["cards","list","table"].forEach(mode => {
+    document.getElementById("btn-view-" + mode).addEventListener("click", () => {
+      state.viewMode = mode;
+      document.querySelectorAll(".view-toggle button").forEach(b => b.classList.toggle("active", b.getAttribute("data-mode") === mode));
+      saveState(); renderNodosView();
+    });
+  });
+  document.getElementById("excluded-chips").addEventListener("click", (ev) => {
+    const btn = ev.target.closest("button[data-provider]");
+    if(!btn) return;
+    const idx = state.excludedProviders.indexOf(btn.getAttribute("data-provider"));
+    if(idx !== -1){ state.excludedProviders.splice(idx,1); addLog("Exclusión de proveedor eliminada.", "success"); }
+    saveState(); renderAll();
+  });
 
   /* ---------------- vista: cuentas ---------------- */
   document.getElementById("btn-add-acc").addEventListener("click", () => {
@@ -910,14 +1086,23 @@
     input.value = "";
     saveState(); renderAll();
   });
+  document.getElementById("acc-search").addEventListener("input", renderCuentas);
 
   function renderCuentas(){
     const wrap = document.getElementById("acc-list");
+    const search = document.getElementById("acc-search").value.trim().toLowerCase();
+    let accounts = state.accounts;
+    if(search) accounts = accounts.filter(a => a.name.toLowerCase().includes(search));
+    document.getElementById("cnt-acc").textContent = state.accounts.length;
     if(!state.accounts.length){
       wrap.innerHTML = `<div class="empty"><b>Aún no tienes cuentas</b>Crea una arriba para empezar a asignar nodos.</div>`;
       return;
     }
-    wrap.innerHTML = state.accounts.map(acc => {
+    if(!accounts.length){
+      wrap.innerHTML = `<div class="empty"><b>Ninguna cuenta coincide con "${escapeHtml(search)}"</b></div>`;
+      return;
+    }
+    wrap.innerHTML = accounts.map(acc => {
       const key = accountCurrentNode(acc.id);
       const node = key ? state.nodes[key] : null;
       let nodeInfo, copyBtn = "";
@@ -961,7 +1146,6 @@
       confirmModal("Asignar mejor nodo", `Se asignará el nodo ${best._key} (${(best.location||{}).city||"?"}) a "${accountName(accId)}".`, [
         { label:"Asignar", cls:"success", onClick:() => { assignToAccount(best._key, accId); saveState(); renderAll(); } }
       ]);
-
     } else if(action === "damaged"){
       confirmModal("Marcar nodo como dañado", `Se bloqueará el nodo actual de "${accountName(accId)}" y se asignará automáticamente el siguiente mejor disponible.`, [
         { label:"Confirmar", cls:"danger", onClick: () => {
@@ -977,180 +1161,21 @@
           saveState(); renderAll();
         }}
       ]);
-
     } else if(action === "unassign"){
-      confirmModal("Liberar nodo", `El nodo de "${accountName(accId)}" volverá a disponibles.`, [
-        { label:"Liberar", cls:"success", onClick: () => {
-          const existing = accountCurrentNode(accId);
-          if(existing){ delete state.status[existing]; delete state.accountOf[existing]; addLog(`Nodo liberado de ${accountName(accId)}.`, "success"); }
-          saveState(); renderAll();
-        }}
-      ]);
-
+      const existing = accountCurrentNode(accId);
+      const name = accountName(accId);
+      withUndo(`Nodo liberado de ${name}.`, "info", () => {
+        if(existing){ delete state.status[existing]; delete state.accountOf[existing]; }
+      });
     } else if(action === "delete"){
-      confirmModal("Eliminar cuenta", `Se eliminará "${accountName(accId)}". Su nodo (si tiene) volverá a disponibles.`, [
-        { label:"Eliminar", cls:"danger", onClick: () => {
-          const existing = accountCurrentNode(accId);
-          if(existing){ delete state.status[existing]; delete state.accountOf[existing]; }
-          state.accounts = state.accounts.filter(a => String(a.id) !== String(accId));
-          addLog(`Cuenta eliminada.`, "warn");
-          saveState(); renderAll();
-        }}
-      ]);
-    }
-  });
-
-  /* ---------------- vista: nodos (control total, ordenable) ---------------- */
-  function fillProviderSelect(){
-    const sel = document.getElementById("nodos-proveedor");
-    const current = sel.value;
-    const providers = Array.from(new Set(Object.values(state.nodes).map(ispOf).filter(Boolean))).sort((a,b)=>a.localeCompare(b));
-    sel.innerHTML = `<option value="">Todos los proveedores</option>` +
-      providers.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}${state.excludedProviders.includes(ispKey(p)) ? " (excluido)" : ""}</option>`).join("");
-    if(providers.includes(current)) sel.value = current;
-  }
-  function renderExcludedChips(){
-    const wrap = document.getElementById("excluded-chips");
-    if(!state.excludedProviders.length){ wrap.innerHTML = ""; return; }
-    wrap.innerHTML = state.excludedProviders.map(p => `<div class="chip">Excluido: ${escapeHtml(p)}<button data-provider="${escapeHtml(p)}" title="Quitar exclusión">×</button></div>`).join("");
-  }
-  document.getElementById("excluded-chips").addEventListener("click", (ev) => {
-    const btn = ev.target.closest("button[data-provider]");
-    if(!btn) return;
-    const idx = state.excludedProviders.indexOf(btn.getAttribute("data-provider"));
-    if(idx !== -1){ state.excludedProviders.splice(idx,1); addLog("Exclusión de proveedor eliminada.", "success"); }
-    saveState(); renderAll();
-  });
-
-  function sortValueFor(key, sortKey){
-    const n = state.nodes[key];
-    switch(sortKey){
-      case "id": return key;
-      case "city": return n && n.location ? (n.location.city||"") : "";
-      case "isp": return n ? ispOf(n) : "";
-      case "uptime": return n && n.quality ? num(n.quality.uptime) : -1;
-      case "latency": return n && n.quality ? num(n.quality.latency, 1e9) : 1e9;
-      case "status": return statusOf(key);
-      default: return "";
-    }
-  }
-
-  function renderNodos(){
-    fillProviderSelect();
-    renderExcludedChips();
-    document.querySelectorAll("#view-nodos th.sortable .arrow").forEach(a => a.remove());
-    if(nodosSort.key){
-      const th = document.querySelector(`#view-nodos th[data-sort="${nodosSort.key}"]`);
-      if(th){ const arrow = document.createElement("span"); arrow.className="arrow"; arrow.textContent = nodosSort.dir===1 ? "▲" : "▼"; th.appendChild(arrow); }
-    }
-
-    const providerFilter = document.getElementById("nodos-proveedor").value;
-    const estadoFilter = document.getElementById("nodos-estado").value;
-    const search = document.getElementById("nodos-search").value.trim().toLowerCase();
-
-    let keys = allKeys();
-    if(providerFilter) keys = keys.filter(k => state.nodes[k] && ispOf(state.nodes[k]) === providerFilter);
-    if(estadoFilter) keys = keys.filter(k => statusOf(k) === estadoFilter);
-    if(search){
-      keys = keys.filter(k => {
-        const n = state.nodes[k] || {}; const loc = n.location || {};
-        return [k, loc.city, loc.isp].join(" ").toLowerCase().includes(search);
+      const name = accountName(accId);
+      withUndo(`Cuenta "${name}" eliminada.`, "danger", () => {
+        const existing = accountCurrentNode(accId);
+        if(existing){ delete state.status[existing]; delete state.accountOf[existing]; }
+        state.accounts = state.accounts.filter(a => String(a.id) !== String(accId));
       });
     }
-
-    if(nodosSort.key){
-      keys.sort((a,b) => {
-        const va = sortValueFor(a, nodosSort.key), vb = sortValueFor(b, nodosSort.key);
-        if(typeof va === "number" && typeof vb === "number") return (va-vb) * nodosSort.dir;
-        return String(va).localeCompare(String(vb)) * nodosSort.dir;
-      });
-    } else {
-      keys.sort((a,b) => {
-        const na = state.nodes[a], nb = state.nodes[b];
-        if(na && nb) return compareNodes(na, nb);
-        if(na) return -1; if(nb) return 1;
-        return a.localeCompare(b);
-      });
-    }
-
-    const tbody = document.getElementById("nodos-tbody");
-    if(!keys.length){ tbody.innerHTML = `<tr><td colspan="8" class="empty">Sin resultados. Carga un JSON o ajusta los filtros.</td></tr>`; return; }
-    const accOptionsHtml = accountSelectOptions();
-    tbody.innerHTML = keys.map(key => {
-      const n = state.nodes[key];
-      const loc = (n && n.location) || {};
-      const q = (n && n.quality) || {};
-      const st = statusOf(key);
-      const accId = state.accountOf[key];
-      let cuentaCell;
-      if(st === "uso" && accId) cuentaCell = escapeHtml(accountName(accId));
-      else if(st === "uso") cuentaCell = `<div class="row" style="margin:0;gap:4px;flex-wrap:nowrap"><select class="assign-select" data-node="${key}" style="font-size:11px;padding:4px 6px">${accOptionsHtml}</select><button class="btn small success" data-action="linkacc" data-node="${key}">Vincular</button></div>`;
-      else cuentaCell = "—";
-      const providerBtn = ispOf(n||{}) ? `<button class="btn small ghost" data-action="toggle-exclude" data-isp="${escapeHtml(ispOf(n))}">${isExcludedProvider(n||{}) ? "Incluir" : "Excluir"}</button>` : "";
-
-      const estadoCell = st === "bloqueado"
-        ? `<span class="status-select bloqueado" style="display:inline-block;border:1px solid var(--bad);color:var(--bad);border-radius:6px;padding:4px 8px;font-size:11px" title="Los nodos bloqueados son permanentes: nunca se pueden reactivar desde aquí.">🔒 Bloqueado</span>`
-        : `<select class="status-select ${st}" data-action="setstatus" data-node="${key}">
-          <option value="disponible" ${st==="disponible"?"selected":""}>Disponible</option>
-          <option value="uso" ${st==="uso"?"selected":""}>En uso</option>
-          <option value="bloqueado">Bloqueado</option>
-        </select>`;
-
-      const accionesCell = st === "bloqueado"
-        ? `<span style="color:var(--muted-2);font-size:11px">Sin acciones — bloqueo permanente</span>`
-        : `<div class="row" style="margin:0;gap:6px">${providerBtn}<button class="btn small danger" data-action="remove" data-node="${key}">Eliminar</button></div>`;
-
-      return `<tr>
-        <td><div class="row" style="margin:0;gap:6px;flex-wrap:nowrap"><code style="font-size:11px">${escapeHtml(key)}</code><button class="btn small ghost" data-action="copy" data-copy="${escapeHtml(key)}">Copiar</button></div></td>
-        <td>${n ? `${escapeHtml(loc.city||"?")}, ${escapeHtml(loc.country||"?")}` : `<span style="color:var(--muted)">sin datos</span>`}</td>
-        <td>${escapeHtml(ispOf(n||{}) || "—")}</td>
-        <td>${fmt(q.uptime)}</td>
-        <td>${fmt(q.latency,"ms")}</td>
-        <td>${estadoCell}</td>
-        <td>${cuentaCell}</td>
-        <td>${accionesCell}</td>
-      </tr>`;
-    }).join("");
-  }
-
-  document.querySelectorAll("#view-nodos th.sortable").forEach(th => {
-    th.addEventListener("click", () => {
-      const key = th.getAttribute("data-sort");
-      if(nodosSort.key === key) nodosSort.dir *= -1;
-      else { nodosSort.key = key; nodosSort.dir = 1; }
-      renderNodos();
-    });
   });
-  document.getElementById("nodos-tbody").addEventListener("change", (ev) => {
-    const sel = ev.target.closest("select[data-action='setstatus']");
-    if(!sel) return;
-    confirmModal("Cambiar estado", `¿Cambiar el nodo ${sel.getAttribute("data-node")} a "${sel.value}"?`, [
-      { label:"Confirmar", cls: sel.value==="bloqueado" ? "danger" : "success", onClick: () => { setStatusManual(sel.getAttribute("data-node"), sel.value); saveState(); renderAll(); } }
-    ]);
-  });
-  document.getElementById("nodos-tbody").addEventListener("click", (ev) => {
-    const btn = ev.target.closest("button[data-action]");
-    if(!btn) return;
-    const key = btn.getAttribute("data-node");
-    const action = btn.dataset.action;
-    if(action === "copy"){ copyToClipboard(btn.getAttribute("data-copy"), btn); return; }
-    if(action === "toggle-exclude"){ toggleExcludeProvider(btn.getAttribute("data-isp")); saveState(); renderAll(); return; }
-    if(action === "remove"){
-      confirmModal("Eliminar nodo del pool", `Se eliminará por completo el nodo ${key}. Esta acción no se puede deshacer.`, [
-        { label:"Eliminar", cls:"danger", onClick: () => { removeNodeCompletely(key); saveState(); renderAll(); } }
-      ]);
-      return;
-    }
-    if(action === "linkacc"){
-      const row = btn.closest("tr");
-      const accId = row.querySelector("select.assign-select").value;
-      if(!accId){ toast("Elige primero una cuenta.", "warn"); return; }
-      doAssign(key, accId);
-    }
-  });
-  document.getElementById("nodos-proveedor").addEventListener("change", renderNodos);
-  document.getElementById("nodos-estado").addEventListener("change", renderNodos);
-  document.getElementById("nodos-search").addEventListener("input", renderNodos);
 
   /* ---------------- modal de confirmación ---------------- */
   function confirmModal(title, text, actions){
@@ -1172,7 +1197,7 @@
     document.getElementById("modal-overlay").classList.add("show");
   }
 
-  /* ---------------- navegación de pestañas ---------------- */
+  /* ---------------- navegación de pestañas principales ---------------- */
   document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
@@ -1186,15 +1211,18 @@
   function renderAll(){
     renderCounts();
     renderLog();
-    renderDisponibles();
+    renderNodosView();
     renderCuentas();
-    renderNodos();
   }
 
   // inicializar controles con los valores guardados
-  document.getElementById("disp-city").value = state.dispFilters.city;
-  document.getElementById("disp-minbw").value = state.dispFilters.minBandwidth;
-  setViewToggle();
+  document.getElementById("f-provider").value = state.filters.provider;
+  document.getElementById("f-city").value = state.filters.city;
+  document.getElementById("f-minbw").value = state.filters.minBandwidth;
+  document.getElementById("f-search").value = state.filters.search;
+  document.getElementById("f-sort").value = state.sort.key;
+  document.querySelectorAll(".view-toggle button").forEach(b => b.classList.toggle("active", b.getAttribute("data-mode") === state.viewMode));
+  updateSortDirButton();
   renderAll();
 })();
 </script>

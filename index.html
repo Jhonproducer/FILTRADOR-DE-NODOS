@@ -3,257 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VPN Node Manager - ERP Dinámico</title>
+    <title>VPN Node Manager - ERP Control Total</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style> [v-cloak] { display: none; } </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
-    <div id="app" v-cloak class="w-full flex h-full">
+<body class="bg-gray-100 text-gray-800 font-sans h-screen flex overflow-hidden">
+    <div id="app" v-cloak class="w-full flex h-full relative">
         
-        <!-- BARRA LATERAL -->
-        <aside class="w-64 bg-gray-900 text-white flex flex-col transition-all duration-300 h-full">
-            <div class="p-6">
-                <h1 class="text-xl font-bold tracking-wider text-blue-400">VPN ADMIN</h1>
-                <p class="text-xs text-gray-400 mt-1">Control ERP Dinámico</p>
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-gray-900 text-white flex flex-col h-full shadow-2xl z-20">
+            <div class="p-6 border-b border-gray-800">
+                <h1 class="text-2xl font-black tracking-wider text-blue-500">VPN<span class="text-white">ERP</span></h1>
+                <p class="text-xs text-gray-400 mt-1">Control Manual Absoluto</p>
             </div>
             
-            <nav class="flex-1 px-4 space-y-2 mt-4">
-                <button @click="currentTab = 'dashboard'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'dashboard'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
+            <nav class="flex-1 px-4 space-y-2 mt-6">
+                <button @click="currentTab = 'accounts'" :class="{'bg-blue-600 shadow-lg': currentTab === 'accounts', 'hover:bg-gray-800': currentTab !== 'accounts'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all">
+                    <i data-lucide="users"></i> Panel de Cuentas
                 </button>
-                <button @click="currentTab = 'accounts'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'accounts'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="users"></i> Cuentas Activas
+                <button @click="currentTab = 'pool'" :class="{'bg-blue-600 shadow-lg': currentTab === 'pool', 'hover:bg-gray-800': currentTab !== 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all">
+                    <i data-lucide="server"></i> Nodos (Pool)
                 </button>
-                <button @click="currentTab = 'pool'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="server"></i> Pool de Nodos
-                </button>
-                <button @click="currentTab = 'blacklist'" :class="{'bg-gray-800 border-l-4 border-red-500 text-red-100': currentTab === 'blacklist'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="shield-alert"></i> Lista Negra Libre
+                <button @click="currentTab = 'blacklist'" :class="{'bg-red-600 shadow-lg': currentTab === 'blacklist', 'hover:bg-gray-800': currentTab !== 'blacklist'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all">
+                    <i data-lucide="shield-off"></i> Lista Negra
                 </button>
             </nav>
-            <div class="p-4 border-t border-gray-700">
-                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition text-white">
-                    <i data-lucide="download" class="w-4 h-4"></i> Exportar BD
+
+            <div class="p-4 bg-gray-900">
+                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-4 py-3 rounded-lg text-sm font-bold transition text-white">
+                    <i data-lucide="download" class="w-4 h-4"></i> Respaldar Base de Datos
                 </button>
             </div>
         </aside>
 
-        <!-- CONTENIDO PRINCIPAL -->
-        <main class="flex-1 flex flex-col overflow-hidden h-full relative">
-            
-            <!-- Header -->
-            <header class="bg-white shadow-sm border-b px-8 py-4 flex justify-between items-center z-10">
-                <h2 class="text-2xl font-semibold text-gray-700 capitalize">
-                    {{ currentTab === 'dashboard' ? 'Resumen General' : 
-                       currentTab === 'accounts' ? 'Gestor de Cuentas' :
-                       currentTab === 'pool' ? 'Nodos Frescos' : 'Lista Negra Editable' }}
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col overflow-hidden h-full bg-gray-50">
+            <header class="bg-white shadow-sm border-b px-8 py-5 flex justify-between items-center z-10">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    {{ currentTab === 'accounts' ? 'Gestión de Cuentas y Asignaciones' : currentTab === 'pool' ? 'Base de Nodos Importados' : 'Control de Nodos Bloqueados' }}
                 </h2>
-                <div class="flex items-center gap-4">
-                    <span v-if="syncStatus" class="text-sm px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full font-medium animate-pulse">{{ syncStatus }}</span>
-                </div>
+                <span v-if="syncStatus" class="text-sm px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full font-bold animate-pulse shadow-sm">{{ syncStatus }}</span>
             </header>
 
-            <!-- VISTAS -->
-            <div class="flex-1 overflow-auto p-8 bg-gray-50">
+            <div class="flex-1 overflow-auto p-6">
                 
-                <!-- DASHBOARD -->
-                <div v-show="currentTab === 'dashboard'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <p class="text-gray-500 text-sm font-medium">Cuentas Configuradas</p>
-                        <p class="text-4xl font-bold text-gray-800 mt-2">{{ accounts.length }}</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <p class="text-gray-500 text-sm font-medium">Nodos en Pool</p>
-                        <p class="text-4xl font-bold text-green-600 mt-2">{{ pool.length }}</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200" :class="{'border-red-200 bg-red-50': collisionCount > 0}">
-                        <p class="text-gray-500 text-sm font-medium">Colisiones (IP/Nodo)</p>
-                        <p class="text-4xl font-bold mt-2" :class="collisionCount > 0 ? 'text-red-600' : 'text-gray-800'">{{ collisionCount }}</p>
-                    </div>
-                </div>
-
-                <!-- CUENTAS -->
-                <div v-show="currentTab === 'accounts'" class="bg-white rounded-lg shadow border border-gray-200">
-                    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                        <button @click="addAccount" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition flex items-center gap-2">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Agregar Fila
+                <!-- VISTA: CUENTAS -->
+                <div v-show="currentTab === 'accounts'" class="bg-white rounded-xl shadow-md border border-gray-200">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                        <button @click="addAccount" class="bg-gray-800 hover:bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Agregar Cuenta
                         </button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-max">
-                            <thead>
-                                <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
-                                    <th class="p-4 font-semibold w-48">Nombre Cuenta</th>
-                                    <th class="p-4 font-semibold w-72">Nodo ID (Asignado)</th>
-                                    <th class="p-4 font-semibold w-48">IP Actual</th>
-                                    <th class="p-4 font-semibold text-center w-32">Estado</th>
-                                    <th class="p-4 font-semibold text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm divide-y divide-gray-100">
-                                <tr v-for="(acc, index) in accounts" :key="index" :class="{'bg-red-50': hasCollision(acc), 'hover:bg-gray-50': !hasCollision(acc)}">
-                                    <td class="p-3">
-                                        <input v-model="acc.name" class="border p-2.5 rounded font-medium outline-none w-full bg-white shadow-sm focus:border-blue-500">
-                                    </td>
-                                    <td class="p-3">
-                                        <div class="flex gap-2">
-                                            <input v-model="acc.nodeId" placeholder="ID" class="border p-2.5 rounded font-mono text-gray-600 outline-none w-full bg-white shadow-sm uppercase focus:border-blue-500">
-                                            <!-- Botón mágico para evitar copiar/pegar -->
-                                            <button @click="openSelectorModal('pool', index)" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 rounded shadow-sm flex items-center" title="Elegir del Pool sin copiar">
-                                                <i data-lucide="search" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td class="p-3">
-                                        <input v-model="acc.ip" placeholder="IP" class="border p-2.5 rounded text-gray-600 outline-none w-full bg-white shadow-sm focus:border-blue-500">
-                                    </td>
-                                    <td class="p-3 text-center">
-                                        <div v-if="hasCollision(acc)" class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold shadow-sm border border-red-200">
-                                            CHOQUE
-                                        </div>
-                                        <div v-else-if="acc.nodeId && acc.ip" class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold shadow-sm border border-green-200">
-                                            OK
-                                        </div>
-                                    </td>
-                                    <td class="p-3 text-right space-x-2">
-                                        <button @click="burnNode(index)" class="px-2 py-1 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded text-xs font-semibold" title="Mover a Lista Negra y vaciar fila">
-                                            Quemar
-                                        </button>
-                                        <button @click="removeAccount(index)" class="p-1 text-red-400 hover:text-red-600" title="Eliminar fila">✕</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- POOL -->
-                <div v-show="currentTab === 'pool'" class="bg-white rounded-lg shadow border border-gray-200 flex flex-col h-full">
-                    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 cursor-pointer">
-                            <i data-lucide="upload" class="w-4 h-4"></i> Cargar JSON de API
-                            <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
-                        </label>
-                    </div>
-                    <div class="flex-1 overflow-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="sticky top-0 z-10 bg-white shadow-sm border-b">
-                                <tr class="text-gray-500 text-xs uppercase tracking-wider">
-                                    <th class="p-4 font-semibold">ID</th>
-                                    <th class="p-4 font-semibold">Ubicación</th>
-                                    <th class="p-4 font-semibold">Score</th>
-                                    <th class="p-4 font-semibold text-right">Acción Rápida</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm divide-y divide-gray-100">
-                                <tr v-for="(node, index) in pool" :key="node.id" class="hover:bg-gray-50">
-                                    <td class="p-4 font-mono text-gray-800">
-                                        {{ node.id }} 
-                                        <button @click="copyToClipboard(node.id)" class="text-gray-400 hover:text-blue-500 ml-2" title="Copiar ID para probar">
-                                            <i data-lucide="copy" class="w-3 h-3 inline"></i>
-                                        </button>
-                                    </td>
-                                    <td class="p-4 text-gray-600">{{ node.country }} / {{ node.city }}<br><span class="text-xs text-gray-400">{{ node.asn_isp }}</span></td>
-                                    <td class="p-4 font-bold text-green-600">{{ node.q_score }}</td>
-                                    <td class="p-4 text-right">
-                                        <!-- Enviar directo a cuenta sin copiar y pegar -->
-                                        <button @click="openAssignModal(node.id)" class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs hover:bg-black transition">
-                                            Enviar a Cuenta ➡️
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- LISTA NEGRA CON LIBERTAD TOTAL -->
-                <div v-show="currentTab === 'blacklist'" class="bg-white rounded-lg shadow border border-gray-200">
-                    <div class="p-6 border-b border-gray-200 bg-red-50">
-                        <label class="text-sm font-bold text-gray-800">Pegar múltiples IDs quemados (Opcional)</label>
-                        <textarea v-model="bulkBlacklistText" rows="2" class="w-full border border-red-200 rounded p-2 mt-2 text-sm font-mono outline-none focus:ring-2 focus:ring-red-500 bg-white" placeholder="Ej: 0x123..."></textarea>
-                        <button @click="processBulkBlacklist" class="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium">Bloquear Masivamente</button>
-                    </div>
-
-                    <div class="p-4 bg-white flex justify-between items-center border-b">
-                        <h3 class="text-sm font-semibold">Puedes editar las celdas libremente si la IP o ID cambia.</h3>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-semibold text-gray-600">Total Cuentas: {{ accounts.length }}</span>
+                            <span v-if="collisionCount > 0" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-bold border border-red-200">⚠️ {{ collisionCount }} Colisiones Detectadas</span>
+                        </div>
                     </div>
                     
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
-                                <th class="p-4 font-semibold w-64">Nodo ID Bloqueado</th>
-                                <th class="p-4 font-semibold w-48">Última IP</th>
-                                <th class="p-4 font-semibold text-right">Acciones de Libertad</th>
+                            <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
+                                <th class="p-4 font-bold w-48">Cuenta</th>
+                                <th class="p-4 font-bold">Nodo Asignado (ID)</th>
+                                <th class="p-4 font-bold w-48">IP (Opcional)</th>
+                                <th class="p-4 font-bold text-center w-32">Estado</th>
+                                <th class="p-4 font-bold text-right">Opciones del Nodo</th>
                             </tr>
                         </thead>
                         <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-for="(node, index) in blacklist" :key="index" class="hover:bg-gray-50">
-                                <!-- EDICIÓN LIBRE -->
-                                <td class="p-3"><input v-model="node.nodeId" class="border-b border-dashed border-gray-300 p-1 font-mono text-red-600 w-full bg-transparent focus:border-red-500 outline-none uppercase"></td>
-                                <td class="p-3"><input v-model="node.ip" class="border-b border-dashed border-gray-300 p-1 text-gray-600 w-full bg-transparent focus:border-red-500 outline-none"></td>
-                                <td class="p-3 text-right space-x-2">
-                                    <!-- Botones de libertad a futuro -->
-                                    <button @click="openAssignModal(node.nodeId, index)" class="px-2 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-xs font-semibold" title="Dar otra oportunidad: Mover a una cuenta activa">
-                                        Reasignar a Cuenta
+                            <tr v-for="(acc, index) in accounts" :key="index" :class="{'bg-red-50': hasCollision(acc), 'hover:bg-gray-50': !hasCollision(acc)}">
+                                <td class="p-3">
+                                    <input v-model="acc.name" class="border p-2.5 rounded-lg font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white shadow-sm">
+                                </td>
+                                <td class="p-3">
+                                    <!-- Si tiene nodo, lo muestra. Si no, muestra botón para elegir -->
+                                    <div v-if="acc.nodeId" class="flex items-center gap-3">
+                                        <span class="font-mono bg-gray-100 px-3 py-1.5 rounded-md border text-gray-700 font-bold tracking-wider">{{ acc.nodeId }}</span>
+                                        <button @click="copyToClipboard(acc.nodeId)" class="text-gray-400 hover:text-blue-600 transition" title="Copiar ID para probar">
+                                            <i data-lucide="copy" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                    <button v-else @click="openPoolModal(index)" class="w-full border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-500 hover:text-blue-600 px-4 py-2 rounded-lg font-semibold transition flex justify-center items-center gap-2">
+                                        <i data-lucide="mouse-pointer-click" class="w-4 h-4"></i> Seleccionar de la Pool
                                     </button>
-                                    <button @click="restoreToPool(index)" class="px-2 py-1 bg-green-100 text-green-700 hover:bg-green-200 rounded text-xs font-semibold" title="Perdonar y dejar libre">
-                                        ♻️ Perdonar
-                                    </button>
+                                </td>
+                                <td class="p-3">
+                                    <input v-model="acc.ip" placeholder="IP..." class="border p-2.5 rounded-lg text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white shadow-sm">
+                                </td>
+                                <td class="p-3 text-center">
+                                    <div v-if="hasCollision(acc)" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-md text-xs font-black shadow-sm border border-red-200">
+                                        CHOQUE
+                                    </div>
+                                    <div v-else-if="acc.nodeId" class="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-xs font-black shadow-sm border border-green-200">
+                                        ACTIVO
+                                    </div>
+                                    <span v-else class="text-gray-400 text-xs font-semibold">Vacío</span>
+                                </td>
+                                <td class="p-3">
+                                    <!-- Botones de Acción sobre el Nodo -->
+                                    <div class="flex items-center justify-end gap-2" v-if="acc.nodeId">
+                                        <button @click="releaseNode(index)" class="px-3 py-1.5 bg-gray-100 hover:bg-blue-100 text-gray-700 hover:text-blue-700 rounded-md text-xs font-bold transition border border-gray-200 hover:border-blue-300" title="Quitar de la cuenta y devolverlo al Pool">
+                                            Liberar
+                                        </button>
+                                        <button @click="burnNode(index)" class="px-3 py-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-md text-xs font-bold transition border border-red-200 hover:border-red-600" title="Nodo malo: Enviar a Lista Negra">
+                                            Bloquear
+                                        </button>
+                                    </div>
+                                    <div class="flex justify-end" v-else>
+                                        <button @click="removeAccount(index)" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Eliminar fila de cuenta">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-            </div>
-
-            <!-- MODAL: ASIGNAR NODO A CUENTA (Desde Pool o Blacklist) -->
-            <div v-if="assignModal.isOpen" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="bg-white p-6 rounded-lg shadow-xl w-96">
-                    <h3 class="text-lg font-bold mb-4">¿A qué cuenta enviar este nodo?</h3>
-                    <p class="font-mono text-sm text-gray-600 mb-4 bg-gray-100 p-2 rounded">{{ assignModal.nodeId }}</p>
-                    <div class="max-h-60 overflow-y-auto space-y-2 mb-4 border p-2 rounded">
-                        <button v-for="(acc, i) in accounts" :key="i" @click="confirmAssign(i)" class="w-full text-left px-3 py-2 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 flex justify-between">
-                            <span class="font-medium">{{ acc.name || 'Sin Nombre' }}</span>
-                            <span class="text-xs text-gray-400">{{ acc.nodeId ? 'Reemplazar ID actual' : 'Vacía' }}</span>
-                        </button>
+                <!-- VISTA: POOL DE NODOS -->
+                <div v-show="currentTab === 'pool'" class="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-[calc(100vh-140px)]">
+                    <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-md cursor-pointer">
+                            <i data-lucide="upload-cloud" class="w-5 h-5"></i> Cargar JSON de Mysterium
+                            <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
+                        </label>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-gray-700">Nodos Disponibles: {{ pool.length }}</p>
+                            <p class="text-xs text-gray-500">Solo muestra nodos frescos (Oculta bloqueados y en uso).</p>
+                        </div>
                     </div>
-                    <button @click="assignModal.isOpen = false" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded font-medium">Cancelar</button>
-                </div>
-            </div>
-
-            <!-- MODAL: SELECCIONAR NODO DEL POOL (Desde Cuentas) -->
-            <div v-if="selectorModal.isOpen" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="bg-white p-6 rounded-lg shadow-xl w-3/4 max-w-4xl max-h-[80vh] flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">Seleccionar Nodo para: <span class="text-blue-600">{{ accounts[selectorModal.targetIndex]?.name }}</span></h3>
-                        <button @click="selectorModal.isOpen = false" class="text-gray-500 hover:text-black">✕</button>
-                    </div>
-                    <div class="overflow-y-auto flex-1 border rounded">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-gray-100 sticky top-0">
-                                <tr class="text-xs uppercase text-gray-500"><th class="p-3">ID</th><th class="p-3">Score</th><th class="p-3">Acción</th></tr>
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse relative">
+                            <thead class="sticky top-0 z-10 bg-white shadow-sm border-b">
+                                <tr class="text-gray-500 text-xs uppercase tracking-wider">
+                                    <th class="p-4 font-bold">ID del Nodo</th>
+                                    <th class="p-4 font-bold">Ubicación</th>
+                                    <th class="p-4 font-bold">Proveedor (ISP)</th>
+                                    <th class="p-4 font-bold text-center">Calidad</th>
+                                </tr>
                             </thead>
-                            <tbody class="text-sm divide-y">
-                                <tr v-for="node in pool" :key="node.id" class="hover:bg-blue-50">
-                                    <td class="p-3 font-mono">{{ node.id }}</td>
-                                    <td class="p-3 text-green-600 font-bold">{{ node.q_score }}</td>
-                                    <td class="p-3">
-                                        <button @click="confirmSelection(node.id)" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700">Usar este ID</button>
+                            <tbody class="text-sm divide-y divide-gray-100">
+                                <tr v-for="node in pool" :key="node.id" class="hover:bg-blue-50 transition">
+                                    <td class="p-4">
+                                        <div class="flex items-center gap-3">
+                                            <span class="font-mono font-bold text-gray-800">{{ node.id }}</span>
+                                            <button @click="copyToClipboard(node.id)" class="px-2 py-1 bg-gray-200 hover:bg-blue-200 rounded text-xs font-bold transition">Copiar</button>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-gray-600 font-medium">{{ node.country }} / {{ node.city }}</td>
+                                    <td class="p-4 text-gray-600">{{ node.asn_isp }}</td>
+                                    <td class="p-4 font-black text-center text-green-600">{{ node.q_score }}</td>
+                                </tr>
+                                <tr v-if="pool.length === 0">
+                                    <td colspan="4" class="p-16 text-center text-gray-400">
+                                        <i data-lucide="inbox" class="w-16 h-16 mx-auto mb-4 text-gray-300"></i>
+                                        <p class="text-lg font-bold text-gray-500">Pool Vacío</p>
+                                        <p class="mt-1">Sube el archivo .json para nutrir la base de datos.</p>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
 
+                <!-- VISTA: LISTA NEGRA -->
+                <div v-show="currentTab === 'blacklist'" class="bg-white rounded-xl shadow-md border border-gray-200">
+                    <div class="p-6 border-b border-gray-200 bg-red-50 rounded-t-xl flex flex-col gap-3">
+                        <label class="text-sm font-black text-red-800 uppercase tracking-wide">Carga Masiva (Pegar Excel)</label>
+                        <textarea v-model="bulkBlacklistText" rows="3" class="w-full border border-red-200 rounded-lg p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-red-500 bg-white shadow-inner" placeholder="Pega tus IDs bloqueados aquí..."></textarea>
+                        <button @click="processBulkBlacklist" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold self-end transition shadow-md">
+                            Bloquear Nodos Pegados
+                        </button>
+                    </div>
+
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
+                                <th class="p-4 font-bold">Nodo Bloqueado</th>
+                                <th class="p-4 font-bold">Registro de IP</th>
+                                <th class="p-4 font-bold text-right">Libertad a Futuro</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-gray-100">
+                            <tr v-for="(node, index) in blacklist" :key="index" class="hover:bg-gray-50">
+                                <td class="p-4 font-mono text-red-600 font-bold line-through">{{ node.nodeId }}</td>
+                                <td class="p-4 text-gray-500">{{ node.ip }}</td>
+                                <td class="p-4 text-right">
+                                    <button @click="removeBlacklistNode(index)" class="px-4 py-1.5 bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 hover:text-green-700 text-gray-600 rounded-lg text-xs font-bold transition shadow-sm">
+                                        Perdonar (Volver a Pool)
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="blacklist.length === 0">
+                                <td colspan="3" class="p-10 text-center text-gray-400 font-bold">La lista negra está limpia.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
         </main>
+
+        <!-- MODAL: SELECCIONAR NODO DEL POOL -->
+        <div v-if="showPoolModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+                <div class="p-5 border-b bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-black text-gray-800">Seleccionar Nodo para {{ accounts[selectedAccountIndex].name }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">Elige el nodo que pasó tu prueba de fidelidad.</p>
+                    </div>
+                    <button @click="closePoolModal" class="p-2 bg-gray-200 hover:bg-red-100 hover:text-red-600 rounded-full transition font-bold">✕</button>
+                </div>
+                
+                <div class="flex-1 overflow-auto p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div v-for="node in pool" :key="node.id" @click="assignNodeToAccount(node.id)" class="border border-gray-200 rounded-xl p-4 hover:border-blue-500 hover:shadow-md cursor-pointer transition bg-white group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-mono font-bold text-gray-800 group-hover:text-blue-600">{{ node.id }}</span>
+                                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-black">{{ node.q_score }}</span>
+                            </div>
+                            <p class="text-sm text-gray-600"><i data-lucide="map-pin" class="w-3 h-3 inline"></i> {{ node.country }} - {{ node.city }}</p>
+                            <p class="text-xs text-gray-500 mt-1"><i data-lucide="wifi" class="w-3 h-3 inline"></i> {{ node.asn_isp }}</p>
+                        </div>
+                        <div v-if="pool.length === 0" class="col-span-2 text-center py-10 text-gray-500 font-bold">
+                            El Pool está vacío. Sube el JSON en la pestaña "Nodos (Pool)".
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
+
     <script src="app.js"></script>
-    <script>document.addEventListener("DOMContentLoaded", () => { lucide.createIcons(); });</script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => { lucide.createIcons(); });
+    </script>
 </body>
 </html>

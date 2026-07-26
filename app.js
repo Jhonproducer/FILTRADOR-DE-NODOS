@@ -15,17 +15,67 @@ createApp({
         const pool = ref([]);
         const blacklist = ref([]);
 
+        // --- SISTEMA DE FILTRADO PARA EL POOL ---
+        const filters = ref({
+            search: '', // Busca en ID o Ciudad
+            isp: '',    // Busca en ASN/ISP
+            country: '' // Filtro exacto por país
+        });
+        const sortDesc = ref(true); // Controla el orden de Calidad
+
+        const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
+        
+        const clearFilters = () => {
+            filters.value.search = '';
+            filters.value.isp = '';
+            filters.value.country = '';
+        };
+
+        // Genera la lista única de países para el Dropdown basándose en lo que hay en el Pool
+        const uniqueCountries = computed(() => {
+            const countries = pool.value.map(n => n.country).filter(c => c && c !== 'N/A');
+            return [...new Set(countries)].sort();
+        });
+
+        // Motor del Buscador en Vivo
+        const filteredPool = computed(() => {
+            let result = pool.value;
+
+            // Filtro 1: Búsqueda Libre (ID o Ciudad)
+            if (filters.value.search) {
+                const s = filters.value.search.toLowerCase();
+                result = result.filter(n => 
+                    n.id.toLowerCase().includes(s) || 
+                    n.city.toLowerCase().includes(s)
+                );
+            }
+
+            // Filtro 2: ISP / ASN
+            if (filters.value.isp) {
+                const ispSearch = filters.value.isp.toLowerCase();
+                result = result.filter(n => n.asn_isp.toLowerCase().includes(ispSearch));
+            }
+
+            // Filtro 3: País
+            if (filters.value.country) {
+                result = result.filter(n => n.country === filters.value.country);
+            }
+
+            // Ordenación Final por Score
+            return result.sort((a, b) => {
+                return sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score;
+            });
+        });
+
         // Persistencia
         const saveData = () => {
-            localStorage.setItem('vpnerp_accounts_v2', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_v2', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blacklist_v2', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_accounts_v3', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_v3', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blacklist_v3', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            const savedAccounts = JSON.parse(localStorage.getItem('vpnerp_accounts_v2'));
-            
-            // Iniciar 28 cuentas automáticas si está vacío
+            const savedAccounts = JSON.parse(localStorage.getItem('vpnerp_accounts_v3'));
             if (savedAccounts && savedAccounts.length > 0) {
                 accounts.value = savedAccounts;
             } else {
@@ -36,16 +86,16 @@ createApp({
                 }
                 accounts.value = initial;
             }
-            
-            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v2')) || [];
-            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blacklist_v2')) || [];
+            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v3')) || [];
+            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blacklist_v3')) || [];
         };
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
-        // --- SISTEMA UI SIN TIPEO ---
+        // --- SISTEMA UI Y MODAL ---
         const openPoolModal = (index) => {
             selectedAccountIndex.value = index;
+            clearFilters(); // Limpiar filtros al abrir para ver todo
             showPoolModal.value = true;
             nextTick(() => lucide.createIcons());
         };
@@ -55,24 +105,21 @@ createApp({
             selectedAccountIndex.value = null;
         };
 
-        // Asignar haciendo clic en el Modal
         const assignNodeToAccount = (nodeId) => {
             if (selectedAccountIndex.value !== null) {
                 accounts.value[selectedAccountIndex.value].nodeId = nodeId;
-                accounts.value[selectedAccountIndex.value].ip = ''; // Se limpia para que pongas la nueva si quieres
+                accounts.value[selectedAccountIndex.value].ip = ''; 
                 closePoolModal();
                 showStatus('¡Nodo asignado exitosamente!');
             }
         };
 
-        // Opción 1: Nodo Bueno, pero quiero vaciar la cuenta (Devuelve al Pool)
         const releaseNode = (index) => {
             accounts.value[index].nodeId = '';
             accounts.value[index].ip = '';
-            showStatus('Nodo liberado.');
+            showStatus('Nodo liberado y disponible en Pool.');
         };
 
-        // Opción 2: Nodo Malo, lo mando a la lista negra
         const burnNode = (index) => {
             const acc = accounts.value[index];
             const nodeStr = (acc.nodeId || '').trim();
@@ -88,26 +135,22 @@ createApp({
             }
         };
 
-        // --- COLISIONES ---
         const hasCollision = (currentAccount) => {
             if (!currentAccount.ip && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
                 if (acc === currentAccount) return false;
-                
                 const curIp = (currentAccount.ip || '').trim();
                 const accIp = (acc.ip || '').trim();
                 const curNode = (currentAccount.nodeId || '').trim();
                 const accNode = (acc.nodeId || '').trim();
 
-                const ipChoque = accIp !== '' && curIp !== '' && accIp === curIp;
-                const nodoChoque = accNode !== '' && curNode !== '' && accNode === curNode;
-                return ipChoque || nodoChoque;
+                return (accIp !== '' && curIp !== '' && accIp === curIp) || 
+                       (accNode !== '' && curNode !== '' && accNode === curNode);
             });
         };
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
 
-        // --- CUENTAS Y BLACKLIST ---
         const addAccount = () => {
             const num = accounts.value.length + 1;
             accounts.value.push({ name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '' });
@@ -137,12 +180,11 @@ createApp({
         };
 
         const removeBlacklistNode = (index) => {
-            // El famoso botón de "Perdonar"
             blacklist.value.splice(index, 1);
-            showStatus('Nodo perdonado. Volverá a aparecer en el Pool.');
+            showStatus('Nodo perdonado. Volverá al Pool.');
         };
 
-        // --- IMPORTAR JSON DE MYSTERIUM ---
+        // --- IMPORTACIÓN JSON ---
         const importPoolJSON = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -154,12 +196,9 @@ createApp({
                     const rawPool = [];
                     
                     data.forEach(nodo => {
-                        if (nodo.service_type !== "wireguard") return;
-                        if (!nodo.provider_id) return;
+                        if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
                         
                         const idCorto = nodo.provider_id.substring(0, 15);
-                        
-                        // Ocultar si está bloqueado o en uso
                         const enBlacklist = blacklist.value.some(b => b.nodeId === idCorto);
                         const enUso = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                         
@@ -216,6 +255,7 @@ createApp({
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText,
             showPoolModal, selectedAccountIndex, collisionCount,
+            filters, filteredPool, uniqueCountries, toggleSortScore, clearFilters,
             hasCollision, addAccount, removeAccount, releaseNode, burnNode, 
             processBulkBlacklist, removeBlacklistNode, importPoolJSON, 
             copyToClipboard, exportDatabase, openPoolModal, closePoolModal, assignNodeToAccount

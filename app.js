@@ -1,4 +1,4 @@
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 createApp({
     setup() {
@@ -6,48 +6,94 @@ createApp({
         const syncStatus = ref('');
         const bulkBlacklistText = ref('');
         
-        // --- BASE DE DATOS ---
+        // Modal State
+        const showPoolModal = ref(false);
+        const selectedAccountIndex = ref(null);
+        
+        // Base de Datos
         const accounts = ref([]);
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // --- ESTADOS DE MODALES ---
-        // Modal para enviar desde Pool/Blacklist a una Cuenta
-        const assignModal = ref({ isOpen: false, nodeId: '', sourceIndexToRemove: null });
-        // Modal para pedir un ID desde la pestaña Cuentas
-        const selectorModal = ref({ isOpen: false, targetIndex: null });
-
-        // --- PERSISTENCIA ---
+        // Persistencia
         const saveData = () => {
-            localStorage.setItem('vpn_erp_accounts', JSON.stringify(accounts.value));
-            localStorage.setItem('vpn_erp_pool', JSON.stringify(pool.value));
-            localStorage.setItem('vpn_erp_blacklist', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_accounts_v2', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_v2', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blacklist_v2', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            const savedAccounts = JSON.parse(localStorage.getItem('vpn_erp_accounts'));
+            const savedAccounts = JSON.parse(localStorage.getItem('vpnerp_accounts_v2'));
+            
+            // Iniciar 28 cuentas automáticas si está vacío
             if (savedAccounts && savedAccounts.length > 0) {
                 accounts.value = savedAccounts;
             } else {
-                // Pre-cargar 28 cuentas para ahorrar trabajo
-                const initialAccounts = [];
+                const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initialAccounts.push({ name: `LON-${num}`, nodeId: '', ip: '' });
+                    initial.push({ name: `LON-${num}`, nodeId: '', ip: '' });
                 }
-                accounts.value = initialAccounts;
+                accounts.value = initial;
             }
-            pool.value = JSON.parse(localStorage.getItem('vpn_erp_pool')) || [];
-            blacklist.value = JSON.parse(localStorage.getItem('vpn_erp_blacklist')) || [];
+            
+            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v2')) || [];
+            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blacklist_v2')) || [];
         };
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
-        // --- MOTOR DE COLISIONES ---
+        // --- SISTEMA UI SIN TIPEO ---
+        const openPoolModal = (index) => {
+            selectedAccountIndex.value = index;
+            showPoolModal.value = true;
+            nextTick(() => lucide.createIcons());
+        };
+
+        const closePoolModal = () => {
+            showPoolModal.value = false;
+            selectedAccountIndex.value = null;
+        };
+
+        // Asignar haciendo clic en el Modal
+        const assignNodeToAccount = (nodeId) => {
+            if (selectedAccountIndex.value !== null) {
+                accounts.value[selectedAccountIndex.value].nodeId = nodeId;
+                accounts.value[selectedAccountIndex.value].ip = ''; // Se limpia para que pongas la nueva si quieres
+                closePoolModal();
+                showStatus('¡Nodo asignado exitosamente!');
+            }
+        };
+
+        // Opción 1: Nodo Bueno, pero quiero vaciar la cuenta (Devuelve al Pool)
+        const releaseNode = (index) => {
+            accounts.value[index].nodeId = '';
+            accounts.value[index].ip = '';
+            showStatus('Nodo liberado.');
+        };
+
+        // Opción 2: Nodo Malo, lo mando a la lista negra
+        const burnNode = (index) => {
+            const acc = accounts.value[index];
+            const nodeStr = (acc.nodeId || '').trim();
+            const ipStr = (acc.ip || '').trim();
+
+            if(nodeStr) {
+                if(!blacklist.value.some(b => b.nodeId === nodeStr)) {
+                    blacklist.value.unshift({ nodeId: nodeStr, ip: ipStr || 'Desconocida' });
+                }
+                accounts.value[index].nodeId = '';
+                accounts.value[index].ip = '';
+                showStatus('Nodo enviado a Lista Negra.');
+            }
+        };
+
+        // --- COLISIONES ---
         const hasCollision = (currentAccount) => {
             if (!currentAccount.ip && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
                 if (acc === currentAccount) return false;
+                
                 const curIp = (currentAccount.ip || '').trim();
                 const accIp = (acc.ip || '').trim();
                 const curNode = (currentAccount.nodeId || '').trim();
@@ -61,105 +107,59 @@ createApp({
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
 
-        // --- CUENTAS ACTIVAS ---
+        // --- CUENTAS Y BLACKLIST ---
         const addAccount = () => {
             const num = accounts.value.length + 1;
             accounts.value.push({ name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '' });
-            setTimeout(() => { if(window.lucide) lucide.createIcons(); }, 50);
+            nextTick(() => lucide.createIcons());
         };
 
         const removeAccount = (index) => {
-            if(confirm("¿Eliminar esta fila?")) accounts.value.splice(index, 1);
+            if(confirm("¿Eliminar esta cuenta del panel?")) accounts.value.splice(index, 1);
         };
 
-        const burnNode = (index) => {
-            const acc = accounts.value[index];
-            const nodeStr = (acc.nodeId || '').trim();
-            const ipStr = (acc.ip || '').trim();
-            if(!nodeStr && !ipStr) return;
-            
-            if(confirm(`¿Quemar nodo "${nodeStr}" y enviarlo a Lista Negra?`)) {
-                if(nodeStr) {
-                    const truncado = nodeStr.substring(0, 15);
-                    if(!blacklist.value.some(b => b.nodeId === truncado)) {
-                        blacklist.value.unshift({ nodeId: truncado, ip: ipStr || 'Desconocida' });
-                    }
-                }
-                accounts.value[index].nodeId = '';
-                accounts.value[index].ip = '';
-            }
-        };
-
-        // --- FLUJOS DE "CERO COPY-PASTE" ---
-        
-        // 1. Abrir Modal: Del Pool/Blacklist -> Enviar a Cuenta
-        const openAssignModal = (nodeId, blacklistIndex = null) => {
-            assignModal.value.nodeId = nodeId;
-            assignModal.value.sourceIndexToRemove = blacklistIndex; // Si viene de la blacklist, guardamos su index
-            assignModal.value.isOpen = true;
-        };
-
-        // Confirmar envío a la cuenta seleccionada
-        const confirmAssign = (accountIndex) => {
-            accounts.value[accountIndex].nodeId = assignModal.value.nodeId;
-            // Si el nodo venía de la lista negra, lo sacamos de allí (Libertad)
-            if (assignModal.value.sourceIndexToRemove !== null) {
-                blacklist.value.splice(assignModal.value.sourceIndexToRemove, 1);
-            }
-            assignModal.value.isOpen = false;
-            // Te lleva a la pestaña de cuentas automáticamente para que solo pegues la IP
-            currentTab.value = 'accounts'; 
-        };
-
-        // 2. Abrir Modal: De Cuenta -> Buscar en el Pool
-        const openSelectorModal = (source, index) => {
-            selectorModal.value.targetIndex = index;
-            selectorModal.value.isOpen = true;
-        };
-
-        // Confirmar selección desde el pool
-        const confirmSelection = (nodeId) => {
-            accounts.value[selectorModal.value.targetIndex].nodeId = nodeId;
-            selectorModal.value.isOpen = false;
-        };
-
-
-        // --- LISTA NEGRA: LIBERTAD A FUTURO ---
         const processBulkBlacklist = () => {
             if(!bulkBlacklistText.value.trim()) return;
             const rawItems = bulkBlacklistText.value.split(/[\n,\s]+/);
+            let agregados = 0;
             rawItems.forEach(item => {
                 const limpio = item.trim();
                 if(limpio.length >= 10) { 
                     const truncado = limpio.substring(0, 15);
                     if(!blacklist.value.some(b => b.nodeId === truncado)) {
-                        blacklist.value.unshift({ nodeId: truncado, ip: '' });
+                        blacklist.value.unshift({ nodeId: truncado, ip: 'Carga Masiva' });
+                        agregados++;
                     }
                 }
             });
             bulkBlacklistText.value = ''; 
-            alert(`Bloqueo masivo completado.`);
+            showStatus(`Bloqueados ${agregados} nodos.`);
         };
 
-        const restoreToPool = (index) => {
-            if(confirm("¿Perdonar este nodo? Desaparecerá de bloqueados y volverá a estar disponible en el Pool la próxima vez que sincronices.")) {
-                blacklist.value.splice(index, 1);
-            }
+        const removeBlacklistNode = (index) => {
+            // El famoso botón de "Perdonar"
+            blacklist.value.splice(index, 1);
+            showStatus('Nodo perdonado. Volverá a aparecer en el Pool.');
         };
 
-        // --- IMPORTACIÓN POOL JSON ---
+        // --- IMPORTAR JSON DE MYSTERIUM ---
         const importPoolJSON = (event) => {
             const file = event.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
                     const rawPool = [];
+                    
                     data.forEach(nodo => {
-                        if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
+                        if (nodo.service_type !== "wireguard") return;
+                        if (!nodo.provider_id) return;
+                        
                         const idCorto = nodo.provider_id.substring(0, 15);
                         
+                        // Ocultar si está bloqueado o en uso
                         const enBlacklist = blacklist.value.some(b => b.nodeId === idCorto);
                         const enUso = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                         
@@ -173,12 +173,13 @@ createApp({
                             });
                         }
                     });
+
                     pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-                    syncStatus.value = `¡${pool.value.length} nodos cargados!`;
+                    showStatus(`¡${pool.value.length} nodos listos!`);
                     event.target.value = null; 
-                    setTimeout(() => { syncStatus.value = ''; }, 3000);
+                    
                 } catch (err) {
-                    alert("Error leyendo JSON");
+                    alert("Error leyendo JSON. Verifica el archivo.");
                     event.target.value = null;
                 }
             };
@@ -186,9 +187,10 @@ createApp({
         };
 
         const copyToClipboard = async (text) => {
-            await navigator.clipboard.writeText(text);
-            syncStatus.value = '¡Copiado!';
-            setTimeout(() => { syncStatus.value = ''; }, 2000);
+            try {
+                await navigator.clipboard.writeText(text);
+                showStatus('ID Copiado');
+            } catch (err) { console.error(err); }
         };
 
         const exportDatabase = () => {
@@ -197,8 +199,13 @@ createApp({
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `VPN_ERP_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `VPN_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
+        };
+
+        const showStatus = (msg) => {
+            syncStatus.value = msg;
+            setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
         onMounted(() => {
@@ -207,12 +214,11 @@ createApp({
         });
 
         return {
-            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, collisionCount,
-            assignModal, selectorModal,
-            hasCollision, addAccount, removeAccount, burnNode, 
-            openAssignModal, confirmAssign, openSelectorModal, confirmSelection,
-            processBulkBlacklist, restoreToPool, importPoolJSON, 
-            copyToClipboard, exportDatabase
+            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText,
+            showPoolModal, selectedAccountIndex, collisionCount,
+            hasCollision, addAccount, removeAccount, releaseNode, burnNode, 
+            processBulkBlacklist, removeBlacklistNode, importPoolJSON, 
+            copyToClipboard, exportDatabase, openPoolModal, closePoolModal, assignNodeToAccount
         };
     }
 }).mount('#app');

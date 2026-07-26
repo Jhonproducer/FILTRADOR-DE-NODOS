@@ -9,12 +9,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style> 
         [v-cloak] { display: none; } 
-        /* Scrollbar estilizado */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        /* Animación suave para modales y alertas */
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
@@ -54,12 +52,10 @@
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col overflow-hidden h-full">
             
-            <!-- HEADER CENTRADITO Y LIMPIO -->
             <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 px-10 py-5 flex justify-between items-center z-10 sticky top-0">
                 <h2 class="text-xl font-bold text-slate-800 tracking-tight">
                     {{ currentTab === 'accounts' ? 'Gestión de Cuentas' : currentTab === 'pool' ? 'Base de Datos de Nodos' : 'Registro de Nodos Bloqueados' }}
                 </h2>
-                <!-- Notificación Flotante -->
                 <transition name="fade">
                     <div v-if="syncStatus" class="px-5 py-2 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 shadow-sm flex items-center gap-2">
                         <i data-lucide="info" class="w-4 h-4"></i> {{ syncStatus }}
@@ -72,13 +68,11 @@
                 <!-- ==================== VISTA: CUENTAS ==================== -->
                 <div v-show="currentTab === 'accounts'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
                     
-                    <!-- BARRA SUPERIOR DE CUENTAS (Centradita) -->
                     <div class="p-5 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50/50">
                         <button @click="addAccount" class="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm">
                             <i data-lucide="plus" class="w-4 h-4"></i> Nueva
                         </button>
                         
-                        <!-- Buscador Centrado -->
                         <div class="relative w-96 flex-shrink-0">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
@@ -86,7 +80,6 @@
                             <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, ID, proveedor..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-center font-medium placeholder-slate-400">
                         </div>
 
-                        <!-- Alerta Colisión -->
                         <div class="min-w-[120px] text-right">
                             <span v-if="collisionCount > 0" class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 shadow-sm animate-pulse">
                                 <i data-lucide="alert-triangle" class="w-4 h-4"></i> {{ collisionCount }} ALERTAS
@@ -94,7 +87,6 @@
                         </div>
                     </div>
                     
-                    <!-- TABLA DE CUENTAS (Perfectamente alineada) -->
                     <div class="flex-1 overflow-auto">
                         <table class="w-full text-left border-collapse table-fixed">
                             <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
@@ -111,17 +103,14 @@
                             <tbody class="text-sm divide-y divide-slate-100">
                                 <tr v-for="acc in processedAccounts" :key="acc.uid" :class="{'bg-rose-50/50': hasCollision(acc), 'hover:bg-slate-50 transition-colors': !hasCollision(acc)}">
                                     
-                                    <!-- 1. Cuenta (Centradito) -->
                                     <td class="p-3 align-middle">
-                                        <input v-model="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all">
+                                        <input v-model="acc.name" :title="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all cursor-text hover:cursor-text">
                                     </td>
                                     
-                                    <!-- 2. Nodo ID + Botón Asignar/Copiar -->
                                     <td class="p-3 align-middle">
                                         <div class="flex items-center justify-center gap-2">
-                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" placeholder="Vacío" maxlength="14" class="w-36 bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide">
+                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" :title="acc.nodeId" placeholder="Vacío" maxlength="14" class="w-36 bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide cursor-text">
                                             
-                                            <!-- Botones Elegantes (Iconos) -->
                                             <div class="flex gap-1">
                                                 <button @click="openPoolModal(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool">
                                                     <i data-lucide="search" class="w-4 h-4"></i>
@@ -133,13 +122,12 @@
                                         </div>
                                     </td>
 
-                                    <!-- 3. Proveedor (Centradito) -->
                                     <td class="p-3 align-middle text-center">
-                                        <span v-if="acc.asn_isp" class="inline-block px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold truncate max-w-[160px]">{{ acc.asn_isp }}</span>
+                                        <!-- Aquí está la magia: :title="acc.asn_isp" mostrará el proveedor completo al pasar el ratón -->
+                                        <span v-if="acc.asn_isp" :title="acc.asn_isp" class="inline-block px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold truncate max-w-[160px] cursor-help">{{ acc.asn_isp }}</span>
                                         <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
 
-                                    <!-- 4. Quality (Centradito) -->
                                     <td class="p-3 align-middle text-center">
                                         <div v-if="acc.q_score" class="inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-black border" :class="acc.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">
                                             {{ acc.q_score }}
@@ -147,12 +135,10 @@
                                         <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
 
-                                    <!-- 5. IP (Centradito) -->
                                     <td class="p-3 align-middle">
-                                        <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" placeholder="0.0.0.0" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center text-slate-600 font-medium outline-none transition-all">
+                                        <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" :title="acc.ip" placeholder="0.0.0.0" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center text-slate-600 font-medium outline-none transition-all cursor-text">
                                     </td>
 
-                                    <!-- 6. Estado (Centradito) -->
                                     <td class="p-3 align-middle text-center">
                                         <div v-if="hasCollision(acc)" class="inline-flex items-center justify-center px-3 py-1.5 bg-rose-100 text-rose-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-rose-200 shadow-sm animate-pulse">
                                             Choque
@@ -163,7 +149,6 @@
                                         <span v-else class="inline-flex items-center justify-center px-3 py-1.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">Vacío</span>
                                     </td>
 
-                                    <!-- 7. Opciones (Centradito, minimalista) -->
                                     <td class="p-3 align-middle text-center">
                                         <div class="flex items-center justify-center gap-1" v-if="acc.nodeId">
                                             <button @click="releaseNode(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Liberar al Pool">
@@ -204,7 +189,6 @@
                         <span class="text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-xl border shadow-sm uppercase tracking-wider">Total Disponibles: {{ pool.length }}</span>
                     </div>
 
-                    <!-- Filtros Centraditos -->
                     <div class="p-5 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-center">
                         <div class="w-64">
                             <input type="text" v-model="filters.nodeId" placeholder="Filtrar por ID..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium">
@@ -237,13 +221,14 @@
                                     <td class="p-4 align-middle text-center">
                                         <div class="inline-flex items-center gap-2">
                                             <span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border px-3 py-1.5 rounded-lg">{{ node.id }}</span>
-                                            <button @click="copyToClipboard(node.id)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors">
+                                            <button @click="copyToClipboard(node.id)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Copiar ID">
                                                 <i data-lucide="copy" class="w-4 h-4"></i>
                                             </button>
                                         </div>
                                     </td>
-                                    <td class="p-4 align-middle text-center font-medium text-slate-600">{{ node.city }}</td>
-                                    <td class="p-4 align-middle text-center text-slate-600">{{ node.asn_isp }}</td>
+                                    <!-- Hover sobre ciudad y proveedor -->
+                                    <td class="p-4 align-middle text-center font-medium text-slate-600" :title="node.city">{{ node.city }}</td>
+                                    <td class="p-4 align-middle text-center text-slate-600" :title="node.asn_isp">{{ node.asn_isp }}</td>
                                     <td class="p-4 align-middle text-center">
                                         <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ node.q_score }}</span>
                                     </td>
@@ -298,7 +283,8 @@
                                 <td class="p-4 align-middle text-center">
                                     <span class="font-mono text-rose-600 font-bold uppercase bg-rose-50 px-3 py-1 rounded-lg border border-rose-100">{{ node.nodeId }}</span>
                                 </td>
-                                <td class="p-4 align-middle text-center text-slate-500 font-medium">{{ node.ip }}</td>
+                                <!-- Hover sobre la IP guardada en Blacklist -->
+                                <td class="p-4 align-middle text-center text-slate-500 font-medium" :title="node.ip">{{ node.ip }}</td>
                                 <td class="p-4 align-middle text-center">
                                     <button @click="removeBlacklistNode(index)" class="px-4 py-1.5 bg-white border border-slate-200 hover:border-emerald-400 hover:text-emerald-600 text-slate-500 rounded-lg text-xs font-bold transition-colors shadow-sm">
                                         Perdonar
@@ -341,8 +327,9 @@
                                         Q: {{ node.q_score }}
                                     </div>
                                     <h4 class="font-mono font-bold text-slate-800 text-sm uppercase tracking-wide group-hover:text-indigo-600 transition-colors mb-2">{{ node.id }}</h4>
-                                    <p class="text-xs text-slate-500 font-medium mb-1 truncate">{{ node.city }}</p>
-                                    <p class="text-xs text-slate-600 font-bold truncate">{{ node.asn_isp }}</p>
+                                    <!-- Hover sobre ciudad y proveedor truncados en las tarjetas -->
+                                    <p class="text-xs text-slate-500 font-medium mb-1 truncate cursor-help" :title="node.city">{{ node.city }}</p>
+                                    <p class="text-xs text-slate-600 font-bold truncate cursor-help" :title="node.asn_isp">{{ node.asn_isp }}</p>
                                 </div>
                             </div>
                             <div v-if="filteredPool.length === 0" class="col-span-4 text-center py-20 text-slate-400 font-bold">

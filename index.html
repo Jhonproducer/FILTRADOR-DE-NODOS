@@ -54,7 +54,7 @@
                 <h2 class="text-2xl font-semibold text-gray-700 capitalize">
                     {{ currentTab === 'dashboard' ? 'Resumen General' : 
                        currentTab === 'accounts' ? 'Gestor de Cuentas' :
-                       currentTab === 'pool' ? 'Nodos Frescos (Mysterium API)' : 'Nodos Bloqueados' }}
+                       currentTab === 'pool' ? 'Nodos Frescos (Importación)' : 'Nodos Bloqueados' }}
                 </h2>
                 <div class="flex items-center gap-4">
                     <span v-if="syncStatus" class="text-sm px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full font-medium animate-pulse">{{ syncStatus }}</span>
@@ -158,10 +158,11 @@
                 <!-- TAB: POOL DE NODOS -->
                 <div v-show="currentTab === 'pool'" class="bg-white rounded-lg shadow border border-gray-200 flex flex-col h-full">
                     <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                        <button @click="fetchFromAPI" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition flex items-center gap-2 shadow-sm">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Consultar Mysterium API
-                        </button>
-                        <p class="text-xs text-gray-500 max-w-md text-right">Lista filtrada: Wireguard, Residencial, Calidad > 2.5. Los nodos que ya están en uso o en lista negra no aparecen aquí.</p>
+                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-md text-sm font-medium transition flex items-center gap-2 shadow-sm cursor-pointer">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Importar JSON de Mysterium
+                            <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
+                        </label>
+                        <p class="text-xs text-gray-500 max-w-md text-right">El sistema filtrará automáticamente (Wireguard, Residencial, Calidad > 2.5) y descartará nodos quemados o en uso.</p>
                     </div>
                     <div class="flex-1 overflow-auto">
                         <table class="w-full text-left border-collapse relative">
@@ -187,7 +188,7 @@
                                 <tr v-if="pool.length === 0">
                                     <td colspan="4" class="p-12 text-center text-gray-400">
                                         <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i>
-                                        Pool vacío o no se ha sincronizado. Haz clic en "Consultar API".
+                                        Pool vacío. Exporta el JSON de la API con tu curl y súbelo aquí.
                                     </td>
                                 </tr>
                             </tbody>

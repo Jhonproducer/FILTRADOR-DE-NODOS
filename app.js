@@ -15,53 +15,45 @@ createApp({
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // --- SISTEMA DE FILTRADO PARA EL POOL ---
+        // --- SISTEMA DE FILTROS SEPARADOS (Sin País) ---
         const filters = ref({
-            search: '', // Busca en ID o Ciudad
-            isp: '',    // Busca en ASN/ISP
-            country: '' // Filtro exacto por país
+            nodeId: '',
+            city: '',
+            isp: ''
         });
-        const sortDesc = ref(true); // Controla el orden de Calidad
+        const sortDesc = ref(true); // true = Mayor Calidad primero
 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
         
         const clearFilters = () => {
-            filters.value.search = '';
+            filters.value.nodeId = '';
+            filters.value.city = '';
             filters.value.isp = '';
-            filters.value.country = '';
         };
 
-        // Genera la lista única de países para el Dropdown basándose en lo que hay en el Pool
-        const uniqueCountries = computed(() => {
-            const countries = pool.value.map(n => n.country).filter(c => c && c !== 'N/A');
-            return [...new Set(countries)].sort();
-        });
-
-        // Motor del Buscador en Vivo
+        // Motor de búsqueda avanzado y separado
         const filteredPool = computed(() => {
             let result = pool.value;
 
-            // Filtro 1: Búsqueda Libre (ID o Ciudad)
-            if (filters.value.search) {
-                const s = filters.value.search.toLowerCase();
-                result = result.filter(n => 
-                    n.id.toLowerCase().includes(s) || 
-                    n.city.toLowerCase().includes(s)
-                );
+            // Filtro 1: Solo ID
+            if (filters.value.nodeId) {
+                const s = filters.value.nodeId.toLowerCase().trim();
+                result = result.filter(n => n.id.toLowerCase().includes(s));
             }
 
-            // Filtro 2: ISP / ASN
+            // Filtro 2: Solo Ciudad
+            if (filters.value.city) {
+                const c = filters.value.city.toLowerCase().trim();
+                result = result.filter(n => (n.city || '').toLowerCase().includes(c));
+            }
+
+            // Filtro 3: Solo ISP/ASN
             if (filters.value.isp) {
-                const ispSearch = filters.value.isp.toLowerCase();
-                result = result.filter(n => n.asn_isp.toLowerCase().includes(ispSearch));
+                const ispSearch = filters.value.isp.toLowerCase().trim();
+                result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(ispSearch));
             }
 
-            // Filtro 3: País
-            if (filters.value.country) {
-                result = result.filter(n => n.country === filters.value.country);
-            }
-
-            // Ordenación Final por Score
+            // Ordenar por Calidad
             return result.sort((a, b) => {
                 return sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score;
             });
@@ -69,13 +61,13 @@ createApp({
 
         // Persistencia
         const saveData = () => {
-            localStorage.setItem('vpnerp_accounts_v3', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_v3', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blacklist_v3', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_accounts_v4', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_v4', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blacklist_v4', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            const savedAccounts = JSON.parse(localStorage.getItem('vpnerp_accounts_v3'));
+            const savedAccounts = JSON.parse(localStorage.getItem('vpnerp_accounts_v4'));
             if (savedAccounts && savedAccounts.length > 0) {
                 accounts.value = savedAccounts;
             } else {
@@ -86,8 +78,8 @@ createApp({
                 }
                 accounts.value = initial;
             }
-            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v3')) || [];
-            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blacklist_v3')) || [];
+            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v4')) || [];
+            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blacklist_v4')) || [];
         };
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
@@ -95,9 +87,8 @@ createApp({
         // --- SISTEMA UI Y MODAL ---
         const openPoolModal = (index) => {
             selectedAccountIndex.value = index;
-            clearFilters(); // Limpiar filtros al abrir para ver todo
+            clearFilters(); 
             showPoolModal.value = true;
-            nextTick(() => lucide.createIcons());
         };
 
         const closePoolModal = () => {
@@ -110,14 +101,14 @@ createApp({
                 accounts.value[selectedAccountIndex.value].nodeId = nodeId;
                 accounts.value[selectedAccountIndex.value].ip = ''; 
                 closePoolModal();
-                showStatus('¡Nodo asignado exitosamente!');
+                showStatus('¡Nodo asignado!');
             }
         };
 
         const releaseNode = (index) => {
             accounts.value[index].nodeId = '';
             accounts.value[index].ip = '';
-            showStatus('Nodo liberado y disponible en Pool.');
+            showStatus('Nodo liberado al Pool.');
         };
 
         const burnNode = (index) => {
@@ -131,7 +122,7 @@ createApp({
                 }
                 accounts.value[index].nodeId = '';
                 accounts.value[index].ip = '';
-                showStatus('Nodo enviado a Lista Negra.');
+                showStatus('Nodo Bloqueado.');
             }
         };
 
@@ -154,7 +145,6 @@ createApp({
         const addAccount = () => {
             const num = accounts.value.length + 1;
             accounts.value.push({ name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '' });
-            nextTick(() => lucide.createIcons());
         };
 
         const removeAccount = (index) => {
@@ -181,7 +171,7 @@ createApp({
 
         const removeBlacklistNode = (index) => {
             blacklist.value.splice(index, 1);
-            showStatus('Nodo perdonado. Volverá al Pool.');
+            showStatus('Nodo perdonado.');
         };
 
         // --- IMPORTACIÓN JSON ---
@@ -205,7 +195,7 @@ createApp({
                         if (!enBlacklist && !enUso) {
                             rawPool.push({
                                 id: idCorto,
-                                country: nodo.location?.country || 'N/A',
+                                // GB ya está implícito, no necesitamos el país.
                                 city: nodo.location?.city || 'N/A',
                                 asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`,
                                 q_score: (nodo.quality?.quality || 0).toFixed(2)
@@ -214,11 +204,11 @@ createApp({
                     });
 
                     pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-                    showStatus(`¡${pool.value.length} nodos listos!`);
+                    showStatus(`¡${pool.value.length} nodos cargados!`);
                     event.target.value = null; 
                     
                 } catch (err) {
-                    alert("Error leyendo JSON. Verifica el archivo.");
+                    alert("Error leyendo JSON.");
                     event.target.value = null;
                 }
             };
@@ -228,7 +218,7 @@ createApp({
         const copyToClipboard = async (text) => {
             try {
                 await navigator.clipboard.writeText(text);
-                showStatus('ID Copiado');
+                showStatus('¡ID Copiado!');
             } catch (err) { console.error(err); }
         };
 
@@ -238,7 +228,7 @@ createApp({
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `VPN_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `VPN_ERP_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
         };
 
@@ -247,18 +237,25 @@ createApp({
             setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
+        // AL INICIAR
         onMounted(() => {
             loadData();
-            setTimeout(() => { if(window.lucide) lucide.createIcons(); }, 100);
         });
 
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText,
             showPoolModal, selectedAccountIndex, collisionCount,
-            filters, filteredPool, uniqueCountries, toggleSortScore, clearFilters,
+            filters, filteredPool, toggleSortScore, clearFilters,
             hasCollision, addAccount, removeAccount, releaseNode, burnNode, 
             processBulkBlacklist, removeBlacklistNode, importPoolJSON, 
             copyToClipboard, exportDatabase, openPoolModal, closePoolModal, assignNodeToAccount
         };
+    },
+    // Este Hook de Vue garantiza que los iconos se rendericen SIEMPRE 
+    // después de cualquier cambio en el DOM (abrir modal, asignar nodo, etc.)
+    updated() {
+        if(window.lucide) {
+            lucide.createIcons();
+        }
     }
 }).mount('#app');

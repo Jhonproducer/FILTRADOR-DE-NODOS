@@ -1,183 +1,35 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VPN Node Manager - Enterprise</title>
-    <!-- Tailwind CSS (Diseño) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue.js 3 (Reactividad) -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Iconos (Lucide) -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        [v-cloak] { display: none; }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
-    <div id="app" v-cloak class="w-full flex">
-        
-        <!-- BARRA LATERAL (Sidebar) -->
-        <aside class="w-64 bg-gray-900 text-white flex flex-col transition-all duration-300">
-            <div class="p-6">
-                <h1 class="text-xl font-bold tracking-wider">VPN ADMIN</h1>
-                <p class="text-xs text-gray-400 mt-1">Enterprise Node Manager</p>
-            </div>
-            
-            <nav class="flex-1 px-4 space-y-2">
-                <button @click="currentTab = 'dashboard'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'dashboard'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
-                </button>
-                <button @click="currentTab = 'accounts'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'accounts'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="users"></i> Cuentas Activas
-                </button>
-                <button @click="currentTab = 'pool'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="server"></i> Pool de Nodos
-                </button>
-                <button @click="currentTab = 'blacklist'" :class="{'bg-gray-800 border-l-4 border-blue-500': currentTab === 'blacklist'}" class="w-full flex items-center gap-3 px-4 py-3 rounded text-sm font-medium hover:bg-gray-800 transition">
-                    <i data-lucide="shield-alert"></i> Lista Negra
-                </button>
-            </nav>
-
-            <div class="p-4 border-t border-gray-700">
-                <button @click="exportData" class="w-full flex justify-center items-center gap-2 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition">
-                    <i data-lucide="download"></i> Exportar BD
-                </button>
-            </div>
-        </aside>
-
-        <!-- CONTENIDO PRINCIPAL -->
-        <main class="flex-1 flex flex-col overflow-hidden">
-            <!-- Header -->
-            <header class="bg-white shadow-sm border-b px-8 py-4 flex justify-between items-center">
-                <h2 class="text-2xl font-semibold text-gray-700 capitalize">{{ currentTab === 'dashboard' ? 'Resumen General' : currentTab }}</h2>
-                <div class="flex items-center gap-4">
-                    <span v-if="syncStatus" class="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full animate-pulse">{{ syncStatus }}</span>
-                </div>
-            </header>
-
-            <!-- Área de Vistas (Tabs) -->
-            <div class="flex-1 overflow-auto p-8">
-                
-                <!-- TAB: DASHBOARD -->
-                <div v-show="currentTab === 'dashboard'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <p class="text-gray-500 text-sm font-medium">Cuentas Activas</p>
-                        <p class="text-3xl font-bold text-gray-800 mt-2">{{ accounts.length }}</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <p class="text-gray-500 text-sm font-medium">Nodos en Pool</p>
-                        <p class="text-3xl font-bold text-blue-600 mt-2">{{ pool.length }}</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <p class="text-gray-500 text-sm font-medium">Colisiones / Alertas</p>
-                        <p class="text-3xl font-bold text-red-500 mt-2">{{ collisionCount }}</p>
-                    </div>
-                </div>
-
-                <!-- TAB: CUENTAS ACTIVAS -->
+<!-- TAB: CUENTAS ACTIVAS -->
                 <div v-show="currentTab === 'accounts'" class="bg-white rounded-lg shadow-sm border border-gray-100">
-                    <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                        <button @click="addNewAccount" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition">
-                            + Nueva Cuenta
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <button @click="addAccount" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition">
+                            + Agregar Nueva Fila
                         </button>
-                        <input type="text" placeholder="Buscar cuenta..." class="border rounded px-3 py-2 text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none">
+                        <span class="text-xs text-gray-500">Todo es editable libremente. Las colisiones se marcan en rojo.</span>
                     </div>
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                                <th class="p-4 font-medium">Cuenta</th>
-                                <th class="p-4 font-medium">Nodo ID (15)</th>
-                                <th class="p-4 font-medium">IP Asignada</th>
-                                <th class="p-4 font-medium">Estado</th>
-                                <th class="p-4 font-medium text-right">Acciones</th>
+                            <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="p-4 font-medium border-b w-48">Nombre Cuenta</th>
+                                <th class="p-4 font-medium border-b w-48">Nodo ID (Asignado)</th>
+                                <th class="p-4 font-medium border-b w-48">IP Actual</th>
+                                <th class="p-4 font-medium border-b text-center">Estado</th>
+                                <th class="p-4 font-medium border-b text-right">Acciones Manuales</th>
                             </tr>
                         </thead>
                         <tbody class="text-sm divide-y divide-gray-100">
                             <tr v-for="(acc, index) in accounts" :key="index" :class="{'bg-red-50': hasCollision(acc)}">
-                                <td class="p-4"><input v-model="acc.name" class="border-b border-dashed border-gray-300 focus:border-blue-500 outline-none bg-transparent"></td>
-                                <td class="p-4 font-mono text-gray-600"><input v-model="acc.nodeId" class="border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-32 bg-transparent uppercase" maxlength="15"></td>
-                                <td class="p-4"><input v-model="acc.ip" class="border-b border-dashed border-gray-300 focus:border-blue-500 outline-none w-32 bg-transparent"></td>
-                                <td class="p-4">
-                                    <span v-if="hasCollision(acc)" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">Choque IP/Nodo</span>
-                                    <span v-else class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">OK</span>
+                                <td class="p-4"><input v-model="acc.name" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white"></td>
+                                <td class="p-4 font-mono"><input v-model="acc.nodeId" placeholder="Pegar ID aquí" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white uppercase"></td>
+                                <td class="p-4"><input v-model="acc.ip" placeholder="Pegar IP aquí" class="border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white"></td>
+                                <td class="p-4 text-center">
+                                    <span v-if="hasCollision(acc)" class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold shadow-sm">⚠️ CHOQUE EN SISTEMA</span>
+                                    <span v-else class="text-gray-400 text-xs">Válido</span>
                                 </td>
-                                <td class="p-4 text-right space-x-2">
-                                    <button @click="replaceFromPool(index)" class="text-blue-600 hover:text-blue-800 text-xs underline">Auto-Reemplazo</button>
-                                    <button @click="moveToBlacklist(index)" class="text-red-600 hover:text-red-800 text-xs underline">Bloquear</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- TAB: POOL DE NODOS -->
-                <div v-show="currentTab === 'pool'" class="bg-white rounded-lg shadow-sm border border-gray-100">
-                    <div class="p-4 border-b border-gray-100 flex gap-4 bg-gray-50">
-                        <button @click="fetchFromAPI" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition flex items-center gap-2">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API
-                        </button>
-                        <!-- Import JSON Oculto detrás de un label -->
-                        <label class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded text-sm font-medium transition flex items-center gap-2 cursor-pointer">
-                            <i data-lucide="upload" class="w-4 h-4"></i> Importar JSON
-                            <input type="file" @change="importJSON" accept=".json" class="hidden">
-                        </label>
-                    </div>
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-white text-gray-500 text-xs uppercase tracking-wider border-b">
-                                <th class="p-4 font-medium">ID (15 chars)</th>
-                                <th class="p-4 font-medium">País / Ciudad</th>
-                                <th class="p-4 font-medium">ASN - ISP</th>
-                                <th class="p-4 font-medium">Score (Q)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-for="node in pool" :key="node.id" class="hover:bg-gray-50">
-                                <td class="p-4 font-mono text-gray-600">{{ node.id }}</td>
-                                <td class="p-4">{{ node.country }} / {{ node.city }}</td>
-                                <td class="p-4 text-gray-500">{{ node.asn_isp }}</td>
-                                <td class="p-4 font-semibold text-green-600">{{ node.q_score }}</td>
-                            </tr>
-                            <tr v-if="pool.length === 0">
-                                <td colspan="4" class="p-8 text-center text-gray-400">Pool vacío. Sincroniza con la API.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- TAB: LISTA NEGRA -->
-                <div v-show="currentTab === 'blacklist'" class="bg-white rounded-lg shadow-sm border border-gray-100">
-                    <div class="p-4 border-b border-gray-100">
-                        <p class="text-sm text-gray-500">Nodos que han fallado pruebas o IPs quemadas.</p>
-                    </div>
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                                <th class="p-4 font-medium">Nodo ID</th>
-                                <th class="p-4 font-medium">Última IP Conocida</th>
-                                <th class="p-4 font-medium text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-for="(node, index) in blacklist" :key="index">
-                                <td class="p-4 font-mono text-red-600 line-through">{{ node.nodeId }}</td>
-                                <td class="p-4 text-gray-500">{{ node.ip }}</td>
-                                <td class="p-4 text-right">
-                                    <button @click="restoreFromBlacklist(index)" class="text-blue-600 hover:text-blue-800 text-xs underline">Restaurar al Pool</button>
+                                <td class="p-4 text-right space-x-3">
+                                    <button @click="burnNode(index)" class="text-orange-600 hover:text-orange-800 text-xs font-medium uppercase tracking-wider" title="Limpia la fila y mueve el nodo a Bloqueados">Quemar a Bloqueados</button>
+                                    <button @click="removeAccount(index)" class="text-red-500 hover:text-red-700 font-bold" title="Eliminar fila por completo">✕</button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- Cargar Lógica -->
-    <script src="app.js"></script>
-    <script>lucide.createIcons();</script>
-</body>
-</html>

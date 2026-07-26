@@ -3,259 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VPN Node Manager - ERP Nivel Estratégico</title>
+    <title>VPN Manager | Enterprise UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style> [v-cloak] { display: none; } </style>
+    <style> 
+        [v-cloak] { display: none; } 
+        /* Scrollbar estilizado */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Animación suave para modales y alertas */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans h-screen flex overflow-hidden">
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden antialiased selection:bg-indigo-200">
     <div id="app" v-cloak class="w-full flex h-full relative">
         
-        <!-- SIDEBAR -->
-        <aside class="w-64 bg-gray-900 text-white flex flex-col h-full shadow-2xl z-20">
-            <div class="p-6 border-b border-gray-800">
-                <h1 class="text-2xl font-black tracking-wider text-blue-500">VPN<span class="text-white">ERP</span></h1>
-                <p class="text-xs text-gray-400 mt-1">Control Estratégico Anti-Choque</p>
+        <!-- SIDEBAR PREMIUM -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col h-full shadow-2xl z-20 shrink-0">
+            <div class="p-8 pb-6 border-b border-slate-800 flex flex-col items-center text-center">
+                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="shield-check" class="text-white w-7 h-7"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-widest text-white">VPN<span class="text-indigo-400">ERP</span></h1>
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-2 font-bold">Control Estratégico</p>
             </div>
             
-            <nav class="flex-1 px-4 space-y-2 mt-6">
-                <button @click="currentTab = 'accounts'" :class="{'bg-blue-600 shadow-lg': currentTab === 'accounts', 'hover:bg-gray-800': currentTab !== 'accounts'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all">
-                    <i data-lucide="users"></i> Panel de Cuentas
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button @click="currentTab = 'accounts'" :class="{'bg-indigo-600 text-white shadow-md': currentTab === 'accounts', 'hover:bg-slate-800 hover:text-white': currentTab !== 'accounts'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layers" class="w-5 h-5"></i> Cuentas
                 </button>
-                <button @click="currentTab = 'pool'" :class="{'bg-blue-600 shadow-lg': currentTab === 'pool', 'hover:bg-gray-800': currentTab !== 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all">
-                    <i data-lucide="server"></i> Nodos (Pool)
+                <button @click="currentTab = 'pool'" :class="{'bg-indigo-600 text-white shadow-md': currentTab === 'pool', 'hover:bg-slate-800 hover:text-white': currentTab !== 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="server" class="w-5 h-5"></i> Pool Nodos
                 </button>
-                <button @click="currentTab = 'blacklist'" :class="{'bg-red-600 shadow-lg': currentTab === 'blacklist', 'hover:bg-gray-800': currentTab !== 'blacklist'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all">
-                    <i data-lucide="shield-off"></i> Lista Negra
+                <button @click="currentTab = 'blacklist'" :class="{'bg-rose-600 text-white shadow-md': currentTab === 'blacklist', 'hover:bg-slate-800 hover:text-white': currentTab !== 'blacklist'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="shield-ban" class="w-5 h-5"></i> Bloqueados
                 </button>
             </nav>
 
-            <div class="p-4 bg-gray-900">
-                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 px-4 py-3 rounded-lg text-sm font-bold transition text-white">
-                    <i data-lucide="download" class="w-4 h-4"></i> Respaldar Base
+            <div class="p-6">
+                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white">
+                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Respaldar
                 </button>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col overflow-hidden h-full bg-gray-50">
-            <header class="bg-white shadow-sm border-b px-8 py-5 flex justify-between items-center z-10">
-                <h2 class="text-2xl font-bold text-gray-800">
-                    {{ currentTab === 'accounts' ? 'Gestión Maestra de Cuentas' : currentTab === 'pool' ? 'Base de Nodos Disponibles' : 'Registro de Nodos Bloqueados' }}
+        <main class="flex-1 flex flex-col overflow-hidden h-full">
+            
+            <!-- HEADER CENTRADITO Y LIMPIO -->
+            <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 px-10 py-5 flex justify-between items-center z-10 sticky top-0">
+                <h2 class="text-xl font-bold text-slate-800 tracking-tight">
+                    {{ currentTab === 'accounts' ? 'Gestión de Cuentas' : currentTab === 'pool' ? 'Base de Datos de Nodos' : 'Registro de Nodos Bloqueados' }}
                 </h2>
-                <span v-if="syncStatus" class="text-sm px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full font-bold animate-pulse shadow-sm">{{ syncStatus }}</span>
+                <!-- Notificación Flotante -->
+                <transition name="fade">
+                    <div v-if="syncStatus" class="px-5 py-2 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 shadow-sm flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4"></i> {{ syncStatus }}
+                    </div>
+                </transition>
             </header>
 
-            <div class="flex-1 overflow-auto p-6">
+            <div class="flex-1 overflow-auto p-8">
                 
-                <!-- VISTA: CUENTAS -->
-                <div v-show="currentTab === 'accounts'" class="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-full">
+                <!-- ==================== VISTA: CUENTAS ==================== -->
+                <div v-show="currentTab === 'accounts'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
                     
-                    <!-- Top Bar Cuentas -->
-                    <div class="p-4 border-b border-gray-200 flex flex-wrap gap-4 justify-between items-center bg-gray-50 rounded-t-xl">
-                        <div class="flex items-center gap-3">
-                            <button @click="addAccount" class="bg-gray-800 hover:bg-black text-white px-5 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-sm">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Agregar Cuenta
-                            </button>
-                            <span v-if="collisionCount > 0" class="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-xs font-black border border-red-300 shadow-sm animate-pulse">
-                                ⚠️ {{ collisionCount }} COLISIONES ACTIVAS
-                            </span>
-                        </div>
+                    <!-- BARRA SUPERIOR DE CUENTAS (Centradita) -->
+                    <div class="p-5 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50/50">
+                        <button @click="addAccount" class="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Nueva
+                        </button>
                         
-                        <!-- NUEVO: Buscador de Cuentas -->
-                        <div class="flex items-center gap-3">
-                            <div class="relative w-72">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i data-lucide="search" class="w-4 h-4 text-gray-400"></i>
-                                </div>
-                                <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, nodo, o IP..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                        <!-- Buscador Centrado -->
+                        <div class="relative w-96 flex-shrink-0">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                             </div>
-                            <span class="text-xs font-bold text-gray-500 bg-white px-3 py-2 rounded-lg border shadow-sm">Mostrando: {{ processedAccounts.length }}</span>
+                            <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, ID, proveedor..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-center font-medium placeholder-slate-400">
+                        </div>
+
+                        <!-- Alerta Colisión -->
+                        <div class="min-w-[120px] text-right">
+                            <span v-if="collisionCount > 0" class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 shadow-sm animate-pulse">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i> {{ collisionCount }} ALERTAS
+                            </span>
                         </div>
                     </div>
                     
+                    <!-- TABLA DE CUENTAS (Perfectamente alineada) -->
                     <div class="flex-1 overflow-auto">
-                        <table class="w-full text-left border-collapse min-w-max">
-                            <thead class="sticky top-0 z-10 bg-white shadow-sm">
-                                <tr class="text-gray-500 text-xs uppercase tracking-wider border-b">
-                                    <th class="p-3 font-bold cursor-pointer hover:text-blue-600" @click="toggleAccountSort('name')">Cuenta <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-3 font-bold w-64">Nodo Asignado (14 chars)</th>
-                                    <th class="p-3 font-bold cursor-pointer hover:text-blue-600" @click="toggleAccountSort('asn_isp')">Proveedor (ISP) <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-3 font-bold text-center cursor-pointer hover:text-blue-600" @click="toggleAccountSort('q_score')">Calidad <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-3 font-bold w-40">IP Actual</th>
-                                    <th class="p-3 font-bold text-center">Estado</th>
-                                    <th class="p-3 font-bold text-right">Opciones</th>
+                        <table class="w-full text-left border-collapse table-fixed">
+                            <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
+                                    <th class="p-4 font-bold w-[12%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('name')">Cuenta <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    <th class="p-4 font-bold w-[25%] text-center">Nodo Asignado (14)</th>
+                                    <th class="p-4 font-bold w-[20%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('asn_isp')">Proveedor <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    <th class="p-4 font-bold w-[8%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('q_score')">Quality <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    <th class="p-4 font-bold w-[15%] text-center">Registro IP</th>
+                                    <th class="p-4 font-bold w-[10%] text-center">Estado</th>
+                                    <th class="p-4 font-bold w-[10%] text-center">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-sm divide-y divide-gray-100">
-                                <tr v-for="acc in processedAccounts" :key="acc.uid" :class="{'bg-red-50': hasCollision(acc), 'hover:bg-gray-50': !hasCollision(acc)}">
+                            <tbody class="text-sm divide-y divide-slate-100">
+                                <tr v-for="acc in processedAccounts" :key="acc.uid" :class="{'bg-rose-50/50': hasCollision(acc), 'hover:bg-slate-50 transition-colors': !hasCollision(acc)}">
                                     
-                                    <!-- Cuenta -->
-                                    <td class="p-2">
-                                        <input v-model="acc.name" class="border p-2 rounded font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white shadow-sm">
+                                    <!-- 1. Cuenta (Centradito) -->
+                                    <td class="p-3 align-middle">
+                                        <input v-model="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all">
                                     </td>
                                     
-                                    <!-- Nodo ID (Editable) + Botones -->
-                                    <td class="p-2">
-                                        <div class="flex flex-col gap-1">
-                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" placeholder="ID (14)" maxlength="14" class="border p-2 rounded font-mono text-gray-700 font-bold focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white shadow-sm uppercase tracking-wider">
+                                    <!-- 2. Nodo ID + Botón Asignar/Copiar -->
+                                    <td class="p-3 align-middle">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" placeholder="Vacío" maxlength="14" class="w-36 bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide">
                                             
-                                            <div class="flex gap-1 mt-1">
-                                                <button @click="openPoolModal(acc.uid)" class="flex-1 bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 border border-gray-200 py-1 rounded text-xs font-bold transition flex items-center justify-center gap-1">
-                                                    <i data-lucide="mouse-pointer-click" class="w-3 h-3"></i> Pool
+                                            <!-- Botones Elegantes (Iconos) -->
+                                            <div class="flex gap-1">
+                                                <button @click="openPoolModal(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool">
+                                                    <i data-lucide="search" class="w-4 h-4"></i>
                                                 </button>
-                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId)" class="flex-1 bg-blue-100 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 py-1 rounded text-xs font-black transition flex items-center justify-center gap-1 shadow-sm">
-                                                    <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors" title="Copiar ID 14 Caracteres">
+                                                    <i data-lucide="copy" class="w-4 h-4"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </td>
 
-                                    <!-- Proveedor (Se trae del Pool) -->
-                                    <td class="p-2">
-                                        <span v-if="acc.asn_isp" class="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded border">{{ acc.asn_isp }}</span>
-                                        <span v-else class="text-gray-300 text-xs">-</span>
+                                    <!-- 3. Proveedor (Centradito) -->
+                                    <td class="p-3 align-middle text-center">
+                                        <span v-if="acc.asn_isp" class="inline-block px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold truncate max-w-[160px]">{{ acc.asn_isp }}</span>
+                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
 
-                                    <!-- Calidad (Se trae del Pool) -->
-                                    <td class="p-2 text-center">
-                                        <span v-if="acc.q_score" class="text-xs font-black px-2 py-1 rounded border" :class="acc.q_score >= 2.8 ? 'bg-green-100 text-green-700 border-green-200' : 'bg-blue-100 text-blue-700 border-blue-200'">{{ acc.q_score }}</span>
-                                        <span v-else class="text-gray-300 text-xs">-</span>
-                                    </td>
-
-                                    <!-- IP -->
-                                    <td class="p-2">
-                                        <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" placeholder="0.0.0.0" class="border p-2 rounded text-gray-600 focus:ring-2 focus:ring-blue-500 outline-none w-full bg-white shadow-sm">
-                                    </td>
-
-                                    <!-- Estado -->
-                                    <td class="p-2 text-center">
-                                        <div v-if="hasCollision(acc)" class="inline-flex items-center px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs font-black shadow-sm border border-red-300 animate-pulse">
-                                            CHOQUE
+                                    <!-- 4. Quality (Centradito) -->
+                                    <td class="p-3 align-middle text-center">
+                                        <div v-if="acc.q_score" class="inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-black border" :class="acc.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">
+                                            {{ acc.q_score }}
                                         </div>
-                                        <div v-else-if="acc.nodeId" class="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-black shadow-sm border border-green-200">
-                                            OK
-                                        </div>
-                                        <span v-else class="text-gray-300 text-xs font-bold">VACÍO</span>
+                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
 
-                                    <!-- Acciones -->
-                                    <td class="p-2">
-                                        <div class="flex items-center justify-end gap-1" v-if="acc.nodeId">
-                                            <button @click="releaseNode(acc.uid)" class="px-2 py-1.5 bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 rounded text-xs font-bold transition border border-gray-200" title="Liberar">
-                                                Liberar
+                                    <!-- 5. IP (Centradito) -->
+                                    <td class="p-3 align-middle">
+                                        <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" placeholder="0.0.0.0" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center text-slate-600 font-medium outline-none transition-all">
+                                    </td>
+
+                                    <!-- 6. Estado (Centradito) -->
+                                    <td class="p-3 align-middle text-center">
+                                        <div v-if="hasCollision(acc)" class="inline-flex items-center justify-center px-3 py-1.5 bg-rose-100 text-rose-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-rose-200 shadow-sm animate-pulse">
+                                            Choque
+                                        </div>
+                                        <div v-else-if="acc.nodeId" class="inline-flex items-center justify-center px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-200 shadow-sm">
+                                            Activo
+                                        </div>
+                                        <span v-else class="inline-flex items-center justify-center px-3 py-1.5 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">Vacío</span>
+                                    </td>
+
+                                    <!-- 7. Opciones (Centradito, minimalista) -->
+                                    <td class="p-3 align-middle text-center">
+                                        <div class="flex items-center justify-center gap-1" v-if="acc.nodeId">
+                                            <button @click="releaseNode(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Liberar al Pool">
+                                                <i data-lucide="unlock" class="w-4 h-4"></i>
                                             </button>
-                                            <button @click="burnNode(acc.uid)" class="px-2 py-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded text-xs font-bold transition border border-red-200" title="Bloquear">
-                                                Bloquear
+                                            <button @click="burnNode(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors" title="Quemar a Bloqueados">
+                                                <i data-lucide="flame" class="w-4 h-4"></i>
                                             </button>
                                         </div>
-                                        <div class="flex justify-end" v-else>
-                                            <button @click="removeAccount(acc.uid)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition" title="Eliminar cuenta">
+                                        <div class="flex justify-center" v-else>
+                                            <button @click="removeAccount(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Eliminar fila">
                                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr v-if="processedAccounts.length === 0">
-                                    <td colspan="7" class="p-10 text-center text-gray-400 font-bold">No hay cuentas que coincidan con la búsqueda.</td>
+                                    <td colspan="7" class="p-16 text-center">
+                                        <div class="flex flex-col items-center justify-center text-slate-400">
+                                            <i data-lucide="search-x" class="w-10 h-10 mb-3 opacity-50"></i>
+                                            <span class="font-medium">No se encontraron cuentas</span>
+                                        </div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- VISTA: POOL DE NODOS -->
-                <div v-show="currentTab === 'pool'" class="bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-[calc(100vh-140px)]">
-                    <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
-                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
-                            <i data-lucide="upload-cloud" class="w-4 h-4"></i> Cargar JSON Mysterium
+                <!-- ==================== VISTA: POOL ==================== -->
+                <div v-show="currentTab === 'pool'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
+                    
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
+                            <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar JSON
                             <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
                         </label>
-                        <p class="text-sm font-bold text-gray-700">Total Frescos: {{ pool.length }}</p>
+                        <span class="text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-xl border shadow-sm uppercase tracking-wider">Total Disponibles: {{ pool.length }}</span>
                     </div>
 
-                    <div class="p-4 bg-white border-b border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                        <div>
-                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Buscar por ID</label>
-                            <input type="text" v-model="filters.nodeId" placeholder="Ej: 0x123..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <!-- Filtros Centraditos -->
+                    <div class="p-5 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-center">
+                        <div class="w-64">
+                            <input type="text" v-model="filters.nodeId" placeholder="Filtrar por ID..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium">
                         </div>
-                        <div>
-                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Filtrar por Ciudad</label>
-                            <input type="text" v-model="filters.city" placeholder="Ej: London..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <div class="w-64">
+                            <input type="text" v-model="filters.city" placeholder="Filtrar por Ciudad..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium">
                         </div>
-                        <div>
-                            <label class="block text-xs font-black text-gray-500 uppercase mb-1">Proveedor (ISP)</label>
-                            <input type="text" v-model="filters.isp" placeholder="Ej: Vodafone..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <div class="w-64">
+                            <input type="text" v-model="filters.isp" placeholder="Filtrar por ISP..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium">
                         </div>
-                        <div>
-                            <button @click="clearFilters" class="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition border border-gray-300">
-                                Limpiar Filtros
+                        <button @click="clearFilters" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors border border-slate-200">
+                            Limpiar
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
+                                    <th class="p-4 font-bold text-center w-1/4">ID (14 Chars)</th>
+                                    <th class="p-4 font-bold text-center w-1/4">Ciudad</th>
+                                    <th class="p-4 font-bold text-center w-1/4">Proveedor</th>
+                                    <th class="p-4 font-bold text-center w-1/4 cursor-pointer hover:text-indigo-600 transition-colors flex items-center justify-center gap-1" @click="toggleSortScore">
+                                        Calidad <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-slate-100">
+                                <tr v-for="node in filteredPool" :key="node.id" class="hover:bg-slate-50 transition-colors">
+                                    <td class="p-4 align-middle text-center">
+                                        <div class="inline-flex items-center gap-2">
+                                            <span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border px-3 py-1.5 rounded-lg">{{ node.id }}</span>
+                                            <button @click="copyToClipboard(node.id)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors">
+                                                <i data-lucide="copy" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="p-4 align-middle text-center font-medium text-slate-600">{{ node.city }}</td>
+                                    <td class="p-4 align-middle text-center text-slate-600">{{ node.asn_isp }}</td>
+                                    <td class="p-4 align-middle text-center">
+                                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ node.q_score }}</span>
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredPool.length === 0 && pool.length > 0">
+                                    <td colspan="4" class="p-16 text-center text-slate-400 font-medium">No hay coincidencias.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ==================== VISTA: LISTA NEGRA ==================== -->
+                <div v-show="currentTab === 'blacklist'" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    
+                    <div class="p-8 border-b border-slate-100 bg-rose-50/30 flex flex-col gap-4 text-center">
+                        <div class="flex justify-center items-center gap-3">
+                            <div class="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center text-rose-600">
+                                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800">Carga Masiva de Bloqueados</h3>
+                        </div>
+                        <p class="text-xs text-slate-500 font-medium max-w-lg mx-auto">Pega tus IDs aquí. El sistema cortará automáticamente a 14 caracteres y descartará duplicados.</p>
+                        
+                        <div class="max-w-2xl mx-auto w-full relative">
+                            <textarea v-model="bulkBlacklistText" rows="3" class="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-mono outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-center shadow-sm resize-none" placeholder="0x123..."></textarea>
+                        </div>
+                        
+                        <div class="flex justify-center mt-2">
+                            <button @click="processBulkBlacklist" class="bg-rose-600 hover:bg-rose-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm">
+                                Procesar IDs
                             </button>
                         </div>
                     </div>
 
-                    <div class="flex-1 overflow-auto">
-                        <table class="w-full text-left border-collapse relative">
-                            <thead class="sticky top-0 z-10 bg-white shadow-sm border-b">
-                                <tr class="text-gray-500 text-xs uppercase tracking-wider">
-                                    <th class="p-4 font-bold">ID del Nodo (14 chars)</th>
-                                    <th class="p-4 font-bold">Ciudad</th>
-                                    <th class="p-4 font-bold">Proveedor (ASN/ISP)</th>
-                                    <th class="p-4 font-bold text-center cursor-pointer hover:text-blue-600" @click="toggleSortScore">
-                                        Calidad <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm divide-y divide-gray-100">
-                                <tr v-for="node in filteredPool" :key="node.id" class="hover:bg-blue-50 transition">
-                                    <td class="p-4">
-                                        <div class="flex items-center gap-3">
-                                            <span class="font-mono font-bold text-gray-800 uppercase">{{ node.id }}</span>
-                                            <button @click="copyToClipboard(node.id)" class="px-2 py-1 bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-700 font-bold rounded text-xs transition">Copiar</button>
-                                        </div>
-                                    </td>
-                                    <td class="p-4 text-gray-600 font-medium">{{ node.city }}</td>
-                                    <td class="p-4 text-gray-600">{{ node.asn_isp }}</td>
-                                    <td class="p-4 font-black text-center" :class="node.q_score >= 2.8 ? 'text-green-600' : 'text-blue-600'">{{ node.q_score }}</td>
-                                </tr>
-                                <tr v-if="filteredPool.length === 0 && pool.length > 0">
-                                    <td colspan="4" class="p-12 text-center text-gray-500 font-bold">Ningún nodo coincide con los filtros.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- VISTA: LISTA NEGRA -->
-                <div v-show="currentTab === 'blacklist'" class="bg-white rounded-xl shadow-md border border-gray-200">
-                    
-                    <div class="p-6 border-b border-gray-200 bg-red-50 rounded-t-xl flex flex-col gap-3">
-                        <div class="flex justify-between items-center">
-                            <label class="text-sm font-black text-red-800 uppercase tracking-wide">Carga Masiva de Bloqueados</label>
-                            <!-- CONTADOR ESTÁTICO FIJO -->
-                            <span class="px-4 py-2 bg-red-800 text-white rounded-lg text-sm font-black shadow-md">Total Bloqueados: {{ blacklist.length }}</span>
-                        </div>
-                        <textarea v-model="bulkBlacklistText" rows="3" class="w-full border border-red-200 rounded-lg p-3 text-sm font-mono outline-none focus:ring-2 focus:ring-red-500 bg-white shadow-inner" placeholder="Pega tus IDs aquí. El sistema cortará a 14 caracteres."></textarea>
-                        <button @click="processBulkBlacklist" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold self-end transition shadow-md">
-                            Procesar y Bloquear Nodos
-                        </button>
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 text-center">
+                        <span class="px-4 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
+                            Total Registros: {{ blacklist.length }}
+                        </span>
                     </div>
 
                     <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b">
-                                <th class="p-4 font-bold">Nodo Bloqueado (14 chars)</th>
-                                <th class="p-4 font-bold">Registro</th>
-                                <th class="p-4 font-bold text-right">Acción</th>
+                        <thead class="bg-white">
+                            <tr class="text-slate-500 text-[11px] uppercase tracking-wider border-b">
+                                <th class="p-4 font-bold text-center w-1/3">Nodo Bloqueado (14)</th>
+                                <th class="p-4 font-bold text-center w-1/3">Notas / IP</th>
+                                <th class="p-4 font-bold text-center w-1/3">Acción</th>
                             </tr>
                         </thead>
-                        <tbody class="text-sm divide-y divide-gray-100">
-                            <tr v-for="(node, index) in blacklist" :key="index" class="hover:bg-gray-50">
-                                <td class="p-4 font-mono text-red-600 font-bold line-through uppercase">{{ node.nodeId }}</td>
-                                <td class="p-4 text-gray-500">{{ node.ip }}</td>
-                                <td class="p-4 text-right">
-                                    <button @click="removeBlacklistNode(index)" class="px-4 py-1.5 bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 hover:text-green-700 text-gray-600 rounded-lg text-xs font-bold transition shadow-sm">
+                        <tbody class="text-sm divide-y divide-slate-100">
+                            <tr v-for="(node, index) in blacklist" :key="index" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 align-middle text-center">
+                                    <span class="font-mono text-rose-600 font-bold uppercase bg-rose-50 px-3 py-1 rounded-lg border border-rose-100">{{ node.nodeId }}</span>
+                                </td>
+                                <td class="p-4 align-middle text-center text-slate-500 font-medium">{{ node.ip }}</td>
+                                <td class="p-4 align-middle text-center">
+                                    <button @click="removeBlacklistNode(index)" class="px-4 py-1.5 bg-white border border-slate-200 hover:border-emerald-400 hover:text-emerald-600 text-slate-500 rounded-lg text-xs font-bold transition-colors shadow-sm">
                                         Perdonar
                                     </button>
                                 </td>
@@ -267,45 +312,47 @@
             </div>
         </main>
 
-        <!-- MODAL: SELECCIONAR NODO DEL POOL -->
-        <div v-if="showPoolModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-                <div class="p-5 border-b bg-gray-50 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-black text-gray-800">Seleccionar Nodo</h3>
-                        <p class="text-xs text-gray-500 mt-1">Se copiarán automáticamente el proveedor y la calidad a la cuenta.</p>
-                    </div>
-                    <button @click="closePoolModal" class="p-2 bg-gray-200 hover:bg-red-100 hover:text-red-600 rounded-full transition font-bold">✕</button>
-                </div>
-                
-                <div class="p-4 bg-white border-b border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" v-model="filters.nodeId" placeholder="ID del Nodo..." class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500">
-                    <input type="text" v-model="filters.city" placeholder="Ciudad..." class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500">
-                    <input type="text" v-model="filters.isp" placeholder="Proveedor (ISP)..." class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500">
-                </div>
-
-                <div class="flex-1 overflow-auto p-4 bg-gray-50">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div v-for="node in filteredPool" :key="node.id" @click="assignNodeToAccount(node.id)" class="border border-gray-200 rounded-xl p-4 hover:border-blue-500 hover:shadow-md cursor-pointer transition bg-white group flex flex-col justify-between h-full">
-                            <div>
-                                <div class="flex justify-between items-start mb-2">
-                                    <span class="font-mono font-bold text-gray-800 group-hover:text-blue-600 text-sm uppercase">{{ node.id }}</span>
-                                    <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-black">{{ node.q_score }}</span>
-                                </div>
-                                <p class="text-xs text-gray-600 mb-1"><i data-lucide="map-pin" class="w-3 h-3 inline"></i> {{ node.city }}</p>
-                                <p class="text-xs text-gray-500 font-medium line-clamp-2"><i data-lucide="wifi" class="w-3 h-3 inline"></i> {{ node.asn_isp }}</p>
-                            </div>
-                            <button class="mt-3 w-full py-2 bg-blue-50 group-hover:bg-blue-600 text-blue-700 group-hover:text-white rounded-lg text-xs font-black transition">
-                                Asignar a Cuenta
-                            </button>
+        <!-- ==================== MODAL SELECCION ==================== -->
+        <transition name="fade">
+            <div v-if="showPoolModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+                    
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center text-center relative bg-slate-50/50">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-slate-800">Seleccionar Nodo</h3>
+                            <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Destino: <span class="text-indigo-600">{{ accounts.find(a => a.uid === selectedAccountUid)?.name }}</span></p>
                         </div>
-                        <div v-if="filteredPool.length === 0" class="col-span-1 md:col-span-3 text-center py-10 text-gray-500 font-bold">
-                            No se encontraron nodos.
+                        <button @click="closePoolModal" class="absolute right-6 top-6 w-8 h-8 bg-slate-200 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors flex items-center justify-center">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="p-5 border-b border-slate-100 flex gap-4 justify-center bg-white">
+                        <input type="text" v-model="filters.nodeId" placeholder="ID (14)" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                        <input type="text" v-model="filters.city" placeholder="Ciudad" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                        <input type="text" v-model="filters.isp" placeholder="Proveedor" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                    </div>
+
+                    <div class="flex-1 overflow-auto p-6 bg-slate-50">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div v-for="node in filteredPool" :key="node.id" @click="assignNodeToAccount(node.id)" class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-500 hover:shadow-lg cursor-pointer transition-all group flex flex-col justify-between h-full text-center">
+                                <div>
+                                    <div class="inline-flex items-center justify-center px-2 py-1 rounded-lg text-[10px] font-black border mb-3" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">
+                                        Q: {{ node.q_score }}
+                                    </div>
+                                    <h4 class="font-mono font-bold text-slate-800 text-sm uppercase tracking-wide group-hover:text-indigo-600 transition-colors mb-2">{{ node.id }}</h4>
+                                    <p class="text-xs text-slate-500 font-medium mb-1 truncate">{{ node.city }}</p>
+                                    <p class="text-xs text-slate-600 font-bold truncate">{{ node.asn_isp }}</p>
+                                </div>
+                            </div>
+                            <div v-if="filteredPool.length === 0" class="col-span-4 text-center py-20 text-slate-400 font-bold">
+                                Sin resultados.
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </transition>
 
     </div>
 

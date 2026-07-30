@@ -84,6 +84,7 @@ createApp({
             return result;
         });
 
+        // --- SISTEMA MAESTRO DE DATOS ---
         const saveData = () => {
             localStorage.setItem('vpnerp_acc_master_v11', JSON.stringify(accounts.value));
             localStorage.setItem('vpnerp_pool_master_v11', JSON.stringify(pool.value));
@@ -96,10 +97,9 @@ createApp({
             let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v11'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v10', 'v9', 'v8', 'v7', 'v6', 'master'];
+                const oldKeys = ['v10', 'v9', 'master', 'v8', 'v7'];
                 for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
-                    if (!oldAcc) oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
+                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
                         savedAcc = oldAcc;
                         savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
@@ -110,12 +110,16 @@ createApp({
             }
 
             if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ ...a, uid: a.uid || generateUid() }));
+                accounts.value = savedAcc.map(a => ({ 
+                    ...a, 
+                    uid: a.uid || generateUid(),
+                    previousIp: a.previousIp || null // Aseguramos que la variable exista siempre
+                }));
             } else {
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '' });
+                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
                 }
                 accounts.value = initial;
             }
@@ -126,7 +130,7 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ LA CASCADA ANTI-BLOQUEOS (AUTO IP)
+        // ⚡ LA CASCADA DE IP PÚBLICA (IPINFO TOKEN)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -135,13 +139,13 @@ createApp({
             syncStatus.value = 'Detectando IP...';
             let newIp = null;
 
-            // 1: ipify
+            // Intento 1: ipify (Rápido, rara vez bloqueado)
             try {
                 const r1 = await fetch("https://api.ipify.org?format=json");
                 if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
             } catch(e) {}
 
-            // 2: ipinfo con tu token
+            // Intento 2: TU API EXACTA de ipinfo
             if(!newIp) {
                 try {
                     const r2 = await fetch("https://ipinfo.io/json", {
@@ -151,7 +155,7 @@ createApp({
                 } catch(e) {}
             }
 
-            // 3: myip
+            // Intento 3: myip
             if(!newIp) {
                 try {
                     const r3 = await fetch("https://api.myip.com");
@@ -159,6 +163,7 @@ createApp({
                 } catch(e) {}
             }
 
+            // --- RESULTADO Y PROTECCIÓN ANTI-CHOQUE ---
             if(newIp) {
                 if(acc.ip === newIp) { 
                     syncStatus.value = 'La IP ya estaba actualizada.'; 
@@ -166,6 +171,7 @@ createApp({
                     return; 
                 }
 
+                // Chequeo de colisión antes de escribir
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
                     const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
@@ -176,34 +182,30 @@ createApp({
                     }
                 }
 
-                acc.previousIp = acc.ip;
+                acc.previousIp = acc.ip; // Activamos el botón Deshacer guardando la IP vieja
                 acc.ip = newIp;
                 triggerCollisionCheck(acc);
-                syncStatus.value = '¡IP extraída con éxito!';
+                syncStatus.value = '¡IP extraída!';
             } else {
-                alert("Bloqueo de red total. Tus extensiones de privacidad impiden leer la IP.");
-                syncStatus.value = 'Error al detectar IP.';
+                alert("Bloqueo de red total. Tus extensiones de privacidad impiden leer la IP desde el navegador.");
+                syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
         const undoIp = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
-            if(acc && acc.previousIp !== undefined) {
+            if(acc && acc.previousIp) {
                 acc.ip = acc.previousIp; 
-                acc.previousIp = undefined; 
+                acc.previousIp = null; // Borramos el historial y se oculta el botón
                 triggerCollisionCheck(acc); 
-                syncStatus.value = 'Cambio deshecho.';
+                syncStatus.value = 'IP Restaurada.';
                 setTimeout(() => { syncStatus.value = ''; }, 3000);
             }
         };
 
-        // 🕵️ SCAMALYTICS DIRECTO
         const openScamalytics = (ip) => {
-            if(!ip || ip.trim() === '') {
-                alert("Primero debes ingresar una IP o extraerla con el botón 'Auto IP'.");
-                return;
-            }
+            if(!ip || ip.trim() === '') return;
             window.open(`https://scamalytics.com/ip/${ip.trim()}`, '_blank');
             syncStatus.value = 'Abriendo Score...';
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -241,7 +243,7 @@ createApp({
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
                 if (acc) {
                     const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = undefined;
+                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null;
                     if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
                     closePoolModal(); triggerCollisionCheck(acc);
                 }
@@ -252,7 +254,7 @@ createApp({
             const acc = accounts.value.find(a => a.uid === accountUid);
             if (acc && nodeToAssign.value) {
                 acc.nodeId = nodeToAssign.value.id;
-                acc.ip = ''; acc.previousIp = undefined;
+                acc.ip = ''; acc.previousIp = null;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
                 closeAccountSelectModal(); triggerCollisionCheck(acc); 
@@ -269,10 +271,10 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '' });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = undefined; } };
+        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; } };
         
         const burnNode = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -284,7 +286,7 @@ createApp({
                         blacklist.value.unshift({ nodeId: truncado, ip: acc.ip || 'Desconocida' });
                     }
                 }
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = undefined;
+                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null;
             }
         };
 
@@ -359,8 +361,12 @@ createApp({
             reader.readAsText(file);
         };
 
-        const copyToClipboard = async (text) => {
-            try { await navigator.clipboard.writeText(text); showStatus('¡Copiado!'); } catch (err) { console.error(err); }
+        const copyToClipboard = async (text, type = 'Dato') => {
+            try { 
+                await navigator.clipboard.writeText(text); 
+                showStatus(`¡${type} Copiado!`); 
+                setTimeout(() => { syncStatus.value = ''; }, 3000);
+            } catch (err) { console.error(err); }
         };
 
         const exportDatabase = () => {

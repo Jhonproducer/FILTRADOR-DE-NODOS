@@ -84,19 +84,20 @@ createApp({
             return result;
         });
 
+        // 🛡️ MOTOR DE PERSISTENCIA
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v12', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v12', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v12', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_master_v11', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v11', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v11', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v12'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v12'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v12'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v11'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v11'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v11'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v11', 'v10', 'v9', 'master', 'v8'];
+                const oldKeys = ['v10', 'v9', 'master', 'v8', 'v7', 'v6'];
                 for (let v of oldKeys) {
                     let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
@@ -128,7 +129,9 @@ createApp({
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
-        // --- CASCADA DE IP ROBUSTA ---
+        // ==========================================
+        // ⚡ AUTO IP Y SCAMALYTICS DIRECTO
+        // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(!acc) return;
@@ -136,24 +139,19 @@ createApp({
             syncStatus.value = 'Detectando IP...';
             let newIp = null;
 
+            // Intento 1: ipify (Rápido y no necesita Token)
             try {
                 const r1 = await fetch("https://api.ipify.org?format=json");
                 if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
             } catch(e) {}
 
+            // Intento 2: TU API EXACTA de ipinfo
             if(!newIp) {
                 try {
                     const r2 = await fetch("https://ipinfo.io/json", {
                         headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
                     });
                     if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
-                } catch(e) {}
-            }
-
-            if(!newIp) {
-                try {
-                    const r3 = await fetch("https://api.myip.com");
-                    if(r3.ok) { const d3 = await r3.json(); newIp = d3.ip; }
                 } catch(e) {}
             }
 
@@ -174,12 +172,12 @@ createApp({
                     }
                 }
 
-                acc.previousIp = acc.ip; 
+                acc.previousIp = acc.ip; // Guardamos el salvavidas
                 acc.ip = newIp;
                 triggerCollisionCheck(acc);
                 syncStatus.value = '¡IP extraída!';
             } else {
-                alert("Bloqueo de red. Tu navegador o VPN no permitió leer la IP.");
+                alert("Tu navegador o extensión bloqueó la extracción de IP. Por favor, usa incógnito sin extensiones o ingresa la IP manualmente.");
                 syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -249,7 +247,7 @@ createApp({
                 acc.ip = ''; acc.previousIp = null;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
+                closeAccountSelectModal(); triggerCollisionCheck(acc); 
             }
         };
 
@@ -257,7 +255,6 @@ createApp({
             if(node && node.id) {
                 if(!blacklist.value.some(b => b.nodeId === node.id)) {
                     blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
-                    showStatus('Nodo bloqueado.');
                 }
             }
         };
@@ -324,18 +321,21 @@ createApp({
             showStatus(`Pool Actualizado: ${pool.value.length} nodos`);
         };
 
+        // 🚀 API DIRECTA (SIN PROXIES) - Exactamente como tu CURL
         const fetchAPI = async () => {
-            syncStatus.value = 'Conectando API...';
+            syncStatus.value = 'Conectando API Mysterium...';
             try {
-                const targetUrl = encodeURIComponent("https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential");
-                const proxyUrl = `https://api.allorigins.win/raw?url=${targetUrl}`;
-                const response = await fetch(proxyUrl);
-                if(!response.ok) throw new Error("Error en Proxy");
+                const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential&quality_min=2.5";
+                const response = await fetch(targetUrl, {
+                    headers: { 'accept': 'application/json' }
+                });
+                
+                if(!response.ok) throw new Error("Fallo en la red");
                 const data = await response.json();
                 processNodeData(data);
             } catch (err) {
                 console.error(err);
-                alert("Bloqueo de red detectado al consultar la API de Mysterium. Usa la opción Importar JSON.");
+                alert("Error conectando a la API. Puede ser temporal o tu navegador la bloqueó. Usa Importar JSON.");
                 syncStatus.value = '';
             }
         };

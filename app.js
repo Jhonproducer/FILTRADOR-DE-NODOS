@@ -18,7 +18,6 @@ createApp({
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // --- FILTROS POOL ---
         const filters = ref({ nodeId: '', city: '', isp: '' });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
@@ -46,7 +45,6 @@ createApp({
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
-        // --- CUENTAS ---
         const accountSearch = ref('');
         const accountSort = ref({ field: null, desc: false });
 
@@ -86,11 +84,7 @@ createApp({
             return result;
         });
 
-        // ==========================================
-        // 🛡️ MOTOR DE RECUPERACIÓN DE DATOS (NO MORE WIPES)
-        // ==========================================
         const saveData = () => {
-            // A PARTIR DE AHORA, LA LLAVE SERÁ "MASTER" Y NUNCA CAMBIARÁ
             localStorage.setItem('vpnerp_acc_master', JSON.stringify(accounts.value));
             localStorage.setItem('vpnerp_pool_master', JSON.stringify(pool.value));
             localStorage.setItem('vpnerp_blk_master', JSON.stringify(blacklist.value));
@@ -101,8 +95,6 @@ createApp({
             let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master'));
             let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master'));
 
-            // Si "master" está vacío (es la primera vez que se ejecuta este nuevo código),
-            // BUSCAMOS EN LAS VERSIONES VIEJAS PARA RESCATAR TUS DATOS.
             if (!savedAcc || savedAcc.length === 0) {
                 const oldKeys = ['v8', 'v7', 'v6', 'v5', 'v4'];
                 for (let v of oldKeys) {
@@ -111,13 +103,12 @@ createApp({
                         savedAcc = oldAcc;
                         savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
                         savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
-                        showStatus('¡Datos antiguos recuperados con éxito!');
-                        break; // Se encontró data, salimos del loop
+                        showStatus('Datos recuperados.');
+                        break;
                     }
                 }
             }
 
-            // Aplicar datos o crear 28 cuentas vacías
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({ ...a, uid: a.uid || generateUid() }));
             } else {
@@ -134,9 +125,6 @@ createApp({
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
-        // ==========================================
-        // ⚡ AUTO IP INFO & SCAMALYTICS
-        // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(!acc) return;
@@ -149,67 +137,45 @@ createApp({
                 
                 if(data && data.ip) {
                     const newIp = data.ip;
-                    
-                    if(acc.ip === newIp) {
-                        showStatus('La IP se mantiene igual.');
-                        return;
-                    }
+                    if(acc.ip === newIp) { showStatus('La IP se mantiene igual.'); return; }
 
-                    // Chequeo Anti-Errores Humanos
                     const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                     if(collides) {
-                        const proceed = confirm(`⚠️ ALERTA DE COLISIÓN INTERNA\n\nLa IP extraída (${newIp}) YA ESTÁ siendo usada en otra de tus cuentas.\n\n¿Estás seguro de que quieres forzar esta actualización?`);
-                        if(!proceed) {
-                            showStatus('Operación cancelada.');
-                            return;
-                        }
+                        const proceed = confirm(`⚠️ ALERTA DE COLISIÓN INTERNA\n\nLa IP extraída (${newIp}) YA ESTÁ siendo usada.\n\n¿Forzar actualización?`);
+                        if(!proceed) { showStatus('Operación cancelada.'); return; }
                     }
 
-                    // Guardar el salvavidas (Backup de la IP anterior)
                     acc.previousIp = acc.ip;
                     acc.ip = newIp;
-                    
                     triggerCollisionCheck(acc);
-                    showStatus('IP Actualizada automáticamente.');
+                    showStatus('IP Actualizada.');
                 }
-            } catch (err) {
-                alert("Error al extraer la IP. Asegúrate de estar conectado al nodo.");
-                showStatus('');
-            }
+            } catch (err) { alert("Error extrayendo IP."); showStatus(''); }
         };
 
         const undoIp = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(acc && acc.previousIp !== undefined) {
-                acc.ip = acc.previousIp;
-                acc.previousIp = undefined; // Limpiar el salvavidas
-                triggerCollisionCheck(acc);
-                showStatus('Cambio de IP deshecho.');
+                acc.ip = acc.previousIp; acc.previousIp = undefined; 
+                triggerCollisionCheck(acc); showStatus('Cambio deshecho.');
             }
         };
 
         const openScamalytics = (ip) => {
-            if(!ip) {
-                alert("La cuenta no tiene ninguna IP asignada para analizar.");
-                return;
-            }
-            // Abre una nueva pestaña mágicamente directo al reporte
+            if(!ip) return alert("Cuenta sin IP.");
             window.open(`https://scamalytics.com/ip/${ip}`, '_blank');
-            showStatus('Abriendo Scamalytics...');
+            showStatus('Abriendo reporte...');
         };
 
-
-        // --- MODALES ---
         const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
         const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
 
         const openAccountSelectModal = (node) => { nodeToAssign.value = node; showAccountSelectModal.value = true; };
         const closeAccountSelectModal = () => { showAccountSelectModal.value = false; nodeToAssign.value = null; };
         
-        // --- COLISIONES ---
         const triggerCollisionCheck = (currentAccount) => {
             if(hasCollision(currentAccount)) {
-                alert(`¡ALERTA CRÍTICA!\n\nEl Nodo o IP ingresado YA EXISTE en otra cuenta activa.\nCámbialo o libéralo inmediatamente.`);
+                alert(`¡ALERTA CRÍTICA!\n\nEl Nodo o IP ingresado YA EXISTE en otra cuenta activa.`);
             }
         };
 
@@ -228,7 +194,6 @@ createApp({
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
 
-        // --- ASIGNACIONES ---
         const assignNodeToAccount = (nodeId) => {
             if (selectedAccountUid.value) {
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
@@ -236,8 +201,7 @@ createApp({
                     const nodeData = pool.value.find(n => n.id === nodeId);
                     acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = undefined; 
                     if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
-                    closePoolModal();
-                    triggerCollisionCheck(acc);
+                    closePoolModal(); triggerCollisionCheck(acc);
                 }
             }
         };
@@ -249,9 +213,7 @@ createApp({
                 acc.ip = ''; acc.previousIp = undefined;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal();
-                triggerCollisionCheck(acc);
-                showStatus(`Asignado a ${acc.name}`);
+                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
             }
         };
 
@@ -264,7 +226,6 @@ createApp({
             }
         };
 
-        // --- GESTIÓN DE CUENTAS ---
         const addAccount = () => {
             const num = accounts.value.length + 1;
             accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '' });
@@ -382,7 +343,7 @@ createApp({
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, 
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, openScamalytics // Nuevas funciones exportadas
+            fetchCurrentIP, undoIp, openScamalytics
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

@@ -1,4 +1,4 @@
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
@@ -8,8 +8,13 @@ createApp({
         const syncStatus = ref('');
         const bulkBlacklistText = ref('');
         
+        // Modal State (De Cuenta a Pool)
         const showPoolModal = ref(false);
         const selectedAccountUid = ref(null);
+
+        // NUEVO: Modal State (De Pool a Cuenta)
+        const showAccountSelectModal = ref(false);
+        const nodeToAssign = ref(null);
         
         const accounts = ref([]);
         const pool = ref([]);
@@ -21,8 +26,21 @@ createApp({
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
         const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; };
 
+        // ==========================================
+        // MAGIA DE INGENIERÍA: FILTRACIÓN DINÁMICA
+        // ==========================================
         const filteredPool = computed(() => {
             let result = pool.value;
+
+            // 1. Eliminar visualmente cualquier nodo que esté en Lista Negra o en Cuentas.
+            // Si una cuenta se libera, el nodo reaparece automáticamente aquí.
+            result = result.filter(n => {
+                const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
+                const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
+                return !inBlacklist && !inUse;
+            });
+
+            // 2. Aplicar los buscadores
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -80,13 +98,13 @@ createApp({
 
         // --- PERSISTENCIA ---
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_v7', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_v7', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_v7', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_v8', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_v8', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_v8', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            const savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v7'));
+            const savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v8'));
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({ ...a, uid: a.uid || generateUid() }));
             } else {
@@ -97,15 +115,71 @@ createApp({
                 }
                 accounts.value = initial;
             }
-            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v7')) || [];
-            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blk_v7')) || [];
+            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v8')) || [];
+            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blk_v8')) || [];
         };
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
+        // --- MODAL: CUENTA -> POOL ---
         const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
         const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
 
+        // --- NUEVO MODAL: POOL -> CUENTA ---
+        const openAccountSelectModal = (node) => {
+            nodeToAssign.value = node;
+            showAccountSelectModal.value = true;
+        };
+        const closeAccountSelectModal = () => {
+            showAccountSelectModal.value = false;
+            nodeToAssign.value = null;
+        };
+
+        // --- LÓGICAS DE ASIGNACIÓN ---
+        
+        // Asignación Modo 1 (Modal: Cuenta a Pool)
+        const assignNodeToAccount = (nodeId) => {
+            if (selectedAccountUid.value) {
+                const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
+                if (acc) {
+                    const nodeData = pool.value.find(n => n.id === nodeId);
+                    acc.nodeId = nodeId; acc.ip = ''; 
+                    if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
+                    closePoolModal();
+                    triggerCollisionCheck(acc);
+                }
+            }
+        };
+
+        // Asignación Modo 2 (Modal Inverso: Pool a Cuenta)
+        const confirmAssignFromPool = (accountUid) => {
+            const acc = accounts.value.find(a => a.uid === accountUid);
+            if (acc && nodeToAssign.value) {
+                // Si la cuenta ya tenía un nodo, al sobreescribirlo aquí, el nodo viejo 
+                // automáticamente "cae" devuelta al Pool gracias al Motor Reactivo.
+                acc.nodeId = nodeToAssign.value.id;
+                acc.ip = '';
+                acc.q_score = nodeToAssign.value.q_score;
+                acc.asn_isp = nodeToAssign.value.asn_isp;
+                
+                closeAccountSelectModal();
+                triggerCollisionCheck(acc);
+                showStatus(`Asignado a ${acc.name}`);
+            }
+        };
+
+        // --- ACCIONES DIRECTAS EN POOL ---
+        const burnDirectlyFromPool = (node) => {
+            if(node && node.id) {
+                if(!blacklist.value.some(b => b.nodeId === node.id)) {
+                    blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde pruebas (Pool)' });
+                    showStatus('Nodo quemado directamente.');
+                    // Desaparece instantáneamente del Pool por el Motor Reactivo.
+                }
+            }
+        };
+
+        // --- CONTROL DE COLISIONES ---
         const triggerCollisionCheck = (currentAccount) => {
             if(hasCollision(currentAccount)) {
                 alert(`¡ALERTA CRÍTICA!\n\nEl Nodo o IP ingresado YA EXISTE en otra cuenta activa.\nCámbialo o libéralo inmediatamente.`);
@@ -127,26 +201,21 @@ createApp({
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
 
-        const assignNodeToAccount = (nodeId) => {
-            if (selectedAccountUid.value) {
-                const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
-                if (acc) {
-                    const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; 
-                    if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
-                    closePoolModal();
-                    triggerCollisionCheck(acc);
-                }
-            }
-        };
-
+        // --- GESTIÓN DE CUENTAS ---
         const addAccount = () => {
             const num = accounts.value.length + 1;
             accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '' });
         };
 
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; } };
+        
+        const releaseNode = (uid) => { 
+            const acc = accounts.value.find(a => a.uid === uid); 
+            if(acc) { 
+                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; 
+                // Al limpiarlo, el Motor Reactivo lo devuelve visualmente a la Pool al instante.
+            } 
+        };
         
         const burnNode = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -162,6 +231,7 @@ createApp({
             }
         };
 
+        // --- BLACKLIST MASIVA ---
         const processBulkBlacklist = () => {
             if(!bulkBlacklistText.value.trim()) return;
             const rawItems = bulkBlacklistText.value.split(/[\n,\s]+/);
@@ -176,27 +246,22 @@ createApp({
             });
             bulkBlacklistText.value = ''; 
         };
-        
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
 
-        // --- MOTOR CENTRAL DE ACTUALIZACIÓN DE POOL (BORRÓN Y CUENTA NUEVA) ---
+        // --- CARGA DE API / JSON ---
         const processNodeData = (data) => {
             const rawPool = [];
-            const seenIds = new Set(); // Para no duplicar dentro del mismo JSON/API
+            const seenIds = new Set(); 
 
             data.forEach(nodo => {
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
-                
                 const idCorto = nodo.provider_id.substring(0, 14);
-                
-                // Evitar duplicados del propio documento
                 if(seenIds.has(idCorto)) return;
                 
-                // Cruzar con Lista Negra y Cuentas Activas
+                // Mantenemos este filtro inicial para ahorrar memoria en el navegador
                 const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
                 const isUsed = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                 
-                // Si el nodo está limpio, entra al nuevo Pool
                 if (!isBlacklisted && !isUsed) {
                     seenIds.add(idCorto);
                     rawPool.push({
@@ -208,25 +273,19 @@ createApp({
                 }
             });
 
-            // REEMPLAZO ABSOLUTO: Destruye el pool viejo y pone el nuevo depurado
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
             showStatus(`Pool Actualizado: ${pool.value.length} nodos`);
         };
 
-        // LLAMADA A LA API CON CORS PROXY (Infalible)
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando API...';
             try {
-                // Forzamos el salto del bloqueo CORS del navegador usando un Proxy público fiable
                 const targetUrl = encodeURIComponent("https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential");
                 const proxyUrl = `https://corsproxy.io/?${targetUrl}`;
-                
                 const response = await fetch(proxyUrl);
                 if(!response.ok) throw new Error("Error en Proxy");
                 const data = await response.json();
-                
                 processNodeData(data);
-                
             } catch (err) {
                 console.error(err);
                 alert("Bloqueo de red detectado. Usa la importación por JSON.");
@@ -241,12 +300,9 @@ createApp({
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    processNodeData(data); // Pasa por el mismo motor de limpieza
+                    processNodeData(data); 
                     event.target.value = null; 
-                } catch (err) { 
-                    alert("Error leyendo el archivo JSON."); 
-                    event.target.value = null; 
-                }
+                } catch (err) { alert("Error JSON."); event.target.value = null; }
             };
             reader.readAsText(file);
         };
@@ -266,11 +322,17 @@ createApp({
         };
 
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
-        
         onMounted(() => { loadData(); });
 
         return {
-            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, showPoolModal, collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, openPoolModal, closePoolModal, assignNodeToAccount
+            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
+            showPoolModal, selectedAccountUid, showAccountSelectModal, nodeToAssign,
+            collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
+            filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
+            addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
+            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, 
+            openPoolModal, closePoolModal, assignNodeToAccount,
+            openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

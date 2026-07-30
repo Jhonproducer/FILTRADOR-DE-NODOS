@@ -85,25 +85,24 @@ createApp({
         });
 
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_master_v13', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v13', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v13', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v13'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v13'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v13'));
 
-            // Recuperación de emergencia por si perdiste datos en las versiones 10, 11 o 12
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v12', 'v11', 'v10', 'master_v11', 'master_v10', 'master_v9'];
+                const oldKeys = ['v12', 'v11', 'v10', 'master'];
                 for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
+                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
                         savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
+                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
+                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`));
                         break;
                     }
                 }
@@ -126,52 +125,37 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ LA CASCADA DE IP (5 APIs Diferentes)
-        // No se puede usar proxy aquí, o extraeríamos la IP del proxy.
+        // ⚡ AUTO IP (CASCADA SEGURA)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(!acc) return;
 
-            syncStatus.value = 'Detectando IP real...';
+            syncStatus.value = 'Detectando IP...';
             let newIp = null;
 
-            // Lista de APIs ultraligeras para extraer IP
-            const ipProviders = [
-                { url: "https://api.ipify.org?format=json", key: "ip" },
-                { url: "https://api.myip.com", key: "ip" },
-                { url: "https://api.seeip.org/jsonip", key: "ip" },
-                { url: "https://jsonip.com", key: "ip" },
-                // Tu API original con token como último recurso
-                { url: "https://ipinfo.io/json?token=8c97cc52a98a48", key: "ip" } 
-            ];
+            try {
+                const r1 = await fetch("https://api.ipify.org?format=json");
+                if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
+            } catch(e) {}
 
-            for (const provider of ipProviders) {
+            if(!newIp) {
                 try {
-                    const res = await fetch(provider.url);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data[provider.key]) {
-                            newIp = data[provider.key];
-                            break; // Si encontró la IP, rompe el ciclo y deja de buscar
-                        }
-                    }
-                } catch(e) {
-                    console.log(`Fallo proveedor de IP: ${provider.url}`);
-                    // Continúa con el siguiente proveedor silenciosamente
-                }
+                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
+                    if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
+                } catch(e) {}
             }
 
             if(newIp) {
                 if(acc.ip === newIp) { 
-                    syncStatus.value = 'La IP se mantiene igual.'; 
+                    syncStatus.value = 'La IP ya estaba actualizada.'; 
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
 
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir?`);
+                    const proceed = confirm(`⚠️ ALERTA\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir?`);
                     if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
                 }
 
@@ -180,8 +164,8 @@ createApp({
                 triggerCollisionCheck(acc);
                 syncStatus.value = '¡IP Actualizada!';
             } else {
-                alert("Bloqueo Total: Tu antivirus o navegador está bloqueando todas las solicitudes de IP. Usa una pestaña normal o desactiva los escudos temporalmente.");
-                syncStatus.value = 'Error al detectar IP.';
+                alert("Bloqueo de red al leer la IP automática.");
+                syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
@@ -198,7 +182,10 @@ createApp({
         };
 
         const openScamalytics = (ip) => {
-            if(!ip || ip.trim() === '') { alert("Primero debes extraer o pegar la IP para ver el Score."); return; }
+            if(!ip || ip.trim() === '') {
+                alert("Primero debes extraer o pegar la IP para ver el Score.");
+                return;
+            }
             window.open(`https://scamalytics.com/ip/${ip.trim()}`, '_blank');
         };
 
@@ -322,49 +309,26 @@ createApp({
         };
 
         // ==========================================
-        // 🚀 EL MOTOR DE ASALTO A LA API MYSTERIUM (Anti-CORS)
-        // Intenta 4 métodos diferentes para penetrar las defensas del navegador.
+        // 🚀 API DE MYSTERIUM CON PROXY DE SALTO (BYPASS CORS)
         // ==========================================
         const fetchAPI = async () => {
-            syncStatus.value = 'Asaltando API Mysterium...';
-            
-            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            const encodedUrl = encodeURIComponent(targetUrl);
-            
-            // Array de métodos de asalto (Directo + 3 Proxies públicos confiables)
-            const attackVectors = [
-                targetUrl, // 1. Directo (A veces el navegador lo permite)
-                `https://api.allorigins.win/raw?url=${encodedUrl}`, // 2. AllOrigins
-                `https://corsproxy.io/?${encodedUrl}`, // 3. CorsProxy.io
-                `https://cors-anywhere.herokuapp.com/${targetUrl}` // 4. Heroku Cors
-            ];
-
-            let dataObtained = null;
-
-            for (const url of attackVectors) {
-                try {
-                    const response = await fetch(url, { headers: { 'accept': 'application/json' } });
-                    if (response.ok) {
-                        const json = await response.json();
-                        // Validar que la respuesta sea un Array (La API de Mysterium devuelve un Array de nodos)
-                        if (Array.isArray(json)) {
-                            dataObtained = json;
-                            break; // Si tuvimos éxito, rompemos el ciclo
-                        }
-                    }
-                } catch (e) {
-                    console.log(`Vector de ataque fallido: ${url}`);
-                }
+            syncStatus.value = 'Conectando con Mysterium...';
+            try {
+                // Usamos un proxy oficial y estable para saltar el bloqueo del navegador
+                const targetUrl = encodeURIComponent("https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential");
+                const proxyUrl = `https://api.allorigins.win/raw?url=${targetUrl}`;
+                
+                const response = await fetch(proxyUrl);
+                if(!response.ok) throw new Error("Error HTTP " + response.status);
+                
+                const data = await response.json();
+                processNodeData(data);
+                
+            } catch (err) {
+                console.error("Error API:", err);
+                alert("El navegador bloqueó la conexión directa. Recuerda que siempre puedes usar 'Importar JSON' con tu archivo descargado.");
+                syncStatus.value = '';
             }
-
-            if (dataObtained) {
-                processNodeData(dataObtained);
-            } else {
-                alert("Escudos al 100%. Tu navegador bloqueó todos los intentos de conexión a la API pública.\n\nPor favor, usa el botón 'Importar JSON' para cargar tus datos.");
-                syncStatus.value = 'Fallo de Sincronización.';
-            }
-            
-            setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
         const importPoolJSON = (event) => {

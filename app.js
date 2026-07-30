@@ -8,11 +8,9 @@ createApp({
         const syncStatus = ref('');
         const bulkBlacklistText = ref('');
         
-        // Modal State (De Cuenta a Pool)
         const showPoolModal = ref(false);
         const selectedAccountUid = ref(null);
 
-        // NUEVO: Modal State (De Pool a Cuenta)
         const showAccountSelectModal = ref(false);
         const nodeToAssign = ref(null);
         
@@ -26,21 +24,13 @@ createApp({
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
         const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; };
 
-        // ==========================================
-        // MAGIA DE INGENIERÍA: FILTRACIÓN DINÁMICA
-        // ==========================================
         const filteredPool = computed(() => {
             let result = pool.value;
-
-            // 1. Eliminar visualmente cualquier nodo que esté en Lista Negra o en Cuentas.
-            // Si una cuenta se libera, el nodo reaparece automáticamente aquí.
             result = result.filter(n => {
                 const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 return !inBlacklist && !inUse;
             });
-
-            // 2. Aplicar los buscadores
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -98,13 +88,13 @@ createApp({
 
         // --- PERSISTENCIA ---
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_v8', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_v8', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_v8', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_v9', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_v9', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_v9', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            const savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v8'));
+            const savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v9'));
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({ ...a, uid: a.uid || generateUid() }));
             } else {
@@ -115,29 +105,19 @@ createApp({
                 }
                 accounts.value = initial;
             }
-            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v8')) || [];
-            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blk_v8')) || [];
+            pool.value = JSON.parse(localStorage.getItem('vpnerp_pool_v9')) || [];
+            blacklist.value = JSON.parse(localStorage.getItem('vpnerp_blk_v9')) || [];
         };
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
-        // --- MODAL: CUENTA -> POOL ---
+        // --- MODALES ---
         const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
         const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
+        const openAccountSelectModal = (node) => { nodeToAssign.value = node; showAccountSelectModal.value = true; };
+        const closeAccountSelectModal = () => { showAccountSelectModal.value = false; nodeToAssign.value = null; };
 
-        // --- NUEVO MODAL: POOL -> CUENTA ---
-        const openAccountSelectModal = (node) => {
-            nodeToAssign.value = node;
-            showAccountSelectModal.value = true;
-        };
-        const closeAccountSelectModal = () => {
-            showAccountSelectModal.value = false;
-            nodeToAssign.value = null;
-        };
-
-        // --- LÓGICAS DE ASIGNACIÓN ---
-        
-        // Asignación Modo 1 (Modal: Cuenta a Pool)
+        // --- ASIGNACIONES ---
         const assignNodeToAccount = (nodeId) => {
             if (selectedAccountUid.value) {
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
@@ -151,30 +131,24 @@ createApp({
             }
         };
 
-        // Asignación Modo 2 (Modal Inverso: Pool a Cuenta)
         const confirmAssignFromPool = (accountUid) => {
             const acc = accounts.value.find(a => a.uid === accountUid);
             if (acc && nodeToAssign.value) {
-                // Si la cuenta ya tenía un nodo, al sobreescribirlo aquí, el nodo viejo 
-                // automáticamente "cae" devuelta al Pool gracias al Motor Reactivo.
                 acc.nodeId = nodeToAssign.value.id;
                 acc.ip = '';
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
-                
                 closeAccountSelectModal();
                 triggerCollisionCheck(acc);
                 showStatus(`Asignado a ${acc.name}`);
             }
         };
 
-        // --- ACCIONES DIRECTAS EN POOL ---
         const burnDirectlyFromPool = (node) => {
             if(node && node.id) {
                 if(!blacklist.value.some(b => b.nodeId === node.id)) {
                     blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde pruebas (Pool)' });
                     showStatus('Nodo quemado directamente.');
-                    // Desaparece instantáneamente del Pool por el Motor Reactivo.
                 }
             }
         };
@@ -201,6 +175,34 @@ createApp({
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
 
+        // --- NUEVO: AUTO-EXTRACCIÓN DE IP (ipinfo.io) ---
+        const fetchCurrentIP = async (uid) => {
+            const acc = accounts.value.find(a => a.uid === uid);
+            if(!acc) return;
+
+            showStatus('Extrayendo IP actual...');
+            try {
+                // Usamos tu token. Como estás pasando la conexión por el navegador, 
+                // esto devolverá la IP real de tu túnel VPN.
+                const res = await fetch('https://ipinfo.io/json', {
+                    headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
+                });
+                
+                if(!res.ok) throw new Error('Error en la API de IP');
+                const data = await res.json();
+                
+                if(data && data.ip) {
+                    acc.ip = data.ip;
+                    showStatus('¡IP actualizada!');
+                    // Verificar si la nueva IP que cambió de repente choca con otra cuenta
+                    triggerCollisionCheck(acc);
+                }
+            } catch (err) {
+                alert("Error al extraer IP. Verifica tu conexión a internet o VPN.");
+                showStatus('');
+            }
+        };
+
         // --- GESTIÓN DE CUENTAS ---
         const addAccount = () => {
             const num = accounts.value.length + 1;
@@ -211,10 +213,7 @@ createApp({
         
         const releaseNode = (uid) => { 
             const acc = accounts.value.find(a => a.uid === uid); 
-            if(acc) { 
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; 
-                // Al limpiarlo, el Motor Reactivo lo devuelve visualmente a la Pool al instante.
-            } 
+            if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; } 
         };
         
         const burnNode = (uid) => {
@@ -231,7 +230,6 @@ createApp({
             }
         };
 
-        // --- BLACKLIST MASIVA ---
         const processBulkBlacklist = () => {
             if(!bulkBlacklistText.value.trim()) return;
             const rawItems = bulkBlacklistText.value.split(/[\n,\s]+/);
@@ -246,6 +244,7 @@ createApp({
             });
             bulkBlacklistText.value = ''; 
         };
+        
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
 
         // --- CARGA DE API / JSON ---
@@ -258,7 +257,6 @@ createApp({
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return;
                 
-                // Mantenemos este filtro inicial para ahorrar memoria en el navegador
                 const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
                 const isUsed = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                 
@@ -332,7 +330,8 @@ createApp({
             addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, 
             openPoolModal, closePoolModal, assignNodeToAccount,
-            openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool
+            openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
+            fetchCurrentIP
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

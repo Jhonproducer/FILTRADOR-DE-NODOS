@@ -84,37 +84,32 @@ createApp({
             return result;
         });
 
-        // 🛡️ MOTOR DE PERSISTENCIA
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v11', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v11', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v11', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_master_v12', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v12', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v12', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v11'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v11'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v11'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v12'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v12'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v12'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v10', 'v9', 'master', 'v8', 'v7', 'v6'];
+                const oldKeys = ['v11', 'v10', 'v9', 'master'];
                 for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
+                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
                         savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`));
+                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
+                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`));
                         break;
                     }
                 }
             }
 
             if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ 
-                    ...a, 
-                    uid: a.uid || generateUid(),
-                    previousIp: a.previousIp || null
-                }));
+                accounts.value = savedAcc.map(a => ({ ...a, uid: a.uid || generateUid(), previousIp: a.previousIp || null }));
             } else {
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
@@ -130,7 +125,7 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP Y SCAMALYTICS DIRECTO
+        // ⚡ AUTO IP (LA MISMA CASCADA, PERO FUNCIONAL)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -139,45 +134,47 @@ createApp({
             syncStatus.value = 'Detectando IP...';
             let newIp = null;
 
-            // Intento 1: ipify (Rápido y no necesita Token)
+            // 1. IPIFY (Ligero, menos propenso a bloqueo)
             try {
                 const r1 = await fetch("https://api.ipify.org?format=json");
                 if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
             } catch(e) {}
 
-            // Intento 2: TU API EXACTA de ipinfo
+            // 2. IPINFO con tu Token Exacto
             if(!newIp) {
                 try {
-                    const r2 = await fetch("https://ipinfo.io/json", {
-                        headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
-                    });
+                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
                     if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
+                } catch(e) {}
+            }
+
+            // 3. MYIP
+            if(!newIp) {
+                try {
+                    const r3 = await fetch("https://api.myip.com");
+                    if(r3.ok) { const d3 = await r3.json(); newIp = d3.ip; }
                 } catch(e) {}
             }
 
             if(newIp) {
                 if(acc.ip === newIp) { 
-                    syncStatus.value = 'La IP ya estaba actualizada.'; 
+                    syncStatus.value = 'La IP es la misma.'; 
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
 
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
-                    if(!proceed) { 
-                        syncStatus.value = 'Cancelado.'; 
-                        setTimeout(() => { syncStatus.value = ''; }, 3000);
-                        return; 
-                    }
+                    const proceed = confirm(`⚠️ ALERTA\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir?`);
+                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
                 }
 
-                acc.previousIp = acc.ip; // Guardamos el salvavidas
+                acc.previousIp = acc.ip; 
                 acc.ip = newIp;
                 triggerCollisionCheck(acc);
-                syncStatus.value = '¡IP extraída!';
+                syncStatus.value = '¡IP Actualizada!';
             } else {
-                alert("Tu navegador o extensión bloqueó la extracción de IP. Por favor, usa incógnito sin extensiones o ingresa la IP manualmente.");
+                alert("Bloqueo de red. Las extensiones de tu navegador impidieron extraer la IP automáticamente.");
                 syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -195,15 +192,16 @@ createApp({
         };
 
         const openScamalytics = (ip) => {
-            if(!ip || ip.trim() === '') return;
+            if(!ip || ip.trim() === '') {
+                alert("Primero debes extraer o pegar la IP para ver el Score.");
+                return;
+            }
             window.open(`https://scamalytics.com/ip/${ip.trim()}`, '_blank');
-            syncStatus.value = 'Abriendo Score...';
-            setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
+
 
         const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
         const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
-
         const openAccountSelectModal = (node) => { nodeToAssign.value = node; showAccountSelectModal.value = true; };
         const closeAccountSelectModal = () => { showAccountSelectModal.value = false; nodeToAssign.value = null; };
         
@@ -233,7 +231,7 @@ createApp({
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
                 if (acc) {
                     const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null;
+                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; 
                     if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
                     closePoolModal(); triggerCollisionCheck(acc);
                 }
@@ -321,21 +319,26 @@ createApp({
             showStatus(`Pool Actualizado: ${pool.value.length} nodos`);
         };
 
-        // 🚀 API DIRECTA (SIN PROXIES) - Exactamente como tu CURL
+        // ==========================================
+        // 🚀 API DE MYSTERIUM DIRECTA Y ORIGINAL (SIN PROXY)
+        // ==========================================
         const fetchAPI = async () => {
-            syncStatus.value = 'Conectando API Mysterium...';
+            syncStatus.value = 'Conectando API Original...';
             try {
-                const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential&quality_min=2.5";
-                const response = await fetch(targetUrl, {
+                // Aquí volvemos al llamado nativo directo que funcionaba al principio
+                const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+                const response = await fetch(url, {
                     headers: { 'accept': 'application/json' }
                 });
                 
-                if(!response.ok) throw new Error("Fallo en la red");
+                if(!response.ok) throw new Error("Error HTTP " + response.status);
+                
                 const data = await response.json();
                 processNodeData(data);
+                
             } catch (err) {
-                console.error(err);
-                alert("Error conectando a la API. Puede ser temporal o tu navegador la bloqueó. Usa Importar JSON.");
+                console.error("Error API:", err);
+                alert("Error conectando a la API de Mysterium. \nVerifica tu conexión a internet o usa 'Importar JSON'.");
                 syncStatus.value = '';
             }
         };

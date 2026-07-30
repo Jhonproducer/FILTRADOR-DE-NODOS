@@ -106,8 +106,8 @@
                                         <div class="flex items-center justify-center gap-2">
                                             <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" :title="acc.nodeId" placeholder="Vacío" maxlength="14" class="w-full max-w-[140px] bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide cursor-text text-sm">
                                             <div class="flex gap-1 shrink-0">
-                                                <button @click="openPoolModal(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool"><i data-lucide="search" class="w-4 h-4"></i></button>
-                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId, 'Nodo')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID Nodo"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                                <button @click="openPoolModal(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool"><i data-lucide="search" class="w-3.5 h-3.5"></i></button>
+                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId, 'Nodo')" class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID Nodo"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                                             </div>
                                         </div>
                                     </td>
@@ -119,8 +119,6 @@
                                         <div v-if="acc.q_score" class="inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-black border" :class="acc.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ acc.q_score }}</div>
                                         <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
-                                    
-                                    <!-- IP CENTRO DE MANDO -->
                                     <td class="p-3 align-middle">
                                         <div class="flex flex-col gap-2 w-full max-w-[240px] mx-auto">
                                             <div class="flex items-center gap-2">
@@ -134,7 +132,6 @@
                                             </div>
                                         </div>
                                     </td>
-
                                     <td class="p-3 align-middle text-center">
                                         <div v-if="hasCollision(acc)" title="Hay otra cuenta usando este mismo Nodo o IP" class="inline-flex items-center justify-center w-6 h-6 bg-rose-100 text-rose-700 rounded-full animate-pulse cursor-help"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
                                         <div v-else-if="acc.nodeId" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>
@@ -159,7 +156,7 @@
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <div class="flex gap-3">
                             <button @click="fetchAPI" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-sm">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Mysterium
                             </button>
                             <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar JSON
@@ -197,7 +194,7 @@
                                     <td class="p-4 align-middle text-center"><span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ node.q_score }}</span></td>
                                     <td class="p-4 align-middle text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button @click="copyToClipboard(node.id, 'Nodo')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                            <button @click="copyToClipboard(node.id, 'Nodo')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID para Prueba"><i data-lucide="copy" class="w-4 h-4"></i></button>
                                             <button @click="openAccountSelectModal(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-100" title="Asignar a Cuenta..."><i data-lucide="user-plus" class="w-4 h-4"></i></button>
                                             <button @click="burnDirectlyFromPool(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-rose-100" title="Falló Prueba: Quemar"><i data-lucide="flame" class="w-4 h-4"></i></button>
                                         </div>

@@ -85,31 +85,36 @@ createApp({
         });
 
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v13', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v13', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v13', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_master', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v13'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v13'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v13'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master'));
 
+            // Recuperación Automática de versiones viejas si las hay
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v12', 'v11', 'v10', 'master'];
+                const oldKeys = ['v12', 'v11', 'v10', 'v9', 'v8', 'v7', 'v6', 'master_v12', 'master_v11', 'master_v10', 'master_v9'];
                 for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
+                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
                         savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`));
+                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
+                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
                         break;
                     }
                 }
             }
 
             if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ ...a, uid: a.uid || generateUid(), previousIp: a.previousIp || null }));
+                accounts.value = savedAcc.map(a => ({ 
+                    ...a, 
+                    uid: a.uid || generateUid(),
+                    previousIp: a.previousIp || null
+                }));
             } else {
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
@@ -125,7 +130,44 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP (CASCADA SEGURA)
+        // 🚀 MYSTERIUM API (Directa y Original - REPARADA)
+        // ==========================================
+        const fetchAPI = async () => {
+            syncStatus.value = 'Conectando a Mysterium...';
+            const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+            let data = null;
+
+            // Cascada Titanium de 4 Niveles
+            const attempts = [
+                { name: "Directo", url: url },
+                { name: "Proxy 1", url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
+                { name: "Proxy 2", url: `https://corsproxy.io/?${encodeURIComponent(url)}` },
+                { name: "Proxy 3", url: `https://thingproxy.freeboard.io/fetch/${url}` }
+            ];
+
+            for (let attempt of attempts) {
+                try {
+                    const res = await fetch(attempt.url, { headers: { 'accept': 'application/json' } });
+                    if (res.ok) {
+                        data = await res.json();
+                        console.log(`Conexión exitosa a Mysterium vía: ${attempt.name}`);
+                        break; // Funcionó, salimos del ciclo
+                    }
+                } catch (e) {
+                    console.warn(`Fallo en conexión: ${attempt.name}`);
+                }
+            }
+
+            if (data && Array.isArray(data)) {
+                processNodeData(data);
+            } else {
+                alert("Bloqueo Severo de Red: Ni la conexión directa ni los proxies lograron saltar la seguridad de tu proveedor/navegador. \n\nPor favor, usa el botón de 'Importar JSON'.");
+                syncStatus.value = '';
+            }
+        };
+
+        // ==========================================
+        // ⚡ AUTO IP (A prueba de bloqueos)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -135,28 +177,40 @@ createApp({
             let newIp = null;
 
             try {
-                const r1 = await fetch("https://api.ipify.org?format=json");
-                if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
-            } catch(e) {}
-
-            if(!newIp) {
+                // PRIMERO: Tu API Privada de ipinfo (La más exacta)
+                const res = await fetch("https://ipinfo.io/json", {
+                    headers: { 'Authorization': 'Bearer 8c97cc52a98a48', 'Accept': 'application/json' }
+                });
+                if(res.ok) { const d = await res.json(); newIp = d.ip; }
+            } catch(e) {
+                // SEGUNDO: Respaldo (Si falla por adblocker)
                 try {
-                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
-                    if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
-                } catch(e) {}
+                    const res = await fetch("https://api.ipify.org?format=json");
+                    if(res.ok) { const d = await res.json(); newIp = d.ip; }
+                } catch(e2) {
+                    // TERCERO: Último recurso
+                    try {
+                        const res = await fetch("https://api.myip.com");
+                        if(res.ok) { const d = await res.json(); newIp = d.ip; }
+                    } catch(e3) {}
+                }
             }
 
             if(newIp) {
                 if(acc.ip === newIp) { 
-                    syncStatus.value = 'La IP ya estaba actualizada.'; 
+                    syncStatus.value = 'La IP es la misma.'; 
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
 
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir?`);
-                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
+                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
+                    if(!proceed) { 
+                        syncStatus.value = 'Cancelado.'; 
+                        setTimeout(() => { syncStatus.value = ''; }, 3000);
+                        return; 
+                    }
                 }
 
                 acc.previousIp = acc.ip; 
@@ -164,7 +218,7 @@ createApp({
                 triggerCollisionCheck(acc);
                 syncStatus.value = '¡IP Actualizada!';
             } else {
-                alert("Bloqueo de red al leer la IP automática.");
+                alert("No se pudo detectar la IP. Revisa que tu VPN esté conectado o que tu navegador no esté en modo estricto.");
                 syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -172,7 +226,7 @@ createApp({
 
         const undoIp = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
-            if(acc && acc.previousIp) {
+            if(acc && acc.previousIp !== undefined && acc.previousIp !== null) {
                 acc.ip = acc.previousIp; 
                 acc.previousIp = null; 
                 triggerCollisionCheck(acc); 
@@ -183,7 +237,7 @@ createApp({
 
         const openScamalytics = (ip) => {
             if(!ip || ip.trim() === '') {
-                alert("Primero debes extraer o pegar la IP para ver el Score.");
+                alert("Debes escribir una IP o extraerla con el botón 'Auto IP' primero.");
                 return;
             }
             window.open(`https://scamalytics.com/ip/${ip.trim()}`, '_blank');
@@ -234,7 +288,7 @@ createApp({
                 acc.ip = ''; acc.previousIp = null;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal(); triggerCollisionCheck(acc); 
+                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
             }
         };
 
@@ -306,29 +360,6 @@ createApp({
             });
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
             showStatus(`Pool Actualizado: ${pool.value.length} nodos`);
-        };
-
-        // ==========================================
-        // 🚀 API DE MYSTERIUM CON PROXY DE SALTO (BYPASS CORS)
-        // ==========================================
-        const fetchAPI = async () => {
-            syncStatus.value = 'Conectando con Mysterium...';
-            try {
-                // Usamos un proxy oficial y estable para saltar el bloqueo del navegador
-                const targetUrl = encodeURIComponent("https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential");
-                const proxyUrl = `https://api.allorigins.win/raw?url=${targetUrl}`;
-                
-                const response = await fetch(proxyUrl);
-                if(!response.ok) throw new Error("Error HTTP " + response.status);
-                
-                const data = await response.json();
-                processNodeData(data);
-                
-            } catch (err) {
-                console.error("Error API:", err);
-                alert("El navegador bloqueó la conexión directa. Recuerda que siempre puedes usar 'Importar JSON' con tu archivo descargado.");
-                syncStatus.value = '';
-            }
         };
 
         const importPoolJSON = (event) => {

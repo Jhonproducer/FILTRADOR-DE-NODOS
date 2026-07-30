@@ -84,20 +84,19 @@ createApp({
             return result;
         });
 
-        // --- SISTEMA MAESTRO DE DATOS ---
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v11', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v11', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v11', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_master_v12', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v12', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v12', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v11'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v11'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v11'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v12'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v12'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v12'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v10', 'v9', 'master', 'v8', 'v7'];
+                const oldKeys = ['v11', 'v10', 'v9', 'master', 'v8'];
                 for (let v of oldKeys) {
                     let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
@@ -113,7 +112,7 @@ createApp({
                 accounts.value = savedAcc.map(a => ({ 
                     ...a, 
                     uid: a.uid || generateUid(),
-                    previousIp: a.previousIp || null // Aseguramos que la variable exista siempre
+                    previousIp: a.previousIp || null
                 }));
             } else {
                 const initial = [];
@@ -129,9 +128,7 @@ createApp({
 
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
-        // ==========================================
-        // ⚡ LA CASCADA DE IP PÚBLICA (IPINFO TOKEN)
-        // ==========================================
+        // --- CASCADA DE IP ROBUSTA ---
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(!acc) return;
@@ -139,13 +136,11 @@ createApp({
             syncStatus.value = 'Detectando IP...';
             let newIp = null;
 
-            // Intento 1: ipify (Rápido, rara vez bloqueado)
             try {
                 const r1 = await fetch("https://api.ipify.org?format=json");
                 if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
             } catch(e) {}
 
-            // Intento 2: TU API EXACTA de ipinfo
             if(!newIp) {
                 try {
                     const r2 = await fetch("https://ipinfo.io/json", {
@@ -155,7 +150,6 @@ createApp({
                 } catch(e) {}
             }
 
-            // Intento 3: myip
             if(!newIp) {
                 try {
                     const r3 = await fetch("https://api.myip.com");
@@ -163,7 +157,6 @@ createApp({
                 } catch(e) {}
             }
 
-            // --- RESULTADO Y PROTECCIÓN ANTI-CHOQUE ---
             if(newIp) {
                 if(acc.ip === newIp) { 
                     syncStatus.value = 'La IP ya estaba actualizada.'; 
@@ -171,7 +164,6 @@ createApp({
                     return; 
                 }
 
-                // Chequeo de colisión antes de escribir
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
                     const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
@@ -182,12 +174,12 @@ createApp({
                     }
                 }
 
-                acc.previousIp = acc.ip; // Activamos el botón Deshacer guardando la IP vieja
+                acc.previousIp = acc.ip; 
                 acc.ip = newIp;
                 triggerCollisionCheck(acc);
                 syncStatus.value = '¡IP extraída!';
             } else {
-                alert("Bloqueo de red total. Tus extensiones de privacidad impiden leer la IP desde el navegador.");
+                alert("Bloqueo de red. Tu navegador o VPN no permitió leer la IP.");
                 syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -197,7 +189,7 @@ createApp({
             const acc = accounts.value.find(a => a.uid === uid);
             if(acc && acc.previousIp) {
                 acc.ip = acc.previousIp; 
-                acc.previousIp = null; // Borramos el historial y se oculta el botón
+                acc.previousIp = null; 
                 triggerCollisionCheck(acc); 
                 syncStatus.value = 'IP Restaurada.';
                 setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -257,7 +249,7 @@ createApp({
                 acc.ip = ''; acc.previousIp = null;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal(); triggerCollisionCheck(acc); 
+                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
             }
         };
 
@@ -265,6 +257,7 @@ createApp({
             if(node && node.id) {
                 if(!blacklist.value.some(b => b.nodeId === node.id)) {
                     blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
+                    showStatus('Nodo bloqueado.');
                 }
             }
         };
@@ -342,7 +335,7 @@ createApp({
                 processNodeData(data);
             } catch (err) {
                 console.error(err);
-                alert("Bloqueo de red detectado. Usa la importación por JSON.");
+                alert("Bloqueo de red detectado al consultar la API de Mysterium. Usa la opción Importar JSON.");
                 syncStatus.value = '';
             }
         };

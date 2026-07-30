@@ -109,7 +109,7 @@
                                                 <button @click="openPoolModal(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool">
                                                     <i data-lucide="search" class="w-4 h-4"></i>
                                                 </button>
-                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors" title="Copiar ID 14 Caracteres">
+                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors" title="Copiar ID">
                                                     <i data-lucide="copy" class="w-4 h-4"></i>
                                                 </button>
                                             </div>
@@ -150,17 +150,16 @@
                 <div v-show="currentTab === 'pool'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
                     
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                        <!-- BOTONES DE SINCRONIZACIÓN -->
                         <div class="flex gap-3">
                             <button @click="fetchAPI" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-sm">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API en Vivo
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API
                             </button>
                             <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar JSON
                                 <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
                             </label>
                         </div>
-                        <span class="text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-xl border shadow-sm uppercase tracking-wider">Total Frescos: {{ pool.length }}</span>
+                        <span class="text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-xl border shadow-sm uppercase tracking-wider">Total Frescos: {{ filteredPool.length }}</span>
                     </div>
 
                     <div class="p-5 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-center">
@@ -180,30 +179,43 @@
                         <table class="w-full text-left border-collapse">
                             <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                                 <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
-                                    <th class="p-4 font-bold text-center w-1/4">ID (14 Chars)</th>
-                                    <th class="p-4 font-bold text-center w-1/4">Ciudad</th>
-                                    <th class="p-4 font-bold text-center w-1/4">Proveedor</th>
-                                    <th class="p-4 font-bold text-center w-1/4 cursor-pointer hover:text-indigo-600 transition-colors flex items-center justify-center gap-1" @click="toggleSortScore">
-                                        Calidad <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
+                                    <th class="p-4 font-bold text-center w-[25%]">ID (14 Chars)</th>
+                                    <th class="p-4 font-bold text-center w-[20%]">Ciudad</th>
+                                    <th class="p-4 font-bold text-center w-[20%]">Proveedor</th>
+                                    <th class="p-4 font-bold text-center w-[15%] cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleSortScore">
+                                        Calidad <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i>
                                     </th>
+                                    <!-- NUEVA COLUMNA DE ACCIONES EN POOL -->
+                                    <th class="p-4 font-bold text-center w-[20%]">Manejo Directo</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
                                 <tr v-for="node in filteredPool" :key="node.id" class="hover:bg-slate-50 transition-colors">
                                     <td class="p-4 align-middle text-center">
-                                        <div class="inline-flex items-center gap-2">
-                                            <span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border px-3 py-1.5 rounded-lg">{{ node.id }}</span>
-                                            <button @click="copyToClipboard(node.id)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                                        </div>
+                                        <span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">{{ node.id }}</span>
                                     </td>
                                     <td class="p-4 align-middle text-center font-medium text-slate-600" :title="node.city">{{ node.city }}</td>
                                     <td class="p-4 align-middle text-center text-slate-600" :title="node.asn_isp">{{ node.asn_isp }}</td>
                                     <td class="p-4 align-middle text-center">
                                         <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ node.q_score }}</span>
                                     </td>
+                                    <td class="p-4 align-middle text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <!-- Botones de Acción Directa en Pool -->
+                                            <button @click="copyToClipboard(node.id)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID para Prueba">
+                                                <i data-lucide="copy" class="w-4 h-4"></i>
+                                            </button>
+                                            <button @click="openAccountSelectModal(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-100" title="Asignar a Cuenta...">
+                                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                            </button>
+                                            <button @click="burnDirectlyFromPool(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-rose-100" title="Falló Prueba: Quemar Inmediatamente">
+                                                <i data-lucide="flame" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr v-if="filteredPool.length === 0 && pool.length > 0">
-                                    <td colspan="4" class="p-16 text-center text-slate-400 font-medium">No hay coincidencias.</td>
+                                    <td colspan="5" class="p-16 text-center text-slate-400 font-medium">No hay coincidencias.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -253,7 +265,7 @@
             </div>
         </main>
 
-        <!-- ==================== MODAL SELECCION ==================== -->
+        <!-- ==================== MODAL: DE CUENTA -> A POOL ==================== -->
         <transition name="fade">
             <div v-if="showPoolModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
                 <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
@@ -279,7 +291,37 @@
                                     <p class="text-xs text-slate-600 font-bold truncate cursor-help" :title="node.asn_isp">{{ node.asn_isp }}</p>
                                 </div>
                             </div>
-                            <div v-if="filteredPool.length === 0" class="col-span-4 text-center py-20 text-slate-400 font-bold">Sin resultados.</div>
+                            <div v-if="filteredPool.length === 0" class="col-span-4 text-center py-20 text-slate-400 font-bold">Sin resultados en Pool.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- ==================== NUEVO MODAL: DE POOL -> A CUENTA ==================== -->
+        <transition name="fade">
+            <div v-if="showAccountSelectModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[70vh] flex flex-col overflow-hidden border border-slate-200">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center text-center relative bg-slate-50/50">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-slate-800">Enviar Nodo a Cuenta</h3>
+                            <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Nodo Seleccionado: <span class="text-indigo-600 font-mono">{{ nodeToAssign?.id }}</span></p>
+                        </div>
+                        <button @click="closeAccountSelectModal" class="absolute right-6 top-6 w-8 h-8 bg-slate-200 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-auto p-6 bg-slate-50">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div v-for="acc in accounts" :key="acc.uid" @click="confirmAssignFromPool(acc.uid)" class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-500 hover:shadow-lg cursor-pointer transition-all group flex flex-col items-center justify-center text-center">
+                                <h4 class="font-bold text-slate-800 text-lg group-hover:text-indigo-600 transition-colors mb-2">{{ acc.name }}</h4>
+                                
+                                <div v-if="acc.nodeId" class="text-[10px] font-black uppercase tracking-wider px-2 py-1 bg-amber-100 text-amber-700 rounded-lg border border-amber-200">
+                                    Ocupada (Reemplazar)
+                                </div>
+                                <div v-else class="text-[10px] font-black uppercase tracking-wider px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200">
+                                    Disponible
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

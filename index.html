@@ -43,15 +43,14 @@
             </nav>
 
             <div class="p-6 flex flex-col gap-2">
+                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white">
+                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Respaldar
+                </button>
                 <!-- NUEVO BOTÓN: RESTAURAR BACKUP -->
-                <label class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-emerald-600 border border-slate-700 hover:border-emerald-500 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white cursor-pointer">
-                    <i data-lucide="upload-cloud" class="w-4 h-4"></i> Restaurar Backup
+                <label class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white cursor-pointer">
+                    <i data-lucide="upload-cloud" class="w-4 h-4"></i> Restaurar Base
                     <input type="file" @change="restoreDatabase" accept=".json" class="hidden">
                 </label>
-                <!-- BOTÓN EXPORTAR -->
-                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white">
-                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Guardar Backup
-                </button>
             </div>
         </aside>
 
@@ -74,119 +73,101 @@
                 <!-- ==================== VISTA: CUENTAS ==================== -->
                 <div v-show="currentTab === 'accounts'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
                     
-                    <!-- 🧠 MOTOR ESTRATÉGICO ANTI-SOSPECHAS -->
-                    <div class="p-4 bg-indigo-50/50 border-b border-indigo-100 flex flex-wrap gap-4 items-center justify-between">
+                    <!-- BARRA SUPERIOR ANTI-SOSPECHAS -->
+                    <div class="p-5 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50/50">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-                                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Workflow Anti-Sospechas</p>
-                                <p class="text-sm font-bold text-slate-700 mt-0.5">Último Proveedor Trabajado: <span class="text-rose-600 uppercase">{{ lastWorkedIsp || 'Ninguno' }}</span></p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 bg-white p-2 pr-4 rounded-xl border border-indigo-100 shadow-sm">
-                            <button @click="generateSafeSuggestion" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-colors shadow-sm flex items-center gap-2">
-                                <i data-lucide="dices" class="w-4 h-4"></i> Sugerir Perfil Seguro
+                            <button @click="addAccount" class="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Nueva
                             </button>
-                            <div v-if="safeSuggestion" class="flex items-center gap-2">
-                                <span class="text-slate-500 text-xs font-medium">Siguiente:</span>
-                                <span class="font-bold text-indigo-700">{{ safeSuggestion.name }}</span>
-                                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold border truncate max-w-[120px]">{{ safeSuggestion.asn_isp }}</span>
+                            <!-- SISTEMA DE RECOMENDACIÓN -->
+                            <div class="px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Último Proveedor:</span>
+                                <span v-if="lastWorkedIsp" class="text-xs font-black text-indigo-600 uppercase">{{ lastWorkedIsp }}</span>
+                                <span v-else class="text-xs font-bold text-slate-400">Ninguno</span>
                             </div>
-                            <span v-else class="text-xs font-medium text-slate-400">Sin sugerencias disponibles.</span>
                         </div>
-                    </div>
 
-                    <div class="p-4 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50/50">
-                        <button @click="addAccount" class="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Nueva
-                        </button>
-                        <div class="relative w-96 flex-shrink-0">
+                        <div class="relative w-80 flex-shrink-0">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                             </div>
-                            <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, ID, proveedor..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-center font-medium placeholder-slate-400">
-                        </div>
-                        <div class="min-w-[120px] text-right">
-                            <span v-if="collisionCount > 0" class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 shadow-sm animate-pulse">
-                                <i data-lucide="alert-triangle" class="w-4 h-4"></i> {{ collisionCount }} ALERTAS
-                            </span>
+                            <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, ID, proveedor..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm font-medium">
                         </div>
                     </div>
                     
                     <div class="flex-1 overflow-auto">
-                        <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
+                        <table class="w-full text-left border-collapse table-fixed min-w-[950px]">
                             <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                                 <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
-                                    <th class="p-4 font-bold w-[12%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('name')">Cuenta <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    <th class="p-4 font-bold w-[12%] text-center cursor-pointer hover:text-indigo-600" @click="toggleAccountSort('name')">Cuenta <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
                                     <th class="p-4 font-bold w-[22%] text-center">Nodo Asignado (14)</th>
-                                    <th class="p-4 font-bold w-[18%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('asn_isp')">Proveedor <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-4 font-bold w-[7%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('q_score')">Quality <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    <th class="p-4 font-bold w-[18%] text-center cursor-pointer hover:text-indigo-600" @click="toggleAccountSort('asn_isp')">Proveedor <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    <th class="p-4 font-bold w-[7%] text-center cursor-pointer hover:text-indigo-600" @click="toggleAccountSort('q_score')">Quality <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
                                     <th class="p-4 font-bold w-[24%] text-center">Registro IP Inteligente</th>
                                     <th class="p-4 font-bold w-[7%] text-center">Estado</th>
                                     <th class="p-4 font-bold w-[10%] text-center">Acción</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
-                                <tr v-for="acc in processedAccounts" :key="acc.uid" 
-                                    :class="{'bg-rose-50/50': hasCollision(acc), 'bg-indigo-50/40 border-l-4 border-indigo-500': safeSuggestion && safeSuggestion.uid === acc.uid, 'hover:bg-slate-50 transition-colors': !hasCollision(acc)}">
+                                <tr v-for="acc in processedAccounts" :key="acc.uid" :class="{'bg-rose-50/50': hasCollision(acc), 'hover:bg-slate-50 transition-colors': !hasCollision(acc)}">
                                     
-                                    <td class="p-3 align-middle">
-                                        <input v-model="acc.name" :title="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all cursor-text">
+                                    <td class="p-3 align-middle relative">
+                                        <!-- BADGE RECOMENDADO -->
+                                        <div v-if="isRecommended(acc)" class="absolute -top-1 left-2 flex items-center gap-1 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[9px] font-black uppercase shadow-sm border border-emerald-200">
+                                            <i data-lucide="star" class="w-2.5 h-2.5"></i> Recomendado
+                                        </div>
+                                        <input v-model="acc.name" :title="acc.name" class="w-full mt-2 bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all cursor-text">
                                     </td>
+                                    
                                     <td class="p-3 align-middle">
                                         <div class="flex items-center justify-center gap-2">
-                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" :title="acc.nodeId" placeholder="Vacío" maxlength="14" class="w-full max-w-[140px] bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide cursor-text text-sm">
+                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" :title="acc.nodeId" placeholder="Vacío" maxlength="14" class="w-32 bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-1.5 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide cursor-text text-sm">
                                             <div class="flex gap-1 shrink-0">
-                                                <button @click="openPoolModal(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool"><i data-lucide="search" class="w-3.5 h-3.5"></i></button>
-                                                <!-- AL COPIAR EL NODO, MARCAMOS EL ISP COMO "TRABAJADO" -->
-                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId, 'Nodo'); markAsWorked(acc.asn_isp)" class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID Nodo"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="p-3 align-middle text-center">
-                                        <span v-if="acc.asn_isp" :title="acc.asn_isp" class="inline-block px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold truncate max-w-[160px] cursor-help">{{ acc.asn_isp }}</span>
-                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
-                                    </td>
-                                    <td class="p-3 align-middle text-center">
-                                        <div v-if="acc.q_score" class="inline-flex items-center justify-center w-8 h-8 rounded-full text-[10px] font-black border" :class="acc.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ acc.q_score }}</div>
-                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
-                                    </td>
-                                    
-                                    <td class="p-3 align-middle">
-                                        <div class="flex flex-col gap-2 w-full max-w-[240px] mx-auto">
-                                            <div class="flex items-center gap-2">
-                                                <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" :title="acc.ip" placeholder="0.0.0.0" class="flex-1 bg-white border border-slate-200 hover:border-indigo-300 focus:border-indigo-500 rounded-lg p-2 text-center text-slate-700 font-mono font-medium outline-none transition-all shadow-sm cursor-text text-sm">
-                                                <button v-if="acc.previousIp" @click="undoIp(acc.uid)" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors border border-rose-200 shadow-sm" title="¡Restaurar IP anterior!"><i data-lucide="undo-2" class="w-4 h-4"></i></button>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-2" v-if="acc.nodeId || acc.ip">
-                                                <!-- AL EXTRAER IP, MARCAMOS EL ISP COMO "TRABAJADO" -->
-                                                <button @click="fetchCurrentIP(acc.uid); markAsWorked(acc.asn_isp)" class="flex flex-col items-center justify-center py-1.5 bg-emerald-50 hover:bg-emerald-500 text-emerald-700 hover:text-white rounded-lg border border-emerald-100 transition-colors shadow-sm" title="Extraer IP">
-                                                    <i data-lucide="zap" class="w-3.5 h-3.5 mb-0.5"></i>
-                                                    <span class="text-[9px] font-black uppercase">Auto IP</span>
-                                                </button>
-                                                <!-- AL COPIAR IP, MARCAMOS EL ISP COMO "TRABAJADO" -->
-                                                <button @click="copyToClipboard(acc.ip, 'IP'); markAsWorked(acc.asn_isp)" class="flex flex-col items-center justify-center py-1.5 bg-indigo-50 hover:bg-indigo-500 text-indigo-700 hover:text-white rounded-lg border border-indigo-100 transition-colors shadow-sm" title="Copiar IP">
-                                                    <i data-lucide="copy" class="w-3.5 h-3.5 mb-0.5"></i>
-                                                    <span class="text-[9px] font-black uppercase">Copiar</span>
-                                                </button>
+                                                <button @click="openPoolModal(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors"><i data-lucide="search" class="w-3.5 h-3.5"></i></button>
+                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId, 'Nodo')" class="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                                             </div>
                                         </div>
                                     </td>
 
                                     <td class="p-3 align-middle text-center">
-                                        <div v-if="hasCollision(acc)" title="Hay otra cuenta usando este mismo Nodo o IP" class="inline-flex items-center justify-center w-6 h-6 bg-rose-100 text-rose-700 rounded-full animate-pulse cursor-help"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
+                                        <span v-if="acc.asn_isp" :title="acc.asn_isp" class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold truncate max-w-[140px] cursor-help">{{ acc.asn_isp }}</span>
+                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
+                                    </td>
+
+                                    <td class="p-3 align-middle text-center">
+                                        <div v-if="acc.q_score" class="inline-flex items-center justify-center w-8 h-8 rounded-full text-[10px] font-black border" :class="acc.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ acc.q_score }}</div>
+                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
+                                    </td>
+                                    
+                                    <!-- IP COMPACTA -->
+                                    <td class="p-3 align-middle">
+                                        <div class="flex items-center justify-center gap-1.5 w-full">
+                                            <div class="relative">
+                                                <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" :title="acc.ip" placeholder="0.0.0.0" class="w-28 bg-white border border-slate-200 focus:border-indigo-500 rounded-lg p-1.5 text-center text-slate-700 font-mono font-bold text-xs outline-none transition-all shadow-sm">
+                                                <button v-if="acc.previousIp" @click="undoIp(acc.uid)" class="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-rose-500 text-white shadow-md hover:bg-rose-600" title="Deshacer"><i data-lucide="undo-2" class="w-2.5 h-2.5"></i></button>
+                                            </div>
+                                            <div class="flex flex-col gap-1 shrink-0">
+                                                <button @click="fetchCurrentIP(acc.uid)" class="w-6 h-5 flex items-center justify-center rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-500 hover:text-white border border-emerald-200" title="Auto IP"><i data-lucide="zap" class="w-3 h-3"></i></button>
+                                                <button v-if="acc.ip" @click="copyToClipboard(acc.ip, 'IP')" class="w-6 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white border border-slate-200" title="Copiar"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="p-3 align-middle text-center">
+                                        <div v-if="hasCollision(acc)" class="inline-flex items-center justify-center w-6 h-6 bg-rose-100 text-rose-700 rounded-full animate-pulse"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
                                         <div v-else-if="acc.nodeId" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>
                                         <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
+                                    
                                     <td class="p-3 align-middle text-center">
                                         <div class="flex items-center justify-center gap-1" v-if="acc.nodeId">
-                                            <button @click="releaseNode(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Liberar al Pool"><i data-lucide="unlock" class="w-3.5 h-3.5"></i></button>
-                                            <button @click="burnNode(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors" title="Quemar a Bloqueados"><i data-lucide="flame" class="w-3.5 h-3.5"></i></button>
+                                            <!-- BOTON MARCAR TRABAJADO -->
+                                            <button @click="markAsWorked(acc.asn_isp)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Marcar como Trabajado (Oculta similares)"><i data-lucide="eye" class="w-3.5 h-3.5"></i></button>
+                                            <button @click="releaseNode(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors" title="Liberar al Pool"><i data-lucide="unlock" class="w-3.5 h-3.5"></i></button>
+                                            <button @click="burnNode(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors" title="Quemar a Bloqueados"><i data-lucide="flame" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                         <div class="flex justify-center" v-else>
-                                            <button @click="removeAccount(acc.uid)" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Eliminar fila"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                            <button @click="removeAccount(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -199,22 +180,26 @@
                 <div v-show="currentTab === 'pool'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <div class="flex gap-3">
-                            <button @click="fetchAPI" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-sm" title="Descarga solo el TOP 5 ISP de UK">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Mysterium (Top 5 UK)
+                            <button @click="fetchAPI" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-sm">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Mysterium (Top UK)
                             </button>
+                            <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
+                                <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar JSON
+                                <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
+                            </label>
                         </div>
-                        <span class="text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-xl border shadow-sm uppercase tracking-wider">Total Élite Frescos: {{ filteredPool.length }}</span>
+                        <span class="text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-xl border shadow-sm uppercase tracking-wider">Top Nodos Listos: {{ filteredPool.length }}</span>
                     </div>
 
-                    <div class="p-5 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-center">
-                        <div class="w-48"><input type="text" v-model="filters.nodeId" placeholder="Filtrar por ID..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
-                        <div class="w-48"><input type="text" v-model="filters.city" placeholder="Filtrar por Ciudad..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
-                        <div class="w-48"><input type="text" v-model="filters.isp" placeholder="Filtrar por ISP..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
+                    <div class="p-4 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-center">
+                        <div class="w-48"><input type="text" v-model="filters.nodeId" placeholder="Filtrar por ID..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-center font-medium"></div>
+                        <div class="w-48"><input type="text" v-model="filters.city" placeholder="Filtrar por Ciudad..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-center font-medium"></div>
+                        <div class="w-48"><input type="text" v-model="filters.isp" placeholder="Filtrar por ISP..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-center font-medium"></div>
                         
                         <!-- NUEVO: FILTRO DE CALIDAD -->
-                        <div class="w-40 relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs font-black text-slate-400">Q ></div>
-                            <input type="number" step="0.1" min="0" v-model="filters.minQuality" placeholder="2.5" class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-black text-indigo-600">
+                        <div class="w-32 relative">
+                            <span class="absolute left-3 top-2 text-xs font-bold text-slate-400">Min Q:</span>
+                            <input type="number" step="0.1" v-model="filters.minQuality" placeholder="2.5" class="w-full pl-12 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none text-center font-black text-indigo-600">
                         </div>
 
                         <button @click="clearFilters" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition-colors border border-slate-200">Limpiar</button>
@@ -226,22 +211,24 @@
                                 <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
                                     <th class="p-4 font-bold text-center w-[25%]">ID (14 Chars)</th>
                                     <th class="p-4 font-bold text-center w-[20%]">Ciudad</th>
-                                    <th class="p-4 font-bold text-center w-[20%]">Proveedor Élite</th>
+                                    <th class="p-4 font-bold text-center w-[20%]">Proveedor</th>
                                     <th class="p-4 font-bold text-center w-[15%] cursor-pointer hover:text-indigo-600 transition-colors flex items-center justify-center gap-1" @click="toggleSortScore">Calidad <i data-lucide="arrow-up-down" class="w-3 h-3"></i></th>
-                                    <th class="p-4 font-bold text-center w-[20%]">Manejo Directo</th>
+                                    <th class="p-4 font-bold text-center w-[20%]">Acción</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
                                 <tr v-for="node in filteredPool" :key="node.id" class="hover:bg-slate-50 transition-colors">
-                                    <td class="p-4 align-middle text-center"><span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">{{ node.id }}</span></td>
+                                    <td class="p-4 align-middle text-center">
+                                        <span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">{{ node.id }}</span>
+                                    </td>
                                     <td class="p-4 align-middle text-center font-medium text-slate-600" :title="node.city">{{ node.city }}</td>
-                                    <td class="p-4 align-middle text-center text-slate-600 font-bold" :title="node.asn_isp">{{ node.asn_isp }}</td>
+                                    <td class="p-4 align-middle text-center font-bold text-indigo-600" :title="node.asn_isp">{{ node.asn_isp }}</td>
                                     <td class="p-4 align-middle text-center"><span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ node.q_score }}</span></td>
                                     <td class="p-4 align-middle text-center">
                                         <div class="flex items-center justify-center gap-2">
-                                            <button @click="copyToClipboard(node.id, 'Nodo')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID para Prueba"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                                            <button @click="openAccountSelectModal(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-100" title="Asignar a Cuenta..."><i data-lucide="user-plus" class="w-4 h-4"></i></button>
-                                            <button @click="burnDirectlyFromPool(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-rose-100" title="Falló Prueba: Quemar"><i data-lucide="flame" class="w-4 h-4"></i></button>
+                                            <button @click="copyToClipboard(node.id, 'Nodo')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                            <button @click="openAccountSelectModal(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-100" title="Asignar..."><i data-lucide="user-plus" class="w-4 h-4"></i></button>
+                                            <button @click="burnDirectlyFromPool(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-rose-100" title="Quemar"><i data-lucide="flame" class="w-4 h-4"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -290,8 +277,7 @@
             </div>
         </main>
 
-        <!-- ==================== MODALES (Ocultos) ==================== -->
-        <!-- Mismo código de modales que ya tenías, para seleccionar y enviar a pool -->
+        <!-- ==================== MODALES ==================== -->
         <transition name="fade">
             <div v-if="showPoolModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
                 <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
@@ -303,9 +289,8 @@
                         <button @click="closePoolModal" class="absolute right-6 top-6 w-8 h-8 bg-slate-200 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                     <div class="p-5 border-b border-slate-100 flex gap-4 justify-center bg-white">
-                        <input type="text" v-model="filters.nodeId" placeholder="ID (14)" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
-                        <input type="text" v-model="filters.city" placeholder="Ciudad" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
-                        <input type="text" v-model="filters.isp" placeholder="Proveedor" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                        <input type="text" v-model="filters.nodeId" placeholder="ID (14)" class="w-32 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                        <input type="text" v-model="filters.isp" placeholder="Proveedor..." class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
                     </div>
                     <div class="flex-1 overflow-auto p-6 bg-slate-50">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -313,11 +298,10 @@
                                 <div>
                                     <div class="inline-flex items-center justify-center px-2 py-1 rounded-lg text-[10px] font-black border mb-3" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">Q: {{ node.q_score }}</div>
                                     <h4 class="font-mono font-bold text-slate-800 text-sm uppercase tracking-wide group-hover:text-indigo-600 transition-colors mb-2">{{ node.id }}</h4>
-                                    <p class="text-xs text-slate-500 font-medium mb-1 truncate cursor-help" :title="node.city">{{ node.city }}</p>
-                                    <p class="text-xs text-slate-600 font-bold truncate cursor-help" :title="node.asn_isp">{{ node.asn_isp }}</p>
+                                    <p class="text-xs text-slate-600 font-bold truncate" :title="node.asn_isp">{{ node.asn_isp }}</p>
                                 </div>
                             </div>
-                            <div v-if="filteredPool.length === 0" class="col-span-4 text-center py-20 text-slate-400 font-bold">Sin resultados en Pool.</div>
+                            <div v-if="filteredPool.length === 0" class="col-span-4 text-center py-20 text-slate-400 font-bold">Sin resultados.</div>
                         </div>
                     </div>
                 </div>

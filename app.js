@@ -29,7 +29,6 @@ createApp({
         };
 
         const suggestedAccount = computed(() => {
-            // Filtra cuentas que tienen nodo, tienen ISP, NO han sido trabajadas y su ISP es diferente al último.
             const available = accounts.value.filter(a => 
                 a.nodeId && 
                 a.asn_isp && 
@@ -38,14 +37,13 @@ createApp({
             );
             
             if(available.length === 0) return null;
-            // Elige una al azar
             return available[Math.floor(Math.random() * available.length)];
         });
 
         const markAsWorked = (acc) => {
             acc.worked = true;
             lastWorkedIsp.value = getIspName(acc.asn_isp);
-            showStatus(`Marcada como trabajada. Proveedor evitado: ${lastWorkedIsp.value.toUpperCase()}`);
+            showStatus(`Marcada. Proveedor evitado: ${lastWorkedIsp.value.toUpperCase()}`);
         };
 
         const resetWorkedStatus = () => {
@@ -64,7 +62,7 @@ createApp({
             return TOP_ISPS.some(t => low.includes(t));
         };
 
-        // --- FILTROS DE POOL (Con nueva Calidad) ---
+        // --- FILTROS DE POOL ---
         const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '' });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
@@ -184,7 +182,7 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP (CASCADA SILENCIOSA)
+        // ⚡ AUTO IP CASCADA (Mantenida segura)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -346,7 +344,7 @@ createApp({
             data.forEach(nodo => {
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
                 
-                // Filtro Top 5 UK Categórico
+                // Filtro Elite Top 5 UK
                 if (!isTopISP(nodo.location?.isp)) return;
 
                 const idCorto = nodo.provider_id.substring(0, 14);
@@ -366,38 +364,58 @@ createApp({
                 }
             });
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Actualizado: ${pool.value.length} nodos Top UK`);
+            showStatus(`Pool Actualizado: ${pool.value.length} nodos Elite`);
         };
 
         // ==========================================
-        // 🚀 CASCADA MYSTERIUM (Onion Routing)
+        // 🚀 CASCADA MYSTERIUM 5 NIVELES (Estricta)
         // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
-            const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             let data = null;
 
+            // 5 intentos agresivos. Usamos proxy que escupe texto bruto para parsearlo nosotros
             const attempts = [
-                url, // Directo
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-                `https://corsproxy.io/?${encodeURIComponent(url)}`
+                { name: 'Directo', url: targetUrl },
+                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
+                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
             ];
 
-            for (let proxy of attempts) {
+            for (let attempt of attempts) {
+                syncStatus.value = `Intentando: ${attempt.name}...`;
                 try {
-                    const res = await fetch(proxy, { headers: { 'accept': 'application/json' } });
+                    const res = await fetch(attempt.url, { 
+                        headers: { 'Accept': 'application/json' },
+                        cache: 'no-store' // Cero caché vieja
+                    });
+                    
                     if (res.ok) {
-                        data = await res.json();
-                        break; 
+                        const text = await res.text();
+                        try {
+                            const parsed = JSON.parse(text);
+                            // Validar que realmente Mysterium devolvió la red de nodos
+                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
+                                data = parsed;
+                                console.log(`¡Éxito usando: ${attempt.name}!`);
+                                break; 
+                            }
+                        } catch (err) {
+                            console.warn(`Respuesta falsa del proxy en ${attempt.name}`);
+                        }
                     }
-                } catch (e) { }
+                } catch (e) {
+                    console.warn(`Fallo en ${attempt.name}`);
+                }
             }
 
             if (data && Array.isArray(data)) {
                 processNodeData(data);
             } else {
-                showStatus('Fallo de red. Sube JSON.');
+                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nNingún proxy logró burlar la seguridad de tu red/navegador para Mysterium.\n\nSOLUCIÓN RÁPIDA: \nUsa tu comando en la consola (curl ... > nodos.json) y cárgalo usando el botón 'Importar JSON'.");
+                syncStatus.value = 'Error de conexión.';
             }
         };
 
@@ -415,9 +433,6 @@ createApp({
             reader.readAsText(file);
         };
 
-        // ==========================================
-        // 💾 RESTAURAR BACKUP DESDE JSON
-        // ==========================================
         const restoreBackup = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -428,7 +443,7 @@ createApp({
                     if(data.accounts) accounts.value = data.accounts;
                     if(data.pool) pool.value = data.pool;
                     if(data.blacklist) blacklist.value = data.blacklist;
-                    showStatus('¡Base de Datos Restaurada!');
+                    showStatus('¡Base Restaurada!');
                     event.target.value = null;
                 } catch (err) {
                     alert("El archivo de respaldo es inválido.");

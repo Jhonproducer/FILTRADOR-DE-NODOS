@@ -2,9 +2,6 @@ const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
-// Definición de las TOP 5 UK ISPs (Filtro Anti-Basura)
-const topUKISPs = ['bt', 'british telecom', 'sky', 'virgin', 'talktalk', 'vodafone', 'ee'];
-
 createApp({
     setup() {
         const currentTab = ref('accounts');
@@ -21,22 +18,62 @@ createApp({
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // RASTREADOR DE ISP PARA ANTI-FINGERPRINTING
-        const lastWorkedIsp = ref(null);
+        // --- NUEVO: ESTADO ESTRATÉGICO ---
+        const lastWorkedIsp = ref('');
+        
+        const markAsWorked = (ispString) => {
+            if(!ispString) return;
+            // Extraer el nombre base (Ej: "BT Group" -> "BT")
+            const baseIsp = ispString.split('-')[1]?.trim() || ispString.trim();
+            // Limpiamos un poco el nombre para que el banner sea elegante
+            let cleanName = baseIsp.split(' ')[0]; 
+            if(cleanName.toLowerCase() === 'virgin') cleanName = 'Virgin Media';
+            if(cleanName.toLowerCase() === 'bt') cleanName = 'BT';
+            
+            lastWorkedIsp.value = cleanName;
+        };
 
-        // NUEVO: FILTRO DE CALIDAD
-        const filters = ref({ nodeId: '', city: '', isp: '', qScore: null });
+        const safeSuggestion = computed(() => {
+            // Buscamos una cuenta que tenga nodo, que no choque con el último ISP y que esté activa
+            const available = accounts.value.filter(a => {
+                if(!a.nodeId || !a.asn_isp) return false;
+                if(!lastWorkedIsp.value) return true; // Si no hay historial, sugiere cualquiera
+                return !a.asn_isp.toLowerCase().includes(lastWorkedIsp.value.toLowerCase());
+            });
+            
+            if(available.length > 0) {
+                // Selecciona una aleatoria de la lista filtrada
+                const randIndex = Math.floor(Math.random() * available.length);
+                return available[randIndex];
+            }
+            return null;
+        });
+
+        const generateSafeSuggestion = () => {
+            if(accounts.value.length === 0) return;
+            // Solo para forzar el re-render de la computed property, podemos hacer un pequeño truco
+            const temp = lastWorkedIsp.value;
+            lastWorkedIsp.value = temp + ' '; 
+            setTimeout(() => { lastWorkedIsp.value = temp; }, 10);
+        };
+
+
+        // --- FILTROS POOL ---
+        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '' });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
-        const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; filters.value.qScore = null; };
+        const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; filters.value.minQuality = ''; };
 
         const filteredPool = computed(() => {
             let result = pool.value;
+            
+            // Ocultar los que ya están en uso o quemados
             result = result.filter(n => {
                 const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 return !inBlacklist && !inUse;
             });
+
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -49,10 +86,14 @@ createApp({
                 const i = filters.value.isp.toLowerCase().trim();
                 result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(i));
             }
-            // NUEVA LÓGICA: FILTRO Q-SCORE
-            if (filters.value.qScore) {
-                result = result.filter(n => parseFloat(n.q_score) >= parseFloat(filters.value.qScore));
+            // FILTRO DE CALIDAD DINÁMICO
+            if (filters.value.minQuality) {
+                const min = parseFloat(filters.value.minQuality);
+                if(!isNaN(min)) {
+                    result = result.filter(n => parseFloat(n.q_score) >= min);
+                }
             }
+
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
@@ -95,67 +136,68 @@ createApp({
             return result;
         });
 
+        // ==========================================
+        // 💾 MOTOR DE GUARDADO Y RESTAURACIÓN
+        // ==========================================
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v13', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v13', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v13', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_master_data', JSON.stringify({
+                accounts: accounts.value,
+                pool: pool.value,
+                blacklist: blacklist.value,
+                lastWorkedIsp: lastWorkedIsp.value
+            }));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v13'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v13'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v13'));
+            const masterData = JSON.parse(localStorage.getItem('vpnerp_master_data'));
 
-            if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v12', 'v11', 'master_v12', 'master_v11', 'master'];
-                for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
-                    if (oldAcc && oldAcc.length > 0) {
-                        savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`));
-                        break;
-                    }
-                }
-            }
-
-            if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ 
+            if (masterData && masterData.accounts && masterData.accounts.length > 0) {
+                accounts.value = masterData.accounts.map(a => ({ 
                     ...a, 
                     uid: a.uid || generateUid(),
-                    previousIp: a.previousIp || null,
-                    scamalyticsScore: a.scamalyticsScore || null // Nueva variable para guardar el score scrapeado
+                    previousIp: a.previousIp || null
                 }));
+                pool.value = masterData.pool || [];
+                blacklist.value = masterData.blacklist || [];
+                lastWorkedIsp.value = masterData.lastWorkedIsp || '';
             } else {
+                // Fallback a inicializar en cero
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, scamalyticsScore: null });
+                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
                 }
                 accounts.value = initial;
             }
-            pool.value = savedPool || [];
-            blacklist.value = savedBlk || [];
         };
 
-        watch([accounts, pool, blacklist], saveData, { deep: true });
-
-        // ==========================================
-        // 🚀 CASCADA IP + REGISTRO DE ÚLTIMO ISP
-        // ==========================================
-        const registerIspWork = (acc) => {
-            if(acc.asn_isp) {
-                // Al tocar una fila, se anota cuál fue el proveedor para evadirlo después
-                let baseIsp = acc.asn_isp.split('-')[1]?.trim() || acc.asn_isp;
-                baseIsp = baseIsp.split(' ')[0].toLowerCase(); // Toma la primera palabra (ej "Virgin")
-                lastWorkedIsp.value = baseIsp;
-            }
+        const restoreDatabase = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.accounts) accounts.value = data.accounts.map(a => ({ ...a, uid: a.uid || generateUid() }));
+                    if(data.pool) pool.value = data.pool;
+                    if(data.blacklist) blacklist.value = data.blacklist;
+                    showStatus('¡Base de Datos Restaurada con Éxito!');
+                } catch (err) { 
+                    alert("Error: El archivo no es un Backup válido del VPN ERP."); 
+                }
+                event.target.value = null; 
+            };
+            reader.readAsText(file);
         };
 
+        watch([accounts, pool, blacklist, lastWorkedIsp], saveData, { deep: true });
+
+        // ==========================================
+        // ⚡ LA CASCADA DE IP PÚBLICA (Limpia y Funcional)
+        // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(!acc) return;
-            registerIspWork(acc); // Registramos que estamos trabajando esta cuenta
 
             syncStatus.value = 'Detectando IP...';
             let newIp = null;
@@ -167,7 +209,9 @@ createApp({
 
             if(!newIp) {
                 try {
-                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
+                    const r2 = await fetch("https://ipinfo.io/json", {
+                        headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
+                    });
                     if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
                 } catch(e) {}
             }
@@ -185,20 +229,21 @@ createApp({
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
-
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
                     const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
-                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
+                    if(!proceed) { 
+                        syncStatus.value = 'Cancelado.'; 
+                        setTimeout(() => { syncStatus.value = ''; }, 3000);
+                        return; 
+                    }
                 }
-
                 acc.previousIp = acc.ip; 
                 acc.ip = newIp;
-                acc.scamalyticsScore = null; // Borramos el score viejo si la IP cambia
                 triggerCollisionCheck(acc);
                 syncStatus.value = '¡IP extraída!';
             } else {
-                alert("Bloqueo de red total para extracción de IP.");
+                alert("Bloqueo de red total. Tus extensiones de privacidad impiden leer la IP desde el navegador.");
                 syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -209,94 +254,10 @@ createApp({
             if(acc && acc.previousIp) {
                 acc.ip = acc.previousIp; 
                 acc.previousIp = null; 
-                acc.scamalyticsScore = null;
                 triggerCollisionCheck(acc); 
                 syncStatus.value = 'IP Restaurada.';
                 setTimeout(() => { syncStatus.value = ''; }, 3000);
             }
-        };
-
-        // ==========================================
-        // 🤖 WEB SCRAPING: SCAMALYTICS (CON PROXY)
-        // ==========================================
-        const autoScrapeScamalytics = async (acc) => {
-            if(!acc.ip || acc.ip.trim() === '') {
-                alert("Necesitas una IP primero."); return;
-            }
-            registerIspWork(acc);
-            
-            syncStatus.value = 'Raspando Scamalytics...';
-            try {
-                // El truco maestro: Pasamos por AllOrigins para descargar el HTML de la página web
-                const targetUrl = encodeURIComponent(`https://scamalytics.com/ip/${acc.ip.trim()}`);
-                const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
-                const data = await res.json();
-                
-                if(data && data.contents) {
-                    const html = data.contents;
-                    
-                    // Verificamos si Cloudflare nos mandó a comer tierra
-                    if(html.includes("cf-browser-verification") || html.includes("Just a moment...")) {
-                        alert("🛡️ SCAMALYTICS ACTIVÓ DEFENSA (Cloudflare)\n\nEl robot ha sido bloqueado. Usa el botón 'Manual' para ver el Score.");
-                        syncStatus.value = '';
-                        return;
-                    }
-
-                    // REGEX: Buscamos la cadena "Fraud Score: [numero]" en el código HTML
-                    const regex = /Fraud Score:\s*(\d+)/i;
-                    const match = html.match(regex);
-                    
-                    if(match && match[1]) {
-                        const score = parseInt(match[1]);
-                        acc.scamalyticsScore = score;
-                        
-                        if(score > 15) {
-                            alert(`🚨 RIESGO DE FRAUDE CRÍTICO 🚨\n\nLa IP ${acc.ip} devolvió un Score de: ${score}\n\nDeberías quemar este nodo inmediatamente.`);
-                        } else {
-                            syncStatus.value = `¡Score Perfecto: ${score}!`;
-                        }
-                    } else {
-                        alert("No se pudo encontrar el número del Score en la web. Puede que hayan cambiado el diseño. Usa Manual.");
-                    }
-                }
-            } catch(e) {
-                alert("Error de red en el Proxy al intentar raspar.");
-            }
-            setTimeout(() => { syncStatus.value = ''; }, 4000);
-        };
-
-        const openScamalytics = (ip) => {
-            if(!ip || ip.trim() === '') return;
-            window.open(`https://scamalytics.com/ip/${ip.trim()}`, '_blank');
-        };
-
-        // ==========================================
-        // 🔮 ANTI-FINGERPRINTING ROUTING (SIGUIENTE PERFIL SEGURO)
-        // ==========================================
-        const recommendNextSafeAccount = () => {
-            // Buscamos cuentas que ESTÉN ACTIVAS (con nodo) y que NO TENGAN la misma empresa ISP que la última.
-            const available = accounts.value.filter(a => {
-                if(!a.nodeId || !a.asn_isp) return false;
-                
-                // Si no hay lastWorkedIsp, cualquiera sirve
-                if(!lastWorkedIsp.value) return true;
-                
-                // Si la cuenta actual tiene la misma empresa que la última trabajada, la descartamos
-                const currentIsp = a.asn_isp.toLowerCase();
-                return !currentIsp.includes(lastWorkedIsp.value);
-            });
-
-            if(available.length === 0) {
-                alert("No hay perfiles activos con proveedores diferentes al actual.\n\nNota: Asegúrate de tener cuentas con nodos asignados de diferentes ISP.");
-                return;
-            }
-
-            // Seleccionamos uno aleatorio
-            const randomAcc = available[Math.floor(Math.random() * available.length)];
-            
-            // Escribimos su nombre en el buscador para que sea el ÚNICO que aparezca en pantalla
-            accountSearch.value = randomAcc.name;
-            showStatus(`Sugerencia Segura: ${randomAcc.name} (Evitando: ${lastWorkedIsp.value})`);
         };
 
 
@@ -331,7 +292,7 @@ createApp({
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
                 if (acc) {
                     const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; acc.scamalyticsScore = null;
+                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; 
                     if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
                     closePoolModal(); triggerCollisionCheck(acc);
                 }
@@ -342,10 +303,10 @@ createApp({
             const acc = accounts.value.find(a => a.uid === accountUid);
             if (acc && nodeToAssign.value) {
                 acc.nodeId = nodeToAssign.value.id;
-                acc.ip = ''; acc.previousIp = null; acc.scamalyticsScore = null;
+                acc.ip = ''; acc.previousIp = null;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal(); triggerCollisionCheck(acc); 
+                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
             }
         };
 
@@ -359,10 +320,10 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, scamalyticsScore: null });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.scamalyticsScore = null; } };
+        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; } };
         
         const burnNode = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -374,7 +335,7 @@ createApp({
                         blacklist.value.unshift({ nodeId: truncado, ip: acc.ip || 'Desconocida' });
                     }
                 }
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.scamalyticsScore = null;
+                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null;
             }
         };
 
@@ -394,24 +355,37 @@ createApp({
         };
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
 
+
         // ==========================================
-        // 🧹 MOTOR DE LIMPIEZA DE BASURA (TOP 5 UK ISPs)
+        // 💎 FILTRO TOP 5 ISP DE UK + MYSTERIUM API
         // ==========================================
+        // Los proveedores más grandes y confiables de Reino Unido.
+        const topUK_ISPs = ['bt ', 'bt group', 'virgin', 'sky', 'talktalk', 'vodafone', 'ee ', 'plusnet', 'three', 'o2'];
+        
+        const isTopISP = (ispString) => {
+            if (!ispString) return false;
+            const str = ispString.toLowerCase();
+            return topUK_ISPs.some(top => str.includes(top));
+        };
+
         const processNodeData = (data) => {
             const rawPool = [];
             const seenIds = new Set(); 
-            
+            let discardedCount = 0;
+
             data.forEach(nodo => {
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return;
                 
-                // FILTRO VIP: Solo dejamos pasar a los gigantes del Reino Unido.
-                const ispName = (nodo.location?.isp || '').toLowerCase();
-                const isTopIsp = topUKISPs.some(top => ispName.includes(top));
-                
-                if(!isTopIsp) return; // Si es una empresa basura/rara, se descarta.
+                // 1. Aplicar el Filtro Élite: Si no es un ISP TOP de UK, se ignora.
+                const fullIsp = `${nodo.location?.asn || ''} - ${nodo.location?.isp || ''}`;
+                if (!isTopISP(fullIsp)) {
+                    discardedCount++;
+                    return; 
+                }
 
+                // 2. Cruzar con Blacklist y Uso Actual
                 const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
                 const isUsed = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                 
@@ -420,35 +394,31 @@ createApp({
                     rawPool.push({
                         id: idCorto,
                         city: nodo.location?.city || 'N/A',
-                        asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`,
+                        asn_isp: fullIsp,
                         q_score: (nodo.quality?.quality || 0).toFixed(2)
                     });
                 }
             });
+            
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`API Filtrada: Solo Top ISPs UK.`);
+            showStatus(`Pool Actualizado. Descartados ${discardedCount} nodos raros.`);
         };
 
         const fetchAPI = async () => {
-            syncStatus.value = 'Conectando Mysterium...';
+            syncStatus.value = 'Conectando a Mysterium...';
             try {
                 const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
                 const response = await fetch(url, { headers: { 'accept': 'application/json' } });
-                if(!response.ok) throw new Error("Error API Original");
+                
+                if(!response.ok) throw new Error("Error HTTP " + response.status);
+                
                 const data = await response.json();
                 processNodeData(data);
+                
             } catch (err) {
-                console.error("Fallo nativo, intentando respaldo...");
-                try {
-                    const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                    const response = await fetch(proxyUrl);
-                    const data = await response.json();
-                    processNodeData(data);
-                } catch(e) {
-                    alert("Mysterium está bloqueado en tu red. Sube el JSON.");
-                    syncStatus.value = '';
-                }
+                console.error("Error API:", err);
+                alert("Error conectando a la API de Mysterium. \nVerifica tu conexión a internet o usa 'Importar JSON'.");
+                syncStatus.value = '';
             }
         };
 
@@ -466,52 +436,15 @@ createApp({
             reader.readAsText(file);
         };
 
-        // ==========================================
-        // 📥 IMPORTACIÓN DE BACKUP (RESTAURAR)
-        // ==========================================
-        const importDatabase = (event) => {
-            const file = event.target.files[0];
-            if(!file) return;
-            
-            if(!confirm("⚠️ ADVERTENCIA\n\nEstás a punto de sobreescribir TODOS los datos actuales con el archivo de respaldo.\n\n¿Deseas continuar?")) {
-                event.target.value = null;
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.accounts && data.pool && data.blacklist) {
-                        accounts.value = data.accounts;
-                        pool.value = data.pool;
-                        blacklist.value = data.blacklist;
-                        saveData(); // Forzamos el guardado
-                        alert("¡Base de Datos Restaurada con Éxito!");
-                    } else {
-                        alert("El archivo no tiene el formato de Base de Datos del VPN ERP.");
-                    }
-                    event.target.value = null; 
-                } catch (err) { alert("Error leyendo el archivo JSON."); event.target.value = null; }
-            };
-            reader.readAsText(file);
-        };
-
         const copyToClipboard = async (text, type = 'Dato') => {
             try { 
                 await navigator.clipboard.writeText(text); 
                 showStatus(`¡${type} Copiado!`); 
-                setTimeout(() => { syncStatus.value = ''; }, 3000);
-                
-                // Si el usuario copió un nodo de una cuenta, registramos el ISP para el sistema Anti-Patrón
-                const acc = accounts.value.find(a => a.nodeId === text);
-                if(acc) registerIspWork(acc);
-                
             } catch (err) { console.error(err); }
         };
 
         const exportDatabase = () => {
-            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
+            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value, lastWorkedIsp: lastWorkedIsp.value }, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -520,7 +453,7 @@ createApp({
             a.click();
         };
 
-        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
+        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 4000); };
         
         onMounted(() => { loadData(); });
 
@@ -530,11 +463,10 @@ createApp({
             collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
             filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
             addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
-            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, importDatabase,
+            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreDatabase,
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, openScamalytics, autoScrapeScamalytics,
-            lastWorkedIsp, recommendNextSafeAccount, registerIspWork
+            fetchCurrentIP, undoIp, lastWorkedIsp, markAsWorked, safeSuggestion, generateSafeSuggestion
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

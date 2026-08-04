@@ -2,9 +2,6 @@ const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
-// Filtro estricto: Solo dejamos pasar a los Gigantes de UK
-const topUkISPs = ['bt', 'virgin', 'sky', 'talktalk', 'vodafone', 'ee', 'o2', 'plusnet', 'three'];
-
 createApp({
     setup() {
         const currentTab = ref('accounts');
@@ -21,10 +18,54 @@ createApp({
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // NUEVA VARIABLE GLOBAL: Para el Recomendador Anti-Sospechas
+        // ==========================================
+        // 🎯 MOTOR ANTI-SOSPECHAS (Ruleta de ISPs)
+        // ==========================================
         const lastWorkedIsp = ref('');
 
-        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '2.5' });
+        const getIspName = (fullString) => {
+            if(!fullString) return 'Desconocido';
+            return fullString.split('-').pop().trim().toLowerCase();
+        };
+
+        const suggestedAccount = computed(() => {
+            // Filtra cuentas que tienen nodo, tienen ISP, NO han sido trabajadas y su ISP es diferente al último.
+            const available = accounts.value.filter(a => 
+                a.nodeId && 
+                a.asn_isp && 
+                !a.worked && 
+                getIspName(a.asn_isp) !== lastWorkedIsp.value
+            );
+            
+            if(available.length === 0) return null;
+            // Elige una al azar
+            return available[Math.floor(Math.random() * available.length)];
+        });
+
+        const markAsWorked = (acc) => {
+            acc.worked = true;
+            lastWorkedIsp.value = getIspName(acc.asn_isp);
+            showStatus(`Marcada como trabajada. Proveedor evitado: ${lastWorkedIsp.value.toUpperCase()}`);
+        };
+
+        const resetWorkedStatus = () => {
+            accounts.value.forEach(a => a.worked = false);
+            lastWorkedIsp.value = '';
+            showStatus('Motor Reiniciado.');
+        };
+
+        // ==========================================
+        // 💎 FILTRO ELITE (Top 5 UK)
+        // ==========================================
+        const TOP_ISPS = ['bt', 'sky', 'virgin', 'talktalk', 'vodafone'];
+        const isTopISP = (ispString) => {
+            if(!ispString) return false;
+            const low = ispString.toLowerCase();
+            return TOP_ISPS.some(t => low.includes(t));
+        };
+
+        // --- FILTROS DE POOL (Con nueva Calidad) ---
+        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '' });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
         const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; filters.value.minQuality = ''; };
@@ -48,7 +89,6 @@ createApp({
                 const i = filters.value.isp.toLowerCase().trim();
                 result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(i));
             }
-            // NUEVO FILTRO DE CALIDAD
             if (filters.value.minQuality) {
                 const minQ = parseFloat(filters.value.minQuality);
                 if (!isNaN(minQ)) {
@@ -58,6 +98,7 @@ createApp({
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
+        // --- CUENTAS (Buscador/Sort) ---
         const accountSearch = ref('');
         const accountSort = ref({ field: null, desc: false });
 
@@ -98,20 +139,18 @@ createApp({
         });
 
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_final', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_final', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_final', JSON.stringify(blacklist.value));
-            localStorage.setItem('vpnerp_last_isp', lastWorkedIsp.value);
+            localStorage.setItem('vpnerp_acc_master_v12', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v12', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v12', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_final'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_final'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_final'));
-            lastWorkedIsp.value = localStorage.getItem('vpnerp_last_isp') || '';
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v12'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v12'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v12'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v12', 'v11', 'master', 'v9', 'v8'];
+                const oldKeys = ['v11', 'v10', 'v9', 'master', 'v8'];
                 for (let v of oldKeys) {
                     let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
@@ -126,14 +165,15 @@ createApp({
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({ 
                     ...a, 
-                    uid: a.uid || generateUid(),
-                    previousIp: a.previousIp || null
+                    uid: a.uid || generateUid(), 
+                    previousIp: a.previousIp || null,
+                    worked: a.worked || false 
                 }));
             } else {
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
+                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false });
                 }
                 accounts.value = initial;
             }
@@ -141,40 +181,10 @@ createApp({
             blacklist.value = savedBlk || [];
         };
 
-        watch([accounts, pool, blacklist, lastWorkedIsp], saveData, { deep: true });
+        watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // 🌟 RECOMENDADOR INTELIGENTE (ANTI-SOSPECHAS)
-        // ==========================================
-        const extractCoreIsp = (fullIspStr) => {
-            if(!fullIspStr) return '';
-            const lower = fullIspStr.toLowerCase();
-            for(let top of topUkISPs) {
-                if(lower.includes(top)) return top;
-            }
-            return fullIspStr.split(' ')[0]; // fallback
-        };
-
-        const markAsWorked = (fullIspStr) => {
-            if(!fullIspStr) {
-                showStatus('Esta cuenta no tiene proveedor.'); return;
-            }
-            lastWorkedIsp.value = extractCoreIsp(fullIspStr);
-            showStatus('Marcado. Recomendaciones actualizadas.');
-        };
-
-        const isRecommended = (acc) => {
-            if(!acc.nodeId || !acc.asn_isp) return false; // Solo recomendamos cuentas listas para trabajar
-            if(!lastWorkedIsp.value) return true; // Si no he trabajado nada, todas son recomendadas
-            
-            const currentCore = extractCoreIsp(acc.asn_isp);
-            // Es recomendado si NO ES IGUAL al último trabajado
-            return currentCore !== lastWorkedIsp.value;
-        };
-
-
-        // ==========================================
-        // ⚡ AUTO IP (Múltiples métodos silenciosos)
+        // ⚡ AUTO IP (CASCADA SILENCIOSA)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -204,31 +214,30 @@ createApp({
 
             if(newIp) {
                 if(acc.ip === newIp) { 
-                    syncStatus.value = 'La IP no ha cambiado.'; 
+                    syncStatus.value = 'Misma IP.'; 
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
 
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir?`);
-                    if(!proceed) { syncStatus.value = ''; return; }
+                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
+                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
                 }
 
                 acc.previousIp = acc.ip; 
                 acc.ip = newIp;
                 triggerCollisionCheck(acc);
-                syncStatus.value = '¡IP Actualizada!';
+                syncStatus.value = '¡IP extraída!';
             } else {
-                alert("Error de red. No se pudo leer la IP.");
-                syncStatus.value = '';
+                showStatus('Fallo de Red en Navegador.');
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
         const undoIp = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
-            if(acc && acc.previousIp !== null) {
+            if(acc && acc.previousIp) {
                 acc.ip = acc.previousIp; 
                 acc.previousIp = null; 
                 triggerCollisionCheck(acc); 
@@ -268,7 +277,7 @@ createApp({
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
                 if (acc) {
                     const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; 
+                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; acc.worked = false;
                     if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
                     closePoolModal(); triggerCollisionCheck(acc);
                 }
@@ -279,7 +288,7 @@ createApp({
             const acc = accounts.value.find(a => a.uid === accountUid);
             if (acc && nodeToAssign.value) {
                 acc.nodeId = nodeToAssign.value.id;
-                acc.ip = ''; acc.previousIp = null;
+                acc.ip = ''; acc.previousIp = null; acc.worked = false;
                 acc.q_score = nodeToAssign.value.q_score;
                 acc.asn_isp = nodeToAssign.value.asn_isp;
                 closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
@@ -296,10 +305,10 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false });
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; } };
+        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.worked = false;} };
         
         const burnNode = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -311,7 +320,7 @@ createApp({
                         blacklist.value.unshift({ nodeId: truncado, ip: acc.ip || 'Desconocida' });
                     }
                 }
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null;
+                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.worked = false;
             }
         };
 
@@ -337,12 +346,8 @@ createApp({
             data.forEach(nodo => {
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
                 
-                // NUEVO: FILTRO ESTRICTO DE PROVEEDORES TOP DE UK
-                const ispStr = (nodo.location?.isp || '').toLowerCase();
-                const isTopIsp = topUkISPs.some(top => ispStr.includes(top));
-                
-                // Si no es un gigante de UK, se ignora y no entra a la Pool
-                if(!isTopIsp) return;
+                // Filtro Top 5 UK Categórico
+                if (!isTopISP(nodo.location?.isp)) return;
 
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return;
@@ -361,28 +366,38 @@ createApp({
                 }
             });
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Top UK: ${pool.value.length} nodos`);
+            showStatus(`Pool Actualizado: ${pool.value.length} nodos Top UK`);
         };
 
         // ==========================================
-        // 🚀 API DE MYSTERIUM (PURA, DIRECTA, SIN PROXIES)
+        // 🚀 CASCADA MYSTERIUM (Onion Routing)
         // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
-            try {
-                // El llamado original y puro que siempre funcionó
-                const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-                const response = await fetch(url, { headers: { 'accept': 'application/json' } });
-                
-                if(!response.ok) throw new Error("Error de red.");
-                
-                const data = await response.json();
+            const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+            let data = null;
+
+            const attempts = [
+                url, // Directo
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`
+            ];
+
+            for (let proxy of attempts) {
+                try {
+                    const res = await fetch(proxy, { headers: { 'accept': 'application/json' } });
+                    if (res.ok) {
+                        data = await res.json();
+                        break; 
+                    }
+                } catch (e) { }
+            }
+
+            if (data && Array.isArray(data)) {
                 processNodeData(data);
-                
-            } catch (err) {
-                console.error(err);
-                alert("Error conectando con Mysterium. Si persiste, usa el botón de Importar JSON.");
-                syncStatus.value = '';
+            } else {
+                showStatus('Fallo de red. Sube JSON.');
             }
         };
 
@@ -400,24 +415,25 @@ createApp({
             reader.readAsText(file);
         };
 
-        // NUEVO: RESTAURAR BASE DE DATOS COMPLETA
-        const restoreDatabase = (event) => {
+        // ==========================================
+        // 💾 RESTAURAR BACKUP DESDE JSON
+        // ==========================================
+        const restoreBackup = (event) => {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if(data.accounts && data.pool && data.blacklist) {
-                        accounts.value = data.accounts;
-                        pool.value = data.pool;
-                        blacklist.value = data.blacklist;
-                        showStatus('¡Base Restaurada al 100%!');
-                    } else {
-                        alert("El archivo no parece ser un respaldo válido de este sistema.");
-                    }
-                } catch (err) { alert("Error al leer el archivo de Respaldo."); }
-                event.target.value = null; 
+                    if(data.accounts) accounts.value = data.accounts;
+                    if(data.pool) pool.value = data.pool;
+                    if(data.blacklist) blacklist.value = data.blacklist;
+                    showStatus('¡Base de Datos Restaurada!');
+                    event.target.value = null;
+                } catch (err) {
+                    alert("El archivo de respaldo es inválido.");
+                    event.target.value = null;
+                }
             };
             reader.readAsText(file);
         };
@@ -450,10 +466,10 @@ createApp({
             collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
             filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
             addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
-            importPoolJSON, restoreDatabase, fetchAPI, copyToClipboard, exportDatabase, 
+            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, markAsWorked, isRecommended, lastWorkedIsp
+            fetchCurrentIP, undoIp, lastWorkedIsp, suggestedAccount, markAsWorked, resetWorkedStatus
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

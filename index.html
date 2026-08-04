@@ -44,7 +44,7 @@
 
             <div class="p-6">
                 <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white">
-                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Respaldar
+                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Respaldar Base
                 </button>
                 <!-- BOTÓN RESTAURAR BACKUP -->
                 <label class="w-full mt-2 flex justify-center items-center gap-2 bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white cursor-pointer shadow-sm">
@@ -116,11 +116,14 @@
                             <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                                 <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
                                     <th class="p-4 font-bold w-[12%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('name')">Cuenta <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-4 font-bold w-[24%] text-center">Nodo Asignado (14)</th>
+                                    <th class="p-4 font-bold w-[25%] text-center">Nodo Asignado (14)</th>
                                     <th class="p-4 font-bold w-[20%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('asn_isp')">Proveedor <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-4 font-bold w-[7%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('q_score')">Quality <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
-                                    <th class="p-4 font-bold w-[18%] text-center">Registro IP Inteligente</th>
-                                    <th class="p-4 font-bold w-[9%] text-center">Estado</th>
+                                    <th class="p-4 font-bold w-[8%] text-center cursor-pointer hover:text-indigo-600 transition-colors" @click="toggleAccountSort('q_score')">Quality <i data-lucide="arrow-up-down" class="w-3 h-3 inline"></i></th>
+                                    
+                                    <!-- COLUMNA IP COMPACTA -->
+                                    <th class="p-4 font-bold w-[18%] text-center">IP Actual</th>
+                                    
+                                    <th class="p-4 font-bold w-[7%] text-center">Estado</th>
                                     <th class="p-4 font-bold w-[10%] text-center">Acción</th>
                                 </tr>
                             </thead>
@@ -128,7 +131,6 @@
                                 <tr v-for="acc in processedAccounts" :key="acc.uid" :class="{'bg-rose-50/50': hasCollision(acc), 'bg-indigo-50/30': acc.worked, 'hover:bg-slate-50 transition-colors': !hasCollision(acc)}">
                                     
                                     <td class="p-3 align-middle relative">
-                                        <!-- Indicador visual si ya fue trabajada -->
                                         <div v-if="acc.worked" class="absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-indigo-500 rounded-full" title="Ya fue revisada en este ciclo"></div>
                                         <input v-model="acc.name" :title="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all cursor-text">
                                     </td>
@@ -153,22 +155,31 @@
                                         <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
                                     
+                                    <!-- ================= IP COMPACTA (MINIMALISTA) ================= -->
                                     <td class="p-3 align-middle">
                                         <div class="flex items-center justify-center gap-1.5 w-full">
                                             <div class="relative">
                                                 <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" :title="acc.ip" placeholder="0.0.0.0" class="w-28 bg-white border border-slate-200 hover:border-indigo-300 focus:border-indigo-500 rounded-lg p-1.5 text-center text-slate-700 font-mono font-bold text-xs outline-none transition-all shadow-sm cursor-text">
-                                                <button v-if="acc.previousIp" @click="undoIp(acc.uid)" class="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-rose-500 text-white shadow-md hover:bg-rose-600 transition-colors" title="Deshacer cambio de IP"><i data-lucide="undo-2" class="w-2.5 h-2.5"></i></button>
+                                                <button v-if="acc.previousIp" @click="undoIp(acc.uid)" class="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-rose-500 text-white shadow-md hover:bg-rose-600 transition-colors" title="Deshacer cambio de IP">
+                                                    <i data-lucide="undo-2" class="w-2.5 h-2.5"></i>
+                                                </button>
                                             </div>
                                             
-                                            <div class="flex flex-col gap-1 shrink-0" v-if="acc.nodeId || acc.ip">
-                                                <button @click="fetchCurrentIP(acc.uid)" class="w-6 h-5 flex items-center justify-center rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-500 hover:text-white transition-colors border border-emerald-200" title="Extraer Auto IP"><i data-lucide="zap" class="w-3 h-3"></i></button>
-                                                <button v-if="acc.ip" @click="copyToClipboard(acc.ip, 'IP')" class="w-6 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white transition-colors border border-slate-200" title="Copiar IP"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                                            <!-- Botoncitos chiquitos (Extrar y Copiar) -->
+                                            <div class="flex flex-col gap-1 shrink-0">
+                                                <button @click="fetchCurrentIP(acc.uid)" class="w-6 h-5 flex items-center justify-center rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-500 hover:text-white transition-colors border border-emerald-200" title="Extraer Auto IP">
+                                                    <i data-lucide="zap" class="w-3 h-3"></i>
+                                                </button>
+                                                <button v-if="acc.ip" @click="copyToClipboard(acc.ip, 'IP')" class="w-6 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white transition-colors border border-slate-200" title="Copiar IP">
+                                                    <i data-lucide="copy" class="w-3 h-3"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </td>
+                                    <!-- ================= FIN IP COMPACTA ================= -->
 
                                     <td class="p-3 align-middle text-center">
-                                        <div v-if="hasCollision(acc)" title="Hay otra cuenta usando este mismo Nodo o IP" class="inline-flex items-center justify-center w-6 h-6 bg-rose-100 text-rose-700 rounded-full animate-pulse cursor-help"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
+                                        <div v-if="hasCollision(acc)" title="Choque de IP o Nodo" class="inline-flex items-center justify-center w-6 h-6 bg-rose-100 text-rose-700 rounded-full animate-pulse cursor-help"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
                                         <div v-else-if="acc.nodeId" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>
                                         <span v-else class="text-slate-300 text-xs font-medium">-</span>
                                     </td>
@@ -193,7 +204,7 @@
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <div class="flex gap-3">
                             <button @click="fetchAPI" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-sm">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API (Multicapa)
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API (Cascada)
                             </button>
                             <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar JSON
@@ -208,7 +219,6 @@
                         <div class="w-48"><input type="text" v-model="filters.city" placeholder="Filtrar por Ciudad..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
                         <div class="w-48"><input type="text" v-model="filters.isp" placeholder="Filtrar por ISP..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
                         
-                        <!-- NUEVO: FILTRO DE CALIDAD -->
                         <div class="w-36">
                             <input type="number" step="0.1" v-model="filters.minQuality" placeholder="Min Calidad" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium" title="Ejemplo: 2.8">
                         </div>

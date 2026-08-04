@@ -2,6 +2,9 @@ const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
+// Filtro estricto: Solo dejamos pasar a los Gigantes de UK
+const topUkISPs = ['bt', 'virgin', 'sky', 'talktalk', 'vodafone', 'ee', 'o2', 'plusnet', 'three'];
+
 createApp({
     setup() {
         const currentTab = ref('accounts');
@@ -18,62 +21,21 @@ createApp({
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // --- NUEVO: ESTADO ESTRATÉGICO ---
+        // NUEVA VARIABLE GLOBAL: Para el Recomendador Anti-Sospechas
         const lastWorkedIsp = ref('');
-        
-        const markAsWorked = (ispString) => {
-            if(!ispString) return;
-            // Extraer el nombre base (Ej: "BT Group" -> "BT")
-            const baseIsp = ispString.split('-')[1]?.trim() || ispString.trim();
-            // Limpiamos un poco el nombre para que el banner sea elegante
-            let cleanName = baseIsp.split(' ')[0]; 
-            if(cleanName.toLowerCase() === 'virgin') cleanName = 'Virgin Media';
-            if(cleanName.toLowerCase() === 'bt') cleanName = 'BT';
-            
-            lastWorkedIsp.value = cleanName;
-        };
 
-        const safeSuggestion = computed(() => {
-            // Buscamos una cuenta que tenga nodo, que no choque con el último ISP y que esté activa
-            const available = accounts.value.filter(a => {
-                if(!a.nodeId || !a.asn_isp) return false;
-                if(!lastWorkedIsp.value) return true; // Si no hay historial, sugiere cualquiera
-                return !a.asn_isp.toLowerCase().includes(lastWorkedIsp.value.toLowerCase());
-            });
-            
-            if(available.length > 0) {
-                // Selecciona una aleatoria de la lista filtrada
-                const randIndex = Math.floor(Math.random() * available.length);
-                return available[randIndex];
-            }
-            return null;
-        });
-
-        const generateSafeSuggestion = () => {
-            if(accounts.value.length === 0) return;
-            // Solo para forzar el re-render de la computed property, podemos hacer un pequeño truco
-            const temp = lastWorkedIsp.value;
-            lastWorkedIsp.value = temp + ' '; 
-            setTimeout(() => { lastWorkedIsp.value = temp; }, 10);
-        };
-
-
-        // --- FILTROS POOL ---
-        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '' });
+        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '2.5' });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
         const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; filters.value.minQuality = ''; };
 
         const filteredPool = computed(() => {
             let result = pool.value;
-            
-            // Ocultar los que ya están en uso o quemados
             result = result.filter(n => {
                 const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 return !inBlacklist && !inUse;
             });
-
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -86,14 +48,13 @@ createApp({
                 const i = filters.value.isp.toLowerCase().trim();
                 result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(i));
             }
-            // FILTRO DE CALIDAD DINÁMICO
+            // NUEVO FILTRO DE CALIDAD
             if (filters.value.minQuality) {
-                const min = parseFloat(filters.value.minQuality);
-                if(!isNaN(min)) {
-                    result = result.filter(n => parseFloat(n.q_score) >= min);
+                const minQ = parseFloat(filters.value.minQuality);
+                if (!isNaN(minQ)) {
+                    result = result.filter(n => parseFloat(n.q_score) >= minQ);
                 }
             }
-
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
@@ -136,32 +97,39 @@ createApp({
             return result;
         });
 
-        // ==========================================
-        // 💾 MOTOR DE GUARDADO Y RESTAURACIÓN
-        // ==========================================
         const saveData = () => {
-            localStorage.setItem('vpnerp_master_data', JSON.stringify({
-                accounts: accounts.value,
-                pool: pool.value,
-                blacklist: blacklist.value,
-                lastWorkedIsp: lastWorkedIsp.value
-            }));
+            localStorage.setItem('vpnerp_acc_master_final', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_final', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_final', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_last_isp', lastWorkedIsp.value);
         };
 
         const loadData = () => {
-            const masterData = JSON.parse(localStorage.getItem('vpnerp_master_data'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_final'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_final'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_final'));
+            lastWorkedIsp.value = localStorage.getItem('vpnerp_last_isp') || '';
 
-            if (masterData && masterData.accounts && masterData.accounts.length > 0) {
-                accounts.value = masterData.accounts.map(a => ({ 
+            if (!savedAcc || savedAcc.length === 0) {
+                const oldKeys = ['v12', 'v11', 'master', 'v9', 'v8'];
+                for (let v of oldKeys) {
+                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
+                    if (oldAcc && oldAcc.length > 0) {
+                        savedAcc = oldAcc;
+                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
+                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
+                        break;
+                    }
+                }
+            }
+
+            if (savedAcc && savedAcc.length > 0) {
+                accounts.value = savedAcc.map(a => ({ 
                     ...a, 
                     uid: a.uid || generateUid(),
                     previousIp: a.previousIp || null
                 }));
-                pool.value = masterData.pool || [];
-                blacklist.value = masterData.blacklist || [];
-                lastWorkedIsp.value = masterData.lastWorkedIsp || '';
             } else {
-                // Fallback a inicializar en cero
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
@@ -169,31 +137,44 @@ createApp({
                 }
                 accounts.value = initial;
             }
-        };
-
-        const restoreDatabase = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.accounts) accounts.value = data.accounts.map(a => ({ ...a, uid: a.uid || generateUid() }));
-                    if(data.pool) pool.value = data.pool;
-                    if(data.blacklist) blacklist.value = data.blacklist;
-                    showStatus('¡Base de Datos Restaurada con Éxito!');
-                } catch (err) { 
-                    alert("Error: El archivo no es un Backup válido del VPN ERP."); 
-                }
-                event.target.value = null; 
-            };
-            reader.readAsText(file);
+            pool.value = savedPool || [];
+            blacklist.value = savedBlk || [];
         };
 
         watch([accounts, pool, blacklist, lastWorkedIsp], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ LA CASCADA DE IP PÚBLICA (Limpia y Funcional)
+        // 🌟 RECOMENDADOR INTELIGENTE (ANTI-SOSPECHAS)
+        // ==========================================
+        const extractCoreIsp = (fullIspStr) => {
+            if(!fullIspStr) return '';
+            const lower = fullIspStr.toLowerCase();
+            for(let top of topUkISPs) {
+                if(lower.includes(top)) return top;
+            }
+            return fullIspStr.split(' ')[0]; // fallback
+        };
+
+        const markAsWorked = (fullIspStr) => {
+            if(!fullIspStr) {
+                showStatus('Esta cuenta no tiene proveedor.'); return;
+            }
+            lastWorkedIsp.value = extractCoreIsp(fullIspStr);
+            showStatus('Marcado. Recomendaciones actualizadas.');
+        };
+
+        const isRecommended = (acc) => {
+            if(!acc.nodeId || !acc.asn_isp) return false; // Solo recomendamos cuentas listas para trabajar
+            if(!lastWorkedIsp.value) return true; // Si no he trabajado nada, todas son recomendadas
+            
+            const currentCore = extractCoreIsp(acc.asn_isp);
+            // Es recomendado si NO ES IGUAL al último trabajado
+            return currentCore !== lastWorkedIsp.value;
+        };
+
+
+        // ==========================================
+        // ⚡ AUTO IP (Múltiples métodos silenciosos)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -209,9 +190,7 @@ createApp({
 
             if(!newIp) {
                 try {
-                    const r2 = await fetch("https://ipinfo.io/json", {
-                        headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
-                    });
+                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
                     if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
                 } catch(e) {}
             }
@@ -225,25 +204,23 @@ createApp({
 
             if(newIp) {
                 if(acc.ip === newIp) { 
-                    syncStatus.value = 'Misma IP.'; 
+                    syncStatus.value = 'La IP no ha cambiado.'; 
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
+
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
-                    if(!proceed) { 
-                        syncStatus.value = 'Cancelado.'; 
-                        setTimeout(() => { syncStatus.value = ''; }, 3000);
-                        return; 
-                    }
+                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir?`);
+                    if(!proceed) { syncStatus.value = ''; return; }
                 }
+
                 acc.previousIp = acc.ip; 
                 acc.ip = newIp;
                 triggerCollisionCheck(acc);
-                syncStatus.value = '¡IP extraída!';
+                syncStatus.value = '¡IP Actualizada!';
             } else {
-                alert("Bloqueo de red total. Tus extensiones de privacidad impiden leer la IP desde el navegador.");
+                alert("Error de red. No se pudo leer la IP.");
                 syncStatus.value = '';
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
@@ -251,7 +228,7 @@ createApp({
 
         const undoIp = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
-            if(acc && acc.previousIp) {
+            if(acc && acc.previousIp !== null) {
                 acc.ip = acc.previousIp; 
                 acc.previousIp = null; 
                 triggerCollisionCheck(acc); 
@@ -259,7 +236,6 @@ createApp({
                 setTimeout(() => { syncStatus.value = ''; }, 3000);
             }
         };
-
 
         const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
         const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
@@ -355,37 +331,22 @@ createApp({
         };
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
 
-
-        // ==========================================
-        // 💎 FILTRO TOP 5 ISP DE UK + MYSTERIUM API
-        // ==========================================
-        // Los proveedores más grandes y confiables de Reino Unido.
-        const topUK_ISPs = ['bt ', 'bt group', 'virgin', 'sky', 'talktalk', 'vodafone', 'ee ', 'plusnet', 'three', 'o2'];
-        
-        const isTopISP = (ispString) => {
-            if (!ispString) return false;
-            const str = ispString.toLowerCase();
-            return topUK_ISPs.some(top => str.includes(top));
-        };
-
         const processNodeData = (data) => {
             const rawPool = [];
             const seenIds = new Set(); 
-            let discardedCount = 0;
-
             data.forEach(nodo => {
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
+                
+                // NUEVO: FILTRO ESTRICTO DE PROVEEDORES TOP DE UK
+                const ispStr = (nodo.location?.isp || '').toLowerCase();
+                const isTopIsp = topUkISPs.some(top => ispStr.includes(top));
+                
+                // Si no es un gigante de UK, se ignora y no entra a la Pool
+                if(!isTopIsp) return;
+
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return;
                 
-                // 1. Aplicar el Filtro Élite: Si no es un ISP TOP de UK, se ignora.
-                const fullIsp = `${nodo.location?.asn || ''} - ${nodo.location?.isp || ''}`;
-                if (!isTopISP(fullIsp)) {
-                    discardedCount++;
-                    return; 
-                }
-
-                // 2. Cruzar con Blacklist y Uso Actual
                 const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
                 const isUsed = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                 
@@ -394,30 +355,33 @@ createApp({
                     rawPool.push({
                         id: idCorto,
                         city: nodo.location?.city || 'N/A',
-                        asn_isp: fullIsp,
+                        asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`,
                         q_score: (nodo.quality?.quality || 0).toFixed(2)
                     });
                 }
             });
-            
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Actualizado. Descartados ${discardedCount} nodos raros.`);
+            showStatus(`Pool Top UK: ${pool.value.length} nodos`);
         };
 
+        // ==========================================
+        // 🚀 API DE MYSTERIUM (PURA, DIRECTA, SIN PROXIES)
+        // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
             try {
+                // El llamado original y puro que siempre funcionó
                 const url = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
                 const response = await fetch(url, { headers: { 'accept': 'application/json' } });
                 
-                if(!response.ok) throw new Error("Error HTTP " + response.status);
+                if(!response.ok) throw new Error("Error de red.");
                 
                 const data = await response.json();
                 processNodeData(data);
                 
             } catch (err) {
-                console.error("Error API:", err);
-                alert("Error conectando a la API de Mysterium. \nVerifica tu conexión a internet o usa 'Importar JSON'.");
+                console.error(err);
+                alert("Error conectando con Mysterium. Si persiste, usa el botón de Importar JSON.");
                 syncStatus.value = '';
             }
         };
@@ -436,15 +400,38 @@ createApp({
             reader.readAsText(file);
         };
 
+        // NUEVO: RESTAURAR BASE DE DATOS COMPLETA
+        const restoreDatabase = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.accounts && data.pool && data.blacklist) {
+                        accounts.value = data.accounts;
+                        pool.value = data.pool;
+                        blacklist.value = data.blacklist;
+                        showStatus('¡Base Restaurada al 100%!');
+                    } else {
+                        alert("El archivo no parece ser un respaldo válido de este sistema.");
+                    }
+                } catch (err) { alert("Error al leer el archivo de Respaldo."); }
+                event.target.value = null; 
+            };
+            reader.readAsText(file);
+        };
+
         const copyToClipboard = async (text, type = 'Dato') => {
             try { 
                 await navigator.clipboard.writeText(text); 
                 showStatus(`¡${type} Copiado!`); 
+                setTimeout(() => { syncStatus.value = ''; }, 3000);
             } catch (err) { console.error(err); }
         };
 
         const exportDatabase = () => {
-            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value, lastWorkedIsp: lastWorkedIsp.value }, null, 2);
+            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -453,7 +440,7 @@ createApp({
             a.click();
         };
 
-        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 4000); };
+        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
         
         onMounted(() => { loadData(); });
 
@@ -463,10 +450,10 @@ createApp({
             collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
             filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
             addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
-            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreDatabase,
+            importPoolJSON, restoreDatabase, fetchAPI, copyToClipboard, exportDatabase, 
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, lastWorkedIsp, markAsWorked, safeSuggestion, generateSafeSuggestion
+            fetchCurrentIP, undoIp, markAsWorked, isRecommended, lastWorkedIsp
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

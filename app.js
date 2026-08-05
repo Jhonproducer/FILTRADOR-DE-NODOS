@@ -19,24 +19,39 @@ createApp({
         const blacklist = ref([]);
 
         // ==========================================
-        // 🎯 MOTOR ANTI-SOSPECHAS (Ruleta de ISPs)
+        // 🎯 MOTOR ANTI-SOSPECHAS MEJORADO
         // ==========================================
         const lastWorkedIsp = ref('');
+        const suggestionTrigger = ref(0); // Para forzar re-cálculo al saltar
 
         const getIspName = (fullString) => {
             if(!fullString) return 'Desconocido';
             return fullString.split('-').pop().trim().toLowerCase();
         };
 
+        // CONTADORES
+        const workedCount = computed(() => accounts.value.filter(a => a.nodeId && a.worked).length);
+        const totalValidCount = computed(() => accounts.value.filter(a => a.nodeId).length);
+
+        const skipRecommendation = () => {
+            suggestionTrigger.value++; // Obliga a buscar otro aleatorio
+        };
+
         const suggestedAccount = computed(() => {
-            const available = accounts.value.filter(a => 
-                a.nodeId && 
-                a.asn_isp && 
-                !a.worked && 
-                getIspName(a.asn_isp) !== lastWorkedIsp.value
-            );
+            suggestionTrigger.value; // Dependencia reactiva para el botón "Saltar"
             
-            if(available.length === 0) return null;
+            let unworked = accounts.value.filter(a => a.nodeId && a.asn_isp && !a.worked);
+            
+            if(unworked.length === 0) return null; // Todo listo
+            
+            // Intenta buscar uno distinto al último
+            let available = unworked.filter(a => getIspName(a.asn_isp) !== lastWorkedIsp.value);
+            
+            // Si TODOS los que quedan son del mismo ISP, ni modo, tenemos que recomendar uno para no quedarnos pegados
+            if(available.length === 0) {
+                available = unworked;
+            }
+            
             return available[Math.floor(Math.random() * available.length)];
         });
 
@@ -53,7 +68,7 @@ createApp({
         };
 
         // ==========================================
-        // 💎 FILTRO ELITE (Top 5 UK) - Ahora es Dinámico
+        // 💎 FILTRO ELITE (Top 5 UK)
         // ==========================================
         const TOP_ISPS = ['bt', 'sky', 'virgin', 'talktalk', 'vodafone'];
         const isTopISP = (ispString) => {
@@ -62,7 +77,6 @@ createApp({
             return TOP_ISPS.some(t => low.includes(t));
         };
 
-        // --- FILTROS DE POOL ---
         const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '', onlyTopISP: false });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
@@ -83,11 +97,9 @@ createApp({
                 return !inBlacklist && !inUse;
             });
             
-            // APLICACIÓN DEL FILTRO TOP 5 SI ESTÁ ENCENDIDO EL BOTÓN
             if (filters.value.onlyTopISP) {
                 result = result.filter(n => isTopISP(n.asn_isp));
             }
-
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -195,7 +207,7 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
+        // ⚡ AUTO IP (CASCADA SILENCIOSA)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -355,7 +367,6 @@ createApp({
             const rawPool = [];
             const seenIds = new Set(); 
             data.forEach(nodo => {
-                // AQUÍ YA NO FILTRAMOS LOS TOP 5 PORQUE LO HAREMOS CON EL BOTÓN EN LA VISTA
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
                 
                 const idCorto = nodo.provider_id.substring(0, 14);
@@ -379,7 +390,7 @@ createApp({
         };
 
         // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES (Estricta)
+        // 🚀 CASCADA MYSTERIUM 5 NIVELES
         // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
@@ -493,7 +504,8 @@ createApp({
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, lastWorkedIsp, suggestedAccount, markAsWorked, resetWorkedStatus
+            fetchCurrentIP, undoIp, lastWorkedIsp, suggestedAccount, markAsWorked, resetWorkedStatus,
+            workedCount, totalValidCount, skipRecommendation
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

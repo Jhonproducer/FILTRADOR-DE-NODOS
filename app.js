@@ -53,7 +53,7 @@ createApp({
         };
 
         // ==========================================
-        // 💎 FILTRO ELITE (Top 5 UK)
+        // 💎 FILTRO ELITE (Top 5 UK) - Ahora es Dinámico
         // ==========================================
         const TOP_ISPS = ['bt', 'sky', 'virgin', 'talktalk', 'vodafone'];
         const isTopISP = (ispString) => {
@@ -63,10 +63,17 @@ createApp({
         };
 
         // --- FILTROS DE POOL ---
-        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '' });
+        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '', onlyTopISP: false });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
-        const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; filters.value.minQuality = ''; };
+        
+        const clearFilters = () => { 
+            filters.value.nodeId = ''; 
+            filters.value.city = ''; 
+            filters.value.isp = ''; 
+            filters.value.minQuality = ''; 
+            filters.value.onlyTopISP = false;
+        };
 
         const filteredPool = computed(() => {
             let result = pool.value;
@@ -75,6 +82,12 @@ createApp({
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 return !inBlacklist && !inUse;
             });
+            
+            // APLICACIÓN DEL FILTRO TOP 5 SI ESTÁ ENCENDIDO EL BOTÓN
+            if (filters.value.onlyTopISP) {
+                result = result.filter(n => isTopISP(n.asn_isp));
+            }
+
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -182,7 +195,7 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP CASCADA (Mantenida segura)
+        // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -342,11 +355,9 @@ createApp({
             const rawPool = [];
             const seenIds = new Set(); 
             data.forEach(nodo => {
+                // AQUÍ YA NO FILTRAMOS LOS TOP 5 PORQUE LO HAREMOS CON EL BOTÓN EN LA VISTA
                 if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
                 
-                // Filtro Elite Top 5 UK
-                if (!isTopISP(nodo.location?.isp)) return;
-
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return;
                 
@@ -364,7 +375,7 @@ createApp({
                 }
             });
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Actualizado: ${pool.value.length} nodos Elite`);
+            showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
         };
 
         // ==========================================
@@ -375,7 +386,6 @@ createApp({
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             let data = null;
 
-            // 5 intentos agresivos. Usamos proxy que escupe texto bruto para parsearlo nosotros
             const attempts = [
                 { name: 'Directo', url: targetUrl },
                 { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
@@ -389,14 +399,13 @@ createApp({
                 try {
                     const res = await fetch(attempt.url, { 
                         headers: { 'Accept': 'application/json' },
-                        cache: 'no-store' // Cero caché vieja
+                        cache: 'no-store'
                     });
                     
                     if (res.ok) {
                         const text = await res.text();
                         try {
                             const parsed = JSON.parse(text);
-                            // Validar que realmente Mysterium devolvió la red de nodos
                             if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
                                 data = parsed;
                                 console.log(`¡Éxito usando: ${attempt.name}!`);
@@ -407,7 +416,7 @@ createApp({
                         }
                     }
                 } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}`);
+                    console.warn(`Fallo en ${attempt.name}:`, e.message);
                 }
             }
 

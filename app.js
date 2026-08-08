@@ -19,130 +19,43 @@ createApp({
         const blacklist = ref([]);
 
         // ==========================================
-        // 🎯 MOTOR DE TANDAS Y SEMÁFORO TÁCTICO
+        // 🎯 MOTOR ANTI-SOSPECHAS (Ruleta de ISPs)
         // ==========================================
-        const BATCH_SIZE = 7;
-        const currentTandaIndex = ref(0);
         const lastWorkedIsp = ref('');
 
-        // Limpia el nombre del ISP para compararlo fácil (ej: "AS1234 - BT" -> "bt")
         const getIspName = (fullString) => {
-            if(!fullString) return '';
+            if(!fullString) return 'Desconocido';
             return fullString.split('-').pop().trim().toLowerCase();
         };
 
-        // Función para mostrar bonito el ISP en la tabla
         const getIspNameUI = (fullString) => {
             if(!fullString) return '';
             return fullString.split('-').pop().trim();
         };
 
-        // Calcula cuántas tandas hay en total basado en el número de cuentas
-        const totalTandas = computed(() => {
-            return Math.ceil(accounts.value.length / BATCH_SIZE) || 1;
+        const suggestedAccount = computed(() => {
+            const available = accounts.value.filter(a => 
+                a.nodeId && 
+                a.asn_isp && 
+                !a.worked && 
+                getIspName(a.asn_isp) !== lastWorkedIsp.value
+            );
+            
+            if(available.length === 0) return null;
+            return available[Math.floor(Math.random() * available.length)];
         });
 
-        // Asegura que no nos salgamos de rango si eliminamos cuentas
-        watch(totalTandas, (newTotal) => {
-            if (currentTandaIndex.value >= newTotal) {
-                currentTandaIndex.value = Math.max(0, newTotal - 1);
-            }
-        });
-
-        const nextTanda = () => {
-            if (currentTandaIndex.value < totalTandas.value - 1) currentTandaIndex.value++;
-        };
-        const prevTanda = () => {
-            if (currentTandaIndex.value > 0) currentTandaIndex.value--;
-        };
-
-        // Obtiene SOLO las cuentas que pertenecen a la Tanda Actual
-        const currentTandaAccounts = computed(() => {
-            const start = currentTandaIndex.value * BATCH_SIZE;
-            return accounts.value.slice(start, start + BATCH_SIZE);
-        });
-
-        // Progreso de la Tanda Actual
-        const currentTandaWorked = computed(() => {
-            return currentTandaAccounts.value.filter(a => a.worked).length;
-        });
-
-        const tandaProgress = computed(() => {
-            const total = currentTandaAccounts.value.length;
-            if (total === 0) return 0;
-            return Math.round((currentTandaWorked.value / total) * 100);
-        });
-
-        // SEMÁFORO: ¿Es seguro trabajar este ISP?
-        const isIspSafe = (isp) => {
-            if(!isp) return true; // Si no tiene ISP, no hay peligro
-            if(!lastWorkedIsp.value) return true; // Si es el primero del día, no hay peligro
-            return getIspName(isp) !== lastWorkedIsp.value;
-        };
-
-        // Marcar cuenta como trabajada
         const markAsWorked = (acc) => {
             acc.worked = true;
-            if (acc.asn_isp) lastWorkedIsp.value = getIspName(acc.asn_isp);
-            showStatus(`Cuenta Lista. ISP Marcado: ${lastWorkedIsp.value.toUpperCase()}`);
+            lastWorkedIsp.value = getIspName(acc.asn_isp);
+            showStatus(`Marcada. Proveedor evitado: ${lastWorkedIsp.value.toUpperCase()}`);
         };
 
-        const unmarkWorked = (acc) => {
-            acc.worked = false;
+        const resetWorkedStatus = () => {
+            accounts.value.forEach(a => a.worked = false);
+            lastWorkedIsp.value = '';
+            showStatus('Motor Reiniciado.');
         };
-
-        const resetAllWorked = () => {
-            if(confirm("¿Estás seguro de reiniciar el estado de TODAS las cuentas de todas las tandas?")) {
-                accounts.value.forEach(a => a.worked = false);
-                lastWorkedIsp.value = '';
-                showStatus('¡Ciclo Global Reiniciado!');
-            }
-        };
-
-        // --- CUENTAS (Buscador/Sort e Integración con Tanda) ---
-        const accountSearch = ref('');
-        const accountSort = ref({ field: null, desc: false });
-
-        const toggleAccountSort = (field) => {
-            if (accountSort.value.field === field) {
-                accountSort.value.desc = !accountSort.value.desc;
-            } else {
-                accountSort.value.field = field;
-                accountSort.value.desc = false;
-            }
-        };
-
-        // Esta es la lista FINAL que se dibuja en la tabla
-        const displayedAccounts = computed(() => {
-            // Si el usuario está buscando, ignoramos las Tandas y buscamos en toda la base de datos
-            let baseList = accountSearch.value ? accounts.value : currentTandaAccounts.value;
-
-            if (accountSearch.value) {
-                const s = accountSearch.value.toLowerCase().trim();
-                baseList = baseList.filter(a => 
-                    a.name.toLowerCase().includes(s) || 
-                    (a.nodeId || '').toLowerCase().includes(s) || 
-                    (a.ip || '').toLowerCase().includes(s) ||
-                    (a.asn_isp || '').toLowerCase().includes(s)
-                );
-            }
-
-            // Ordenamiento (Sort)
-            if (accountSort.value.field) {
-                baseList = [...baseList].sort((a, b) => {
-                    let valA = a[accountSort.value.field] || '';
-                    let valB = b[accountSort.value.field] || '';
-                    if (accountSort.value.field === 'q_score') {
-                        valA = parseFloat(valA) || 0;
-                        valB = parseFloat(valB) || 0;
-                    }
-                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
-                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
-                    return 0;
-                });
-            }
-            return baseList;
-        });
 
         // ==========================================
         // 💎 FILTRO ELITE (Top 5 UK) PARA EL POOL
@@ -177,6 +90,7 @@ createApp({
             if (filters.value.onlyTopISP) {
                 result = result.filter(n => isTopISP(n.asn_isp));
             }
+
             if (filters.value.nodeId) {
                 const s = filters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -198,24 +112,61 @@ createApp({
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
-        // ==========================================
-        // 💾 PERSISTENCIA (Mantenemos los datos seguros)
-        // ==========================================
-        const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v13', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v13', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v13', JSON.stringify(blacklist.value));
-            localStorage.setItem('vpnerp_last_isp', lastWorkedIsp.value);
+        // --- CUENTAS (Buscador/Sort) ---
+        const accountSearch = ref('');
+        const accountSort = ref({ field: null, desc: false });
+
+        const toggleAccountSort = (field) => {
+            if (accountSort.value.field === field) {
+                accountSort.value.desc = !accountSort.value.desc;
+            } else {
+                accountSort.value.field = field;
+                accountSort.value.desc = false;
+            }
         };
 
+        const processedAccounts = computed(() => {
+            let result = accounts.value;
+            if (accountSearch.value) {
+                const s = accountSearch.value.toLowerCase().trim();
+                result = result.filter(a => 
+                    a.name.toLowerCase().includes(s) || 
+                    (a.nodeId || '').toLowerCase().includes(s) || 
+                    (a.ip || '').toLowerCase().includes(s) ||
+                    (a.asn_isp || '').toLowerCase().includes(s)
+                );
+            }
+            if (accountSort.value.field) {
+                result = [...result].sort((a, b) => {
+                    let valA = a[accountSort.value.field] || '';
+                    let valB = b[accountSort.value.field] || '';
+                    if (accountSort.value.field === 'q_score') {
+                        valA = parseFloat(valA) || 0;
+                        valB = parseFloat(valB) || 0;
+                    }
+                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
+                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
+                    return 0;
+                });
+            }
+            return result;
+        });
+
+        const saveData = () => {
+            localStorage.setItem('vpnerp_acc_master_v14', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v14', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v14', JSON.stringify(blacklist.value));
+        };
+
+        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
+
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v13'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v13'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v13'));
-            let savedLastIsp = localStorage.getItem('vpnerp_last_isp') || '';
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v14'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v14'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v14'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v12', 'v11', 'v10', 'v9', 'master'];
+                const oldKeys = ['v13', 'v12', 'v11', 'v10', 'v9', 'master', 'v8'];
                 for (let v of oldKeys) {
                     let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
@@ -244,10 +195,9 @@ createApp({
             }
             pool.value = savedPool || [];
             blacklist.value = savedBlk || [];
-            lastWorkedIsp.value = savedLastIsp;
         };
 
-        watch([accounts, pool, blacklist, lastWorkedIsp], saveData, { deep: true });
+        watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
         // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
@@ -429,11 +379,11 @@ createApp({
                 }
             });
             pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
+            showStatus(`Pool Actualizado: ${pool.value.length} nodos`);
         };
 
         // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES (Estricta)
+        // 🚀 MYSTERIUM API (Cascada Infalible)
         // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
@@ -442,10 +392,9 @@ createApp({
 
             const attempts = [
                 { name: 'Directo', url: targetUrl },
-                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
-                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
+                { name: 'Proxy 1', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 2', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 3', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` }
             ];
 
             for (let attempt of attempts) {
@@ -462,22 +411,21 @@ createApp({
                             const parsed = JSON.parse(text);
                             if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
                                 data = parsed;
-                                console.log(`¡Éxito usando: ${attempt.name}!`);
                                 break; 
                             }
                         } catch (err) {
-                            console.warn(`Respuesta falsa del proxy en ${attempt.name}`);
+                            console.warn(`Respuesta inválida en ${attempt.name}`);
                         }
                     }
                 } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}:`, e.message);
+                    console.warn(`Fallo en ${attempt.name}`);
                 }
             }
 
             if (data && Array.isArray(data)) {
                 processNodeData(data);
             } else {
-                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nNingún proxy logró burlar la seguridad de tu red/navegador para Mysterium.\n\nSOLUCIÓN RÁPIDA: \nUsa tu comando en la consola (curl ... > nodos.json) y cárgalo usando el botón 'Importar JSON'.");
+                alert("🚫 BLOQUEO DE RED (CORS)\n\nTu navegador bloqueó la conexión a Mysterium por seguridad.\n\nSOLUCIÓN RÁPIDA Y SEGURA:\n1. Abre tu consola de terminal y ejecuta tu comando de siempre:\n\ncurl -X GET \"https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential\" -H \"accept: application/json\" > nodos.json\n\n2. Sube ese archivo 'nodos.json' con el botón de 'Importar JSON'.");
                 syncStatus.value = 'Error de conexión.';
             }
         };
@@ -533,8 +481,6 @@ createApp({
             a.download = `VPN_ERP_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
         };
-
-        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
         
         onMounted(() => { loadData(); });
 
@@ -547,12 +493,7 @@ createApp({
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, lastWorkedIsp, getIspNameUI,
-            // Cosas de Tandas
-            currentTandaIndex, totalTandas, nextTanda, prevTanda, currentTandaAccounts, 
-            currentTandaWorked, tandaProgress, displayedAccounts,
-            // Cosas de Semáforo y Acciones Tácticas
-            isIspSafe, markAsWorked, unmarkWorked, resetAllWorked
+            fetchCurrentIP, undoIp, lastWorkedIsp, suggestedAccount, markAsWorked, resetWorkedStatus, getIspNameUI
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

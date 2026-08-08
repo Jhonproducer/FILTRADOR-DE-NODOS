@@ -19,33 +19,133 @@ createApp({
         const blacklist = ref([]);
 
         // ==========================================
-        // 🎯 MOTOR DE DISCIPLINA (Micro-Metas en Bloques)
+        // 🎯 MOTOR DE TANDAS Y SEMÁFORO TÁCTICO
         // ==========================================
+        const BATCH_SIZE = 7;
+        const currentTandaIndex = ref(0);
+        const lastWorkedIsp = ref('');
+
+        // Limpia el nombre del ISP para compararlo fácil (ej: "AS1234 - BT" -> "bt")
         const getIspName = (fullString) => {
-            if(!fullString) return 'Desconocido';
+            if(!fullString) return '';
             return fullString.split('-').pop().trim().toLowerCase();
         };
 
-        // Progreso por bloques fijos
-        const progress = computed(() => {
-            const accs = accounts.value;
-            // Para evitar errores si la base no tiene 28, cortamos de manera segura
-            const A_M = accs.slice(0, 7).filter(a => a.worked).length;
-            const A_N = accs.slice(7, 14).filter(a => a.worked).length;
-            const B_M = accs.slice(14, 21).filter(a => a.worked).length;
-            const B_N = accs.slice(21, 28).filter(a => a.worked).length;
-            return { A_M, A_N, B_M, B_N };
+        // Función para mostrar bonito el ISP en la tabla
+        const getIspNameUI = (fullString) => {
+            if(!fullString) return '';
+            return fullString.split('-').pop().trim();
+        };
+
+        // Calcula cuántas tandas hay en total basado en el número de cuentas
+        const totalTandas = computed(() => {
+            return Math.ceil(accounts.value.length / BATCH_SIZE) || 1;
         });
 
-        const resetWorkedStatus = () => {
-            if(confirm('¿Seguro que deseas reiniciar el progreso de todos los bloques a cero?')) {
+        // Asegura que no nos salgamos de rango si eliminamos cuentas
+        watch(totalTandas, (newTotal) => {
+            if (currentTandaIndex.value >= newTotal) {
+                currentTandaIndex.value = Math.max(0, newTotal - 1);
+            }
+        });
+
+        const nextTanda = () => {
+            if (currentTandaIndex.value < totalTandas.value - 1) currentTandaIndex.value++;
+        };
+        const prevTanda = () => {
+            if (currentTandaIndex.value > 0) currentTandaIndex.value--;
+        };
+
+        // Obtiene SOLO las cuentas que pertenecen a la Tanda Actual
+        const currentTandaAccounts = computed(() => {
+            const start = currentTandaIndex.value * BATCH_SIZE;
+            return accounts.value.slice(start, start + BATCH_SIZE);
+        });
+
+        // Progreso de la Tanda Actual
+        const currentTandaWorked = computed(() => {
+            return currentTandaAccounts.value.filter(a => a.worked).length;
+        });
+
+        const tandaProgress = computed(() => {
+            const total = currentTandaAccounts.value.length;
+            if (total === 0) return 0;
+            return Math.round((currentTandaWorked.value / total) * 100);
+        });
+
+        // SEMÁFORO: ¿Es seguro trabajar este ISP?
+        const isIspSafe = (isp) => {
+            if(!isp) return true; // Si no tiene ISP, no hay peligro
+            if(!lastWorkedIsp.value) return true; // Si es el primero del día, no hay peligro
+            return getIspName(isp) !== lastWorkedIsp.value;
+        };
+
+        // Marcar cuenta como trabajada
+        const markAsWorked = (acc) => {
+            acc.worked = true;
+            if (acc.asn_isp) lastWorkedIsp.value = getIspName(acc.asn_isp);
+            showStatus(`Cuenta Lista. ISP Marcado: ${lastWorkedIsp.value.toUpperCase()}`);
+        };
+
+        const unmarkWorked = (acc) => {
+            acc.worked = false;
+        };
+
+        const resetAllWorked = () => {
+            if(confirm("¿Estás seguro de reiniciar el estado de TODAS las cuentas de todas las tandas?")) {
                 accounts.value.forEach(a => a.worked = false);
-                showStatus('Progreso reiniciado a 0.');
+                lastWorkedIsp.value = '';
+                showStatus('¡Ciclo Global Reiniciado!');
             }
         };
 
+        // --- CUENTAS (Buscador/Sort e Integración con Tanda) ---
+        const accountSearch = ref('');
+        const accountSort = ref({ field: null, desc: false });
+
+        const toggleAccountSort = (field) => {
+            if (accountSort.value.field === field) {
+                accountSort.value.desc = !accountSort.value.desc;
+            } else {
+                accountSort.value.field = field;
+                accountSort.value.desc = false;
+            }
+        };
+
+        // Esta es la lista FINAL que se dibuja en la tabla
+        const displayedAccounts = computed(() => {
+            // Si el usuario está buscando, ignoramos las Tandas y buscamos en toda la base de datos
+            let baseList = accountSearch.value ? accounts.value : currentTandaAccounts.value;
+
+            if (accountSearch.value) {
+                const s = accountSearch.value.toLowerCase().trim();
+                baseList = baseList.filter(a => 
+                    a.name.toLowerCase().includes(s) || 
+                    (a.nodeId || '').toLowerCase().includes(s) || 
+                    (a.ip || '').toLowerCase().includes(s) ||
+                    (a.asn_isp || '').toLowerCase().includes(s)
+                );
+            }
+
+            // Ordenamiento (Sort)
+            if (accountSort.value.field) {
+                baseList = [...baseList].sort((a, b) => {
+                    let valA = a[accountSort.value.field] || '';
+                    let valB = b[accountSort.value.field] || '';
+                    if (accountSort.value.field === 'q_score') {
+                        valA = parseFloat(valA) || 0;
+                        valB = parseFloat(valB) || 0;
+                    }
+                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
+                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
+                    return 0;
+                });
+            }
+            return baseList;
+        });
+
         // ==========================================
-        // 💎 FILTRO ELITE (Top 5 UK)
+        // 💎 FILTRO ELITE (Top 5 UK) PARA EL POOL
         // ==========================================
         const TOP_ISPS = ['bt', 'sky', 'virgin', 'talktalk', 'vodafone'];
         const isTopISP = (ispString) => {
@@ -98,79 +198,24 @@ createApp({
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
-        // --- CUENTAS (Buscador/Sort) y VALIDACIÓN DE ISP ---
-        const accountSearch = ref('');
-        const accountSort = ref({ field: null, desc: false });
-
-        const toggleAccountSort = (field) => {
-            if (accountSort.value.field === field) {
-                accountSort.value.desc = !accountSort.value.desc;
-            } else {
-                accountSort.value.field = field;
-                accountSort.value.desc = false;
-            }
-        };
-
-        const processedAccounts = computed(() => {
-            let result = accounts.value;
-            
-            // LÓGICA DE VALIDACIÓN SECUENCIAL DE ISP (Anti-Bloqueos)
-            // Se calcula ANTES de aplicar búsquedas u órdenes para respetar la posición real
-            let lastIsp = null;
-            result.forEach(acc => {
-                acc.ispCollision = false; // Reset first
-                if (acc.nodeId && acc.asn_isp) {
-                    let currentIsp = getIspName(acc.asn_isp);
-                    if (currentIsp === lastIsp && currentIsp !== 'desconocido') {
-                        acc.ispCollision = true; // Choca con el de arriba
-                    }
-                    lastIsp = currentIsp;
-                }
-            });
-
-            // Búsqueda
-            if (accountSearch.value) {
-                const s = accountSearch.value.toLowerCase().trim();
-                result = result.filter(a => 
-                    a.name.toLowerCase().includes(s) || 
-                    (a.nodeId || '').toLowerCase().includes(s) || 
-                    (a.ip || '').toLowerCase().includes(s) ||
-                    (a.asn_isp || '').toLowerCase().includes(s)
-                );
-            }
-
-            // Ordenamiento
-            if (accountSort.value.field) {
-                result = [...result].sort((a, b) => {
-                    let valA = a[accountSort.value.field] || '';
-                    let valB = b[accountSort.value.field] || '';
-                    if (accountSort.value.field === 'q_score') {
-                        valA = parseFloat(valA) || 0;
-                        valB = parseFloat(valB) || 0;
-                    }
-                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
-                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
-                    return 0;
-                });
-            }
-            return result;
-        });
-
-        const ispCollisionCount = computed(() => accounts.value.filter(a => a.ispCollision).length);
-
+        // ==========================================
+        // 💾 PERSISTENCIA (Mantenemos los datos seguros)
+        // ==========================================
         const saveData = () => {
             localStorage.setItem('vpnerp_acc_master_v13', JSON.stringify(accounts.value));
             localStorage.setItem('vpnerp_pool_master_v13', JSON.stringify(pool.value));
             localStorage.setItem('vpnerp_blk_master_v13', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_last_isp', lastWorkedIsp.value);
         };
 
         const loadData = () => {
             let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v13'));
             let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v13'));
             let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v13'));
+            let savedLastIsp = localStorage.getItem('vpnerp_last_isp') || '';
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v12', 'v11', 'master_v12', 'master_v11', 'master'];
+                const oldKeys = ['v12', 'v11', 'v10', 'v9', 'master'];
                 for (let v of oldKeys) {
                     let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
@@ -187,25 +232,25 @@ createApp({
                     ...a, 
                     uid: a.uid || generateUid(), 
                     previousIp: a.previousIp || null,
-                    worked: a.worked || false,
-                    ispCollision: false
+                    worked: a.worked || false 
                 }));
             } else {
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false, ispCollision: false });
+                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false });
                 }
                 accounts.value = initial;
             }
             pool.value = savedPool || [];
             blacklist.value = savedBlk || [];
+            lastWorkedIsp.value = savedLastIsp;
         };
 
-        watch([accounts, pool, blacklist], saveData, { deep: true });
+        watch([accounts, pool, blacklist, lastWorkedIsp], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP (A PUEBA DE BLOQUEOS)
+        // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -326,7 +371,7 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false, ispCollision: false });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false });
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
         const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.worked = false;} };
@@ -388,7 +433,7 @@ createApp({
         };
 
         // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES
+        // 🚀 CASCADA MYSTERIUM 5 NIVELES (Estricta)
         // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
@@ -496,13 +541,18 @@ createApp({
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
             showPoolModal, selectedAccountUid, showAccountSelectModal, nodeToAssign,
-            collisionCount, ispCollisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
+            collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
             filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
             addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, progress, resetWorkedStatus
+            fetchCurrentIP, undoIp, lastWorkedIsp, getIspNameUI,
+            // Cosas de Tandas
+            currentTandaIndex, totalTandas, nextTanda, prevTanda, currentTandaAccounts, 
+            currentTandaWorked, tandaProgress, displayedAccounts,
+            // Cosas de Semáforo y Acciones Tácticas
+            isIspSafe, markAsWorked, unmarkWorked, resetAllWorked
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

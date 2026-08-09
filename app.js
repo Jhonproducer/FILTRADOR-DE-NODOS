@@ -22,11 +22,16 @@ createApp({
         // 🎯 MOTOR ANTI-SOSPECHAS MEJORADO
         // ==========================================
         const lastWorkedIsp = ref('');
-        const suggestionTrigger = ref(0); // Para forzar re-cálculo al saltar
+        const suggestionTrigger = ref(0); 
 
         const getIspName = (fullString) => {
             if(!fullString) return 'Desconocido';
             return fullString.split('-').pop().trim().toLowerCase();
+        };
+
+        const getIspNameUI = (fullString) => {
+            if(!fullString) return '';
+            return fullString.split('-').pop().trim();
         };
 
         // CONTADORES
@@ -34,20 +39,18 @@ createApp({
         const totalValidCount = computed(() => accounts.value.filter(a => a.nodeId).length);
 
         const skipRecommendation = () => {
-            suggestionTrigger.value++; // Obliga a buscar otro aleatorio
+            suggestionTrigger.value++; 
         };
 
         const suggestedAccount = computed(() => {
-            suggestionTrigger.value; // Dependencia reactiva para el botón "Saltar"
+            suggestionTrigger.value; 
             
             let unworked = accounts.value.filter(a => a.nodeId && a.asn_isp && !a.worked);
             
-            if(unworked.length === 0) return null; // Todo listo
+            if(unworked.length === 0) return null; 
             
-            // Intenta buscar uno distinto al último
             let available = unworked.filter(a => getIspName(a.asn_isp) !== lastWorkedIsp.value);
             
-            // Si TODOS los que quedan son del mismo ISP, ni modo, tenemos que recomendar uno para no quedarnos pegados
             if(available.length === 0) {
                 available = unworked;
             }
@@ -61,10 +64,66 @@ createApp({
             showStatus(`Marcada. Proveedor evitado: ${lastWorkedIsp.value.toUpperCase()}`);
         };
 
+        const unmarkWorked = (acc) => {
+            acc.worked = false;
+        };
+
+        const resetAllWorked = () => {
+            if(confirm("¿Estás seguro de reiniciar TODAS las tandas y el Semáforo a cero?")) {
+                accounts.value.forEach(a => a.worked = false);
+                lastWorkedIsp.value = '';
+                showStatus('¡Ciclo Global Reiniciado!');
+            }
+        };
+
         const resetWorkedStatus = () => {
             accounts.value.forEach(a => a.worked = false);
             lastWorkedIsp.value = '';
             showStatus('Motor Reiniciado.');
+        };
+
+        // ==========================================
+        // 🎯 MOTOR DE TANDAS
+        // ==========================================
+        const BATCH_SIZE = 7;
+        const currentTandaIndex = ref(0);
+
+        const totalTandas = computed(() => {
+            return Math.ceil(accounts.value.length / BATCH_SIZE) || 1;
+        });
+
+        watch(totalTandas, (newTotal) => {
+            if (currentTandaIndex.value >= newTotal) {
+                currentTandaIndex.value = Math.max(0, newTotal - 1);
+            }
+        });
+
+        const nextTanda = () => {
+            if (currentTandaIndex.value < totalTandas.value - 1) currentTandaIndex.value++;
+        };
+        const prevTanda = () => {
+            if (currentTandaIndex.value > 0) currentTandaIndex.value--;
+        };
+
+        const currentTandaAccounts = computed(() => {
+            const start = currentTandaIndex.value * BATCH_SIZE;
+            return accounts.value.slice(start, start + BATCH_SIZE);
+        });
+
+        const currentTandaWorked = computed(() => {
+            return currentTandaAccounts.value.filter(a => a.worked).length;
+        });
+
+        const tandaProgress = computed(() => {
+            const total = currentTandaAccounts.value.length;
+            if (total === 0) return 0;
+            return Math.round((currentTandaWorked.value / total) * 100);
+        });
+
+        const isIspSafe = (isp) => {
+            if(!isp) return true; 
+            if(!lastWorkedIsp.value) return true; 
+            return getIspName(isp) !== lastWorkedIsp.value;
         };
 
         // ==========================================
@@ -134,19 +193,21 @@ createApp({
             }
         };
 
-        const processedAccounts = computed(() => {
-            let result = accounts.value;
+        const displayedAccounts = computed(() => {
+            let baseList = accountSearch.value ? accounts.value : currentTandaAccounts.value;
+
             if (accountSearch.value) {
                 const s = accountSearch.value.toLowerCase().trim();
-                result = result.filter(a => 
+                baseList = baseList.filter(a => 
                     a.name.toLowerCase().includes(s) || 
                     (a.nodeId || '').toLowerCase().includes(s) || 
                     (a.ip || '').toLowerCase().includes(s) ||
                     (a.asn_isp || '').toLowerCase().includes(s)
                 );
             }
+
             if (accountSort.value.field) {
-                result = [...result].sort((a, b) => {
+                baseList = [...baseList].sort((a, b) => {
                     let valA = a[accountSort.value.field] || '';
                     let valB = b[accountSort.value.field] || '';
                     if (accountSort.value.field === 'q_score') {
@@ -158,19 +219,21 @@ createApp({
                     return 0;
                 });
             }
-            return result;
+            return baseList;
         });
 
         const saveData = () => {
             localStorage.setItem('vpnerp_acc_master_v12', JSON.stringify(accounts.value));
             localStorage.setItem('vpnerp_pool_master_v12', JSON.stringify(pool.value));
             localStorage.setItem('vpnerp_blk_master_v12', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_last_isp', lastWorkedIsp.value);
         };
 
         const loadData = () => {
             let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v12'));
             let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v12'));
             let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v12'));
+            let savedLastIsp = localStorage.getItem('vpnerp_last_isp') || '';
 
             if (!savedAcc || savedAcc.length === 0) {
                 const oldKeys = ['v11', 'v10', 'v9', 'master', 'v8'];
@@ -202,12 +265,13 @@ createApp({
             }
             pool.value = savedPool || [];
             blacklist.value = savedBlk || [];
+            lastWorkedIsp.value = savedLastIsp;
         };
 
-        watch([accounts, pool, blacklist], saveData, { deep: true });
+        watch([accounts, pool, blacklist, lastWorkedIsp], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP (CASCADA SILENCIOSA)
+        // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -389,9 +453,6 @@ createApp({
             showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
         };
 
-        // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES
-        // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
@@ -419,16 +480,11 @@ createApp({
                             const parsed = JSON.parse(text);
                             if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
                                 data = parsed;
-                                console.log(`¡Éxito usando: ${attempt.name}!`);
                                 break; 
                             }
-                        } catch (err) {
-                            console.warn(`Respuesta falsa del proxy en ${attempt.name}`);
-                        }
+                        } catch (err) { }
                     }
-                } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}:`, e.message);
-                }
+                } catch (e) { }
             }
 
             if (data && Array.isArray(data)) {
@@ -504,8 +560,12 @@ createApp({
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, lastWorkedIsp, suggestedAccount, markAsWorked, resetWorkedStatus,
-            workedCount, totalValidCount, skipRecommendation
+            fetchCurrentIP, undoIp, lastWorkedIsp, getIspNameUI,
+            currentTandaIndex, totalTandas, nextTanda, prevTanda, currentTandaAccounts, 
+            currentTandaWorked, tandaProgress, displayedAccounts,
+            isIspSafe, markAsWorked, unmarkWorked, resetAllWorked,
+            // 👉 AQUÍ ESTABA EL ERROR: AGREGUÉ LAS 4 VARIABLES FALTANTES
+            workedCount, totalValidCount, skipRecommendation, suggestedAccount
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

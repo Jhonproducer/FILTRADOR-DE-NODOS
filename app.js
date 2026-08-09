@@ -420,47 +420,24 @@ createApp({
         };
 
         // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES
+        // 🚀 CASCADA MYSTERIUM API (CONECTIVIDAD PURA)
         // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            let data = null;
-
-            const attempts = [
-                { name: 'Directo', url: targetUrl },
-                { name: 'Proxy 1', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 2', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 3', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
-                { name: 'Proxy 4', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
-            ];
-
-            for (let attempt of attempts) {
-                syncStatus.value = `Intentando: ${attempt.name}...`;
-                try {
-                    const res = await fetch(attempt.url, { 
-                        headers: { 'Accept': 'application/json' },
-                        cache: 'no-store'
-                    });
-                    
-                    if (res.ok) {
-                        const text = await res.text();
-                        try {
-                            const parsed = JSON.parse(text);
-                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
-                                data = parsed;
-                                console.log(`¡Éxito usando: ${attempt.name}!`);
-                                break; 
-                            }
-                        } catch (err) { }
-                    }
-                } catch (e) { }
-            }
-
-            if (data && Array.isArray(data)) {
+            
+            try {
+                // El único bypass que funciona 100% de las veces si hay bloqueo CORS
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                const res = await fetch(proxyUrl, { cache: 'no-store' });
+                
+                if (!res.ok) throw new Error("Fallo en la red");
+                
+                const data = await res.json();
                 processNodeData(data);
-            } else {
-                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nNingún proxy logró burlar la seguridad de tu red/navegador para Mysterium.\n\nSOLUCIÓN RÁPIDA: \nUsa tu comando en la consola (curl ... > nodos.json) y cárgalo usando el botón 'Importar JSON'.");
+                
+            } catch (err) {
+                alert("Mysterium bloquea la red web. Usa IMPORTAR JSON (curl -X GET ... > nodos.json).");
                 syncStatus.value = 'Error de conexión.';
             }
         };
@@ -531,10 +508,8 @@ createApp({
             openPoolModal, closePoolModal, assignNodeToAccount,
             openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
             fetchCurrentIP, undoIp, lastWorkedIsp, getIspNameUI,
-            // Cosas de Tandas
             currentTandaIndex, totalTandas, nextTanda, prevTanda, currentTandaAccounts, 
             currentTandaWorked, tandaProgress, displayedAccounts,
-            // Cosas de Semáforo y Acciones Tácticas
             isIspSafe, markAsWorked, unmarkWorked, resetAllWorked
         };
     },

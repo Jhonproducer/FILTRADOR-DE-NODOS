@@ -1,205 +1,218 @@
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
-
-// Función auxiliar para pausar y evitar saturar la API
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 createApp({
     setup() {
-        const currentTab = ref('iplookup'); // Nuevo tab por defecto
+        const currentTab = ref('radar');
         const syncStatus = ref('');
-        const bulkBlacklistText = ref('');
         
-        // Estado del Módulo IP Lookup
-        const lookupAccounts = ref([]);
-        const isAnalyzingAll = ref(false);
-
-        // Estado Módulo Pool / Blacklist
+        // Arrays principales
+        const accounts = ref([]);
         const pool = ref([]);
         const blacklist = ref([]);
-        const filters = ref({ nodeId: '', city: '', isp: '' });
-        const sortDesc = ref(true); 
-        const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
 
-        const clearFilters = () => { 
-            filters.value.nodeId = ''; 
-            filters.value.city = ''; 
-            filters.value.isp = ''; 
+        // Textareas masivos
+        const bulkImportText = ref('');
+        const bulkBlacklistText = ref('');
+
+        // ==========================================
+        // 🚀 MÓDULO 1: RADAR E IP LOOKUP EN VIVO
+        // ==========================================
+
+        // 1. Procesador Masivo de Cuentas (Copia y Pega)
+        const processBulkAccounts = async () => {
+            if(!bulkImportText.value.trim()) return;
+            const lines = bulkImportText.value.trim().split('\n');
+            
+            for (let line of lines) {
+                if (!line.trim()) continue;
+                // Detecta espacios múltiples, tabulaciones o comas
+                const parts = line.trim().split(/[\t,]+|\s{2,}/);
+                
+                let name = '', nodeId = '', ip = '';
+                
+                if (parts.length >= 3) {
+                    name = parts[0].trim();
+                    nodeId = parts[1].trim().substring(0, 14);
+                    ip = parts[2].trim();
+                } else {
+                    // Si pegaron con un solo espacio separador
+                    const spaceParts = line.trim().split(' ');
+                    name = spaceParts[0] || '';
+                    nodeId = spaceParts.length > 1 ? spaceParts[1].substring(0, 14) : '';
+                    ip = spaceParts.length > 2 ? spaceParts[2] : '';
+                }
+
+                // Si ya existe la actualiza, si no la crea
+                let existing = accounts.value.find(a => a.name === name);
+                if (existing) {
+                    existing.nodeId = nodeId;
+                    if(existing.ip !== ip) {
+                        existing.ip = ip;
+                        existing.isp = ''; // Reseteamos info vieja
+                        existing.district = '';
+                    }
+                } else {
+                    accounts.value.push({ 
+                        uid: generateUid(), name, nodeId, ip, 
+                        isp: '', city: '', borough: '', district: '', loc: '', subnet: '', loading: false 
+                    });
+                }
+            }
+            
+            bulkImportText.value = '';
+            saveData();
+            
+            // Dispara el satélite (APIs) en segundo plano
+            enrichAllAccounts();
         };
 
-        const filteredPool = computed(() => {
-            let result = pool.value;
-            result = result.filter(n => {
-                const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
-                return !inBlacklist;
+        // 2. Disparador en Cola para las APIs (Respeta rate limits)
+        const enrichAllAccounts = async () => {
+            for (let acc of accounts.value) {
+                // Solo investiga las que tienen IP y les falta el ISP o el Distrito
+                if (acc.ip && (!acc.isp || !acc.district)) {
+                    await enrichSingleAccount(acc);
+                    await sleep(600); // 600ms para no saturar a Nominatim OpenStreetMap
+                }
+            }
+        };
+
+        // Cuando editas una IP a mano en la tabla, re-investiga solo esa
+        const reEnrichAccount = (acc) => {
+            acc.isp = ''; acc.district = ''; acc.borough = ''; acc.city = ''; acc.subnet = '';
+            saveData();
+            enrichSingleAccount(acc);
+        };
+
+        // 3. LA MAGIA DE INGENIERÍA: IPInfo + OpenStreetMap (Nominatim)
+        const enrichSingleAccount = async (acc) => {
+            acc.loading = true;
+            try {
+                // PRIMER PASO: Tu API de IPInfo (Exactamente tu curl)
+                let ipData = null;
+                try {
+                    const ipRes = await fetch(`https://api.ipinfo.io/lite/${acc.ip}`, {
+                        headers: { 'Authorization': 'Bearer 8c97cc52a98a48', 'Accept': 'application/json' }
+                    });
+                    if(ipRes.ok) ipData = await ipRes.json();
+                } catch(e) {}
+
+                // Respaldo de ipinfo por si acaso "lite" falla
+                if(!ipData) {
+                    const ipResFall = await fetch(`https://ipinfo.io/${acc.ip}/json?token=8c97cc52a98a48`);
+                    if(ipResFall.ok) ipData = await ipResFall.json();
+                }
+
+                if(ipData) {
+                    // Limpia el ASN+ISP (ej: "AS1234 British Telecommunications" -> "BT")
+                    acc.isp = ipData.org || ipData.asn || 'Desconocido';
+                    // Extrae Subred /24
+                    const ipParts = acc.ip.split('.');
+                    acc.subnet = ipParts.length === 4 ? `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.x` : '';
+                    
+                    // SEGUNDO PASO: Si hay coordenadas, llamamos al Satélite Público para el County/Borough
+                    if (ipData.loc) {
+                        const [lat, lon] = ipData.loc.split(',');
+                        // API gratuita de Geocodificación inversa
+                        const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`);
+                        if (nomRes.ok) {
+                            const nomData = await nomRes.json();
+                            const addr = nomData.address || {};
+                            
+                            // Mapeo inteligente sin inventar nada
+                            acc.district = addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || '';
+                            acc.borough = addr.borough || addr.county || addr.state_district || '';
+                            acc.city = addr.city || addr.town || addr.village || ipData.city || '';
+                        }
+                    } else {
+                        acc.city = ipData.city || '';
+                    }
+                }
+            } catch (err) {
+                console.error("Error en radar para IP:", acc.ip, err);
+            }
+            acc.loading = false;
+            saveData();
+        };
+
+        // 4. EL RADAR DE RIESGO TÁCTICO (Cálculo en vivo)
+        const analyzedAccounts = computed(() => {
+            return accounts.value.map((acc, index, arr) => {
+                let warnings = [];
+                let isCollision = false;
+
+                // Regla 1: Choque EXACTO Crítico (Mismo Nodo o Misma IP en otra cuenta)
+                const hasExactCollision = arr.some(other => 
+                    other.uid !== acc.uid && 
+                    ( (other.nodeId && other.nodeId === acc.nodeId) || (other.ip && other.ip === acc.ip) )
+                );
+                
+                if (hasExactCollision && (acc.nodeId || acc.ip)) {
+                    isCollision = true;
+                }
+
+                // Regla 2: Proximidad de Subred /24 (Peligroso si están vivas al mismo tiempo)
+                const sameSubnetCount = arr.filter(other => other.uid !== acc.uid && other.subnet && other.subnet === acc.subnet).length;
+                if (sameSubnetCount > 0 && !isCollision && acc.subnet) {
+                    warnings.push(`Comparte Subred con ${sameSubnetCount} cta(s)`);
+                }
+
+                // Regla 3: Rotación de ISP Sospechosa (Si la cuenta INMEDIATAMENTE ANTERIOR tiene el mismo proveedor)
+                if (index > 0 && acc.isp && arr[index-1].isp && !isCollision) {
+                    // Extrae la palabra principal del ISP para comparar
+                    const getCoreISP = (ispStr) => ispStr.toLowerCase().split(' ').pop();
+                    if (getCoreISP(acc.isp) === getCoreISP(arr[index-1].isp) && getCoreISP(acc.isp) !== 'desconocido') {
+                        warnings.push(`ISP Secuencial idéntico al anterior`);
+                    }
+                }
+
+                return { ...acc, warnings, isCollision };
             });
-            if (filters.value.nodeId) result = result.filter(n => n.id.toLowerCase().includes(filters.value.nodeId.toLowerCase().trim()));
-            if (filters.value.city) result = result.filter(n => (n.city || '').toLowerCase().includes(filters.value.city.toLowerCase().trim()));
-            if (filters.value.isp) result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(filters.value.isp.toLowerCase().trim()));
-            
-            return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
+        // Contadores del Dashboard
+        const totalCollisions = computed(() => analyzedAccounts.value.filter(a => a.isCollision).length);
+        const totalWarnings = computed(() => analyzedAccounts.value.reduce((acc, curr) => acc + curr.warnings.length, 0));
+
+        const clearAccounts = () => {
+            if(confirm("¿Borrar toda la tabla del radar?")) accounts.value = [];
+        };
+
         // ==========================================
-        // 💾 SISTEMA DE GUARDADO
+        // 💾 PERSISTENCIA DE DATOS
         // ==========================================
         const saveData = () => {
-            localStorage.setItem('vpnerp_lookup_master', JSON.stringify(lookupAccounts.value));
-            localStorage.setItem('vpnerp_pool_master_v14', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v14', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_v15_acc', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_v15_pool', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_v15_blk', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedLookup = JSON.parse(localStorage.getItem('vpnerp_lookup_master'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v14'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v14'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_v15_acc'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_v15_pool'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_v15_blk'));
 
-            if (savedLookup && savedLookup.length > 0) {
-                lookupAccounts.value = savedLookup;
-            } else {
-                // Crear 28 filas por defecto si está vacío
-                const initial = [];
-                for(let i = 1; i <= 28; i++) {
-                    const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', analyzing: false, geo: null });
-                }
-                lookupAccounts.value = initial;
+            if (savedAcc && savedAcc.length > 0) {
+                accounts.value = savedAcc.map(a => ({ ...a, loading: false }));
             }
             pool.value = savedPool || [];
             blacklist.value = savedBlk || [];
         };
 
-        watch([lookupAccounts, pool, blacklist], saveData, { deep: true });
-
-        // ==========================================
-        // 🛰️ MOTOR DE INTELIGENCIA (IPINFO + NOMINATIM)
-        // ==========================================
-        const cleanIspName = (orgString) => {
-            if(!orgString) return '-';
-            // Quitar el "ASXXXXX " del inicio si existe
-            return orgString.replace(/^AS\d+\s+/, '').trim();
-        };
-
-        const analyzeSingle = async (acc) => {
-            if(!acc.ip || acc.ip.trim() === '') return;
-            
-            acc.analyzing = true;
-            syncStatus.value = `Analizando IP: ${acc.ip}...`;
-
-            try {
-                // 1. IPInfo.io (Con tu API Key)
-                const ipRes = await fetch(`https://ipinfo.io/${acc.ip.trim()}/json`, {
-                    headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
-                });
-                
-                if (!ipRes.ok) throw new Error("Error IPInfo");
-                const ipData = await ipRes.json();
-
-                let district = 'No detectado';
-                let borough = 'No detectado';
-
-                // 2. Extracción profunda satelital con OpenStreetMap (Gratuita)
-                if(ipData.loc) {
-                    const [lat, lng] = ipData.loc.split(',');
-                    // Zoom 14 apunta al nivel de barrio/suburbio/distrito
-                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`, {
-                        headers: { 'Accept-Language': 'en' } // Pedir datos en inglés para coincidir con UK
-                    });
-                    
-                    if(geoRes.ok) {
-                        const geoData = await geoRes.json();
-                        if(geoData && geoData.address) {
-                            // Mapeo inteligente de jerarquías de UK
-                            district = geoData.address.city_district || geoData.address.suburb || geoData.address.neighbourhood || geoData.address.village || 'No detectado';
-                            borough = geoData.address.borough || geoData.address.county || geoData.address.state_district || 'No detectado';
-                        }
-                    }
-                }
-
-                // 3. Cálculo de Subred (/24)
-                const octets = acc.ip.trim().split('.');
-                const subnet = octets.length === 4 ? `${octets[0]}.${octets[1]}.${octets[2]}.x` : 'Inválida';
-
-                // 4. Guardar Data
-                acc.geo = {
-                    isp: cleanIspName(ipData.org || ipData.asn?.name),
-                    city: ipData.city || 'Desconocida',
-                    district: district,
-                    borough: borough,
-                    subnet: subnet
-                };
-
-                syncStatus.value = `¡${acc.ip} Analizada!`;
-
-            } catch (err) {
-                console.error(err);
-                syncStatus.value = `Error analizando ${acc.ip}`;
-                acc.geo = { isp: 'Error API', city: '-', district: '-', borough: '-', subnet: '-' };
-            }
-            
-            acc.analyzing = false;
-            setTimeout(() => { syncStatus.value = ''; }, 3000);
-        };
-
-        const analyzeAll = async () => {
-            isAnalyzingAll.value = true;
-            syncStatus.value = 'Iniciando escaneo masivo...';
-
-            const toAnalyze = lookupAccounts.value.filter(a => a.ip && a.ip.trim() !== '');
-            
-            for (let i = 0; i < toAnalyze.length; i++) {
-                await analyzeSingle(toAnalyze[i]);
-                // Esperamos 1.5 segundos entre cada consulta a Nominatim para evitar ban de la API satelital (es gratuita y limita a 1req/s)
-                if (i < toAnalyze.length - 1) {
-                    await sleep(1500); 
-                }
-            }
-
-            isAnalyzingAll.value = false;
-            syncStatus.value = '¡Análisis de red completado!';
-            setTimeout(() => { syncStatus.value = ''; }, 4000);
-        };
-
-        // ==========================================
-        // 🚨 RADAR DE CHOQUES Y PROXIMIDAD
-        // ==========================================
-        const hasSubnetCollision = (acc) => {
-            if(!acc.geo || !acc.geo.subnet || acc.geo.subnet === 'Inválida' || acc.geo.subnet === '-') return false;
-            return lookupAccounts.value.some(other => 
-                other.uid !== acc.uid && 
-                other.geo && 
-                other.geo.subnet === acc.geo.subnet
-            );
-        };
-
-        const hasIspCollision = (acc) => {
-            if(!acc.geo || !acc.geo.isp || acc.geo.isp === '-' || acc.geo.isp === 'Error API') return false;
-            return lookupAccounts.value.some(other => 
-                other.uid !== acc.uid && 
-                other.geo && 
-                other.geo.isp === acc.geo.isp
-            );
-        };
-
-        // ==========================================
-        // MÉTODOS DE LA TABLA
-        // ==========================================
-        const addLookupRow = () => {
-            const num = lookupAccounts.value.length + 1;
-            lookupAccounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', analyzing: false, geo: null });
-        };
-        const removeLookupRow = (uid) => { if(confirm("¿Eliminar fila?")) lookupAccounts.value = lookupAccounts.value.filter(a => a.uid !== uid); };
+        watch([accounts, pool, blacklist], saveData, { deep: true });
 
 
         // ==========================================
-        // LOGICA DE POOL Y BLACKLIST ORIGINAL MANTENIDA
+        // 🔒 MÓDULOS DE RESERVA Y BLOQUEADOS (Simples y conservados)
         // ==========================================
+        
         const burnDirectlyFromPool = (node) => {
-            if(node && node.id) {
-                if(!blacklist.value.some(b => b.nodeId === node.id)) {
-                    blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
-                }
+            if(node && node.id && !blacklist.value.some(b => b.nodeId === node.id)) {
+                blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
+                pool.value = pool.value.filter(n => n.id !== node.id);
             }
         };
 
@@ -217,75 +230,8 @@ createApp({
             });
             bulkBlacklistText.value = ''; 
         };
+
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
-
-        const processNodeData = (data) => {
-            const rawPool = [];
-            const seenIds = new Set(); 
-            data.forEach(nodo => {
-                if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
-                
-                const idCorto = nodo.provider_id.substring(0, 14);
-                if(seenIds.has(idCorto)) return;
-                
-                const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
-                
-                if (!isBlacklisted) {
-                    seenIds.add(idCorto);
-                    rawPool.push({
-                        id: idCorto,
-                        city: nodo.location?.city || 'N/A',
-                        asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`,
-                        q_score: (nodo.quality?.quality || 0).toFixed(2)
-                    });
-                }
-            });
-            pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
-        };
-
-        const fetchAPI = async () => {
-            syncStatus.value = 'Conectando a Mysterium...';
-            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            let data = null;
-
-            const attempts = [
-                { name: 'Directo', url: targetUrl },
-                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
-                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
-            ];
-
-            for (let attempt of attempts) {
-                syncStatus.value = `Intentando: ${attempt.name}...`;
-                try {
-                    const res = await fetch(attempt.url, { 
-                        headers: { 'Accept': 'application/json' },
-                        cache: 'no-store'
-                    });
-                    
-                    if (res.ok) {
-                        const text = await res.text();
-                        try {
-                            const parsed = JSON.parse(text);
-                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
-                                data = parsed;
-                                console.log(`¡Éxito usando: ${attempt.name}!`);
-                                break; 
-                            }
-                        } catch (err) { }
-                    }
-                } catch (e) { }
-            }
-
-            if (data && Array.isArray(data)) {
-                processNodeData(data);
-            } else {
-                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nPor favor, usa tu consola (curl ... > nodos.json) y súbelo usando el botón 'Importar JSON'.");
-                syncStatus.value = 'Error de conexión.';
-            }
-        };
 
         const importPoolJSON = (event) => {
             const file = event.target.files[0];
@@ -294,29 +240,55 @@ createApp({
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    processNodeData(data); 
+                    const rawPool = [];
+                    const seenIds = new Set(); 
+                    data.forEach(nodo => {
+                        if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
+                        const idCorto = nodo.provider_id.substring(0, 14);
+                        if(seenIds.has(idCorto) || blacklist.value.some(b => b.nodeId === idCorto)) return;
+                        seenIds.add(idCorto);
+                        rawPool.push({
+                            id: idCorto,
+                            city: nodo.location?.city || 'N/A',
+                            asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`
+                        });
+                    });
+                    pool.value = rawPool;
+                    showStatus(`Reserva Actualizada: ${pool.value.length} nodos`);
                     event.target.value = null; 
                 } catch (err) { alert("Error JSON."); event.target.value = null; }
             };
             reader.readAsText(file);
         };
 
-        const copyToClipboard = async (text, type = 'Dato') => {
-            try { 
-                await navigator.clipboard.writeText(text); 
-                showStatus(`¡${type} Copiado!`); 
-                setTimeout(() => { syncStatus.value = ''; }, 3000);
-            } catch (err) { console.error(err); }
-        };
-
         const exportDatabase = () => {
-            const dataStr = JSON.stringify({ lookupAccounts: lookupAccounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
+            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `VPN_Radar_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `VPN_Radar_Export_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
+        };
+
+        const restoreBackup = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.accounts) accounts.value = data.accounts;
+                    if(data.pool) pool.value = data.pool;
+                    if(data.blacklist) blacklist.value = data.blacklist;
+                    showStatus('¡Base Restaurada!');
+                    event.target.value = null;
+                } catch (err) {
+                    alert("Archivo inválido.");
+                    event.target.value = null;
+                }
+            };
+            reader.readAsText(file);
         };
 
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
@@ -324,13 +296,11 @@ createApp({
         onMounted(() => { loadData(); });
 
         return {
-            currentTab, pool, blacklist, syncStatus, bulkBlacklistText, 
-            filters, filteredPool, toggleSortScore, clearFilters, 
-            burnDirectlyFromPool, processBulkBlacklist, removeBlacklistNode, 
-            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase,
-            // Módulo Lookup
-            lookupAccounts, isAnalyzingAll, addLookupRow, removeLookupRow, analyzeSingle, analyzeAll,
-            hasSubnetCollision, hasIspCollision
+            currentTab, accounts, pool, blacklist, syncStatus, bulkImportText, bulkBlacklistText, 
+            processBulkAccounts, reEnrichAccount, clearAccounts, analyzedAccounts,
+            totalCollisions, totalWarnings,
+            burnDirectlyFromPool, processBulkBlacklist, removeBlacklistNode, importPoolJSON,
+            exportDatabase, restoreBackup, saveData
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

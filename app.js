@@ -1,221 +1,245 @@
-const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
+const { createApp, ref, computed, watch, onMounted } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 createApp({
     setup() {
-        const currentTab = ref('radar');
+        const currentTab = ref('analyzer');
         const syncStatus = ref('');
+        const bulkBlacklistText = ref('');
+        const bulkInput = ref('');
+        const isAnalyzing = ref(false);
         
-        // Arrays principales
+        // Data Principal
         const accounts = ref([]);
         const pool = ref([]);
         const blacklist = ref([]);
 
-        // Textareas masivos
-        const bulkImportText = ref('');
-        const bulkBlacklistText = ref('');
-
         // ==========================================
-        // 🚀 MÓDULO 1: RADAR E IP LOOKUP EN VIVO
+        // 🧩 MÓDULO 1: ANALIZADOR DE INTELIGENCIA IP
         // ==========================================
 
-        // 1. Procesador Masivo de Cuentas (Copia y Pega)
-        const processBulkAccounts = async () => {
-            if(!bulkImportText.value.trim()) return;
-            const lines = bulkImportText.value.trim().split('\n');
-            
-            for (let line of lines) {
-                if (!line.trim()) continue;
-                // Detecta espacios múltiples, tabulaciones o comas
-                const parts = line.trim().split(/[\t,]+|\s{2,}/);
-                
-                let name = '', nodeId = '', ip = '';
-                
-                if (parts.length >= 3) {
-                    name = parts[0].trim();
-                    nodeId = parts[1].trim().substring(0, 14);
-                    ip = parts[2].trim();
-                } else {
-                    // Si pegaron con un solo espacio separador
-                    const spaceParts = line.trim().split(' ');
-                    name = spaceParts[0] || '';
-                    nodeId = spaceParts.length > 1 ? spaceParts[1].substring(0, 14) : '';
-                    ip = spaceParts.length > 2 ? spaceParts[2] : '';
-                }
+        // Procesa el texto pegado usando Regex Inteligente
+        const processBulkInput = () => {
+            if(!bulkInput.value.trim()) return;
+            const lines = bulkInput.value.split('\n');
+            let added = 0;
 
-                // Si ya existe la actualiza, si no la crea
-                let existing = accounts.value.find(a => a.name === name);
-                if (existing) {
-                    existing.nodeId = nodeId;
-                    if(existing.ip !== ip) {
-                        existing.ip = ip;
-                        existing.isp = ''; // Reseteamos info vieja
-                        existing.district = '';
-                    }
-                } else {
-                    accounts.value.push({ 
-                        uid: generateUid(), name, nodeId, ip, 
-                        isp: '', city: '', borough: '', district: '', loc: '', subnet: '', loading: false 
+            lines.forEach(line => {
+                // Busca una IP
+                const ipMatch = line.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/);
+                // Busca un Nodo (14 chars alfanuméricos después de 0x, o sueltos)
+                let nodeMatch = line.match(/\b0x[a-fA-F0-9]{12}\b/i) || line.match(/\b[a-zA-Z0-9]{14}\b/);
+                // Busca el nombre de la cuenta (Ej: LON-01)
+                const accMatch = line.match(/(LON-\d+)/i) || line.match(/\b(C-\d+)\b/i);
+
+                if (ipMatch || nodeMatch || accMatch) {
+                    let finalNode = nodeMatch ? nodeMatch[0].toLowerCase() : '';
+                    if(finalNode.length > 14) finalNode = finalNode.substring(0, 14); // Normalizar a 14
+
+                    accounts.value.push({
+                        uid: generateUid(),
+                        name: accMatch ? accMatch[0].toUpperCase() : `ACC-${accounts.value.length + 1}`,
+                        nodeId: finalNode,
+                        ip: ipMatch ? ipMatch[0] : '',
+                        subnet: '',
+                        isp: '',
+                        city: '',
+                        district: '',
+                        county: '',
+                        analyzed: false,
+                        loading: false
                     });
+                    added++;
                 }
-            }
-            
-            bulkImportText.value = '';
-            saveData();
-            
-            // Dispara el satélite (APIs) en segundo plano
-            enrichAllAccounts();
+            });
+
+            bulkInput.value = '';
+            showStatus(`${added} filas cargadas. Listo para escanear.`);
         };
 
-        // 2. Disparador en Cola para las APIs (Respeta rate limits)
-        const enrichAllAccounts = async () => {
-            for (let acc of accounts.value) {
-                // Solo investiga las que tienen IP y les falta el ISP o el Distrito
-                if (acc.ip && (!acc.isp || !acc.district)) {
-                    await enrichSingleAccount(acc);
-                    await sleep(600); // 600ms para no saturar a Nominatim OpenStreetMap
-                }
+        const clearAnalyzer = () => {
+            if(confirm("¿Borrar todos los datos del analizador?")) {
+                accounts.value = [];
             }
         };
 
-        // Cuando editas una IP a mano en la tabla, re-investiga solo esa
-        const reEnrichAccount = (acc) => {
-            acc.isp = ''; acc.district = ''; acc.borough = ''; acc.city = ''; acc.subnet = '';
-            saveData();
-            enrichSingleAccount(acc);
+        // Reglas de Detección de Riesgos
+        const hasCollision = (acc) => {
+            if (!acc.ip && !acc.nodeId) return false;
+            return accounts.value.some(other => {
+                if (other.uid === acc.uid) return false;
+                const matchIp = acc.ip && other.ip && acc.ip === other.ip;
+                const matchNode = acc.nodeId && other.nodeId && acc.nodeId === other.nodeId;
+                return matchIp || matchNode;
+            });
         };
 
-        // 3. LA MAGIA DE INGENIERÍA: IPInfo + OpenStreetMap (Nominatim)
-        const enrichSingleAccount = async (acc) => {
-            acc.loading = true;
-            try {
-                // PRIMER PASO: Tu API de IPInfo (Exactamente tu curl)
-                let ipData = null;
+        const hasRangeProximity = (acc) => {
+            if (!acc.subnet || !acc.analyzed) return false;
+            return accounts.value.some(other => {
+                if (other.uid === acc.uid || !other.analyzed) return false;
+                return acc.subnet === other.subnet;
+            });
+        };
+
+        const collisionCount = computed(() => accounts.value.filter(a => hasCollision(a)).length);
+        const rangeWarningCount = computed(() => accounts.value.filter(a => !hasCollision(a) && hasRangeProximity(a)).length);
+
+        // MOTOR DE ESCANEO PROFUNDO (ipinfo + Nominatim)
+        const analyzeAll = async () => {
+            isAnalyzing.value = true;
+            
+            for (let i = 0; i < accounts.value.length; i++) {
+                const acc = accounts.value[i];
+                if (!acc.ip || acc.analyzed) continue;
+                
+                acc.loading = true;
+                syncStatus.value = `Analizando IP ${i+1}/${accounts.value.length}...`;
+
                 try {
-                    const ipRes = await fetch(`https://api.ipinfo.io/lite/${acc.ip}`, {
-                        headers: { 'Authorization': 'Bearer 8c97cc52a98a48', 'Accept': 'application/json' }
+                    // 1. Llamada a ipinfo.io (Tu API con token)
+                    const ipRes = await fetch(`https://ipinfo.io/${acc.ip}/json`, {
+                        headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
                     });
-                    if(ipRes.ok) ipData = await ipRes.json();
-                } catch(e) {}
+                    const ipData = await ipRes.json();
 
-                // Respaldo de ipinfo por si acaso "lite" falla
-                if(!ipData) {
-                    const ipResFall = await fetch(`https://ipinfo.io/${acc.ip}/json?token=8c97cc52a98a48`);
-                    if(ipResFall.ok) ipData = await ipResFall.json();
-                }
+                    acc.isp = ipData.org || 'ISP Desconocido';
+                    acc.city = ipData.city || '';
+                    acc.subnet = acc.ip.split('.').slice(0,3).join('.') + '.0/24';
 
-                if(ipData) {
-                    // Limpia el ASN+ISP (ej: "AS1234 British Telecommunications" -> "BT")
-                    acc.isp = ipData.org || ipData.asn || 'Desconocido';
-                    // Extrae Subred /24
-                    const ipParts = acc.ip.split('.');
-                    acc.subnet = ipParts.length === 4 ? `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.x` : '';
-                    
-                    // SEGUNDO PASO: Si hay coordenadas, llamamos al Satélite Público para el County/Borough
+                    // 2. Triangulación Inversa (Satelital) via OpenStreetMap (Nominatim)
                     if (ipData.loc) {
                         const [lat, lon] = ipData.loc.split(',');
-                        // API gratuita de Geocodificación inversa
-                        const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14`);
-                        if (nomRes.ok) {
-                            const nomData = await nomRes.json();
-                            const addr = nomData.address || {};
-                            
-                            // Mapeo inteligente sin inventar nada
-                            acc.district = addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || '';
-                            acc.borough = addr.borough || addr.county || addr.state_district || '';
-                            acc.city = addr.city || addr.town || addr.village || ipData.city || '';
+                        
+                        // Retraso intencional de 800ms para no saturar la API pública de Nominatim (anti-baneo)
+                        await new Promise(r => setTimeout(r, 800));
+                        
+                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`, {
+                            headers: { 'User-Agent': 'VPN-GeoIntelligence/1.0' }
+                        });
+                        const geoData = await geoRes.json();
+
+                        if (geoData && geoData.address) {
+                            acc.county = geoData.address.county || geoData.address.state_district || '';
+                            acc.district = geoData.address.borough || geoData.address.city_district || geoData.address.suburb || '';
+                            if (!acc.city) acc.city = geoData.address.city || geoData.address.town || '';
                         }
-                    } else {
-                        acc.city = ipData.city || '';
                     }
+                    acc.analyzed = true;
+
+                } catch (err) {
+                    console.error(`Error escaneando ${acc.ip}:`, err);
+                } finally {
+                    acc.loading = false;
                 }
-            } catch (err) {
-                console.error("Error en radar para IP:", acc.ip, err);
             }
-            acc.loading = false;
-            saveData();
+
+            isAnalyzing.value = false;
+            showStatus('¡Escaneo Profundo Completado!');
         };
 
-        // 4. EL RADAR DE RIESGO TÁCTICO (Cálculo en vivo)
-        const analyzedAccounts = computed(() => {
-            return accounts.value.map((acc, index, arr) => {
-                let warnings = [];
-                let isCollision = false;
 
-                // Regla 1: Choque EXACTO Crítico (Mismo Nodo o Misma IP en otra cuenta)
-                const hasExactCollision = arr.some(other => 
-                    other.uid !== acc.uid && 
-                    ( (other.nodeId && other.nodeId === acc.nodeId) || (other.ip && other.ip === acc.ip) )
-                );
-                
-                if (hasExactCollision && (acc.nodeId || acc.ip)) {
-                    isCollision = true;
-                }
+        // ==========================================
+        // 🧩 MÓDULO 2: POOL DE NODOS (CASCADA 5 CAPAS INTACTA)
+        // ==========================================
+        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '' });
+        const clearFilters = () => { filters.value.nodeId = ''; filters.value.city = ''; filters.value.isp = ''; filters.value.minQuality = ''; };
 
-                // Regla 2: Proximidad de Subred /24 (Peligroso si están vivas al mismo tiempo)
-                const sameSubnetCount = arr.filter(other => other.uid !== acc.uid && other.subnet && other.subnet === acc.subnet).length;
-                if (sameSubnetCount > 0 && !isCollision && acc.subnet) {
-                    warnings.push(`Comparte Subred con ${sameSubnetCount} cta(s)`);
-                }
-
-                // Regla 3: Rotación de ISP Sospechosa (Si la cuenta INMEDIATAMENTE ANTERIOR tiene el mismo proveedor)
-                if (index > 0 && acc.isp && arr[index-1].isp && !isCollision) {
-                    // Extrae la palabra principal del ISP para comparar
-                    const getCoreISP = (ispStr) => ispStr.toLowerCase().split(' ').pop();
-                    if (getCoreISP(acc.isp) === getCoreISP(arr[index-1].isp) && getCoreISP(acc.isp) !== 'desconocido') {
-                        warnings.push(`ISP Secuencial idéntico al anterior`);
-                    }
-                }
-
-                return { ...acc, warnings, isCollision };
-            });
+        const filteredPool = computed(() => {
+            let result = pool.value;
+            result = result.filter(n => !blacklist.value.some(b => b.nodeId === n.id));
+            
+            if (filters.value.nodeId) {
+                const s = filters.value.nodeId.toLowerCase().trim();
+                result = result.filter(n => n.id.toLowerCase().includes(s));
+            }
+            if (filters.value.city) {
+                const c = filters.value.city.toLowerCase().trim();
+                result = result.filter(n => (n.city || '').toLowerCase().includes(c));
+            }
+            if (filters.value.isp) {
+                const i = filters.value.isp.toLowerCase().trim();
+                result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(i));
+            }
+            return result.sort((a, b) => b.q_score - a.q_score);
         });
 
-        // Contadores del Dashboard
-        const totalCollisions = computed(() => analyzedAccounts.value.filter(a => a.isCollision).length);
-        const totalWarnings = computed(() => analyzedAccounts.value.reduce((acc, curr) => acc + curr.warnings.length, 0));
-
-        const clearAccounts = () => {
-            if(confirm("¿Borrar toda la tabla del radar?")) accounts.value = [];
+        const processNodeData = (data) => {
+            const rawPool = [];
+            const seenIds = new Set(); 
+            data.forEach(nodo => {
+                if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
+                const idCorto = nodo.provider_id.substring(0, 14);
+                if(seenIds.has(idCorto)) return;
+                
+                seenIds.add(idCorto);
+                rawPool.push({
+                    id: idCorto,
+                    city: nodo.location?.city || 'N/A',
+                    asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`,
+                    q_score: (nodo.quality?.quality || 0).toFixed(2)
+                });
+            });
+            pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
+            showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
         };
 
-        // ==========================================
-        // 💾 PERSISTENCIA DE DATOS
-        // ==========================================
-        const saveData = () => {
-            localStorage.setItem('vpnerp_v15_acc', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_v15_pool', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_v15_blk', JSON.stringify(blacklist.value));
-        };
+        const fetchAPI = async () => {
+            syncStatus.value = 'Conectando a Mysterium...';
+            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+            let data = null;
 
-        const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_v15_acc'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_v15_pool'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_v15_blk'));
+            const attempts = [
+                { name: 'Directo', url: targetUrl },
+                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
+                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
+            ];
 
-            if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ ...a, loading: false }));
+            for (let attempt of attempts) {
+                syncStatus.value = `Intentando: ${attempt.name}...`;
+                try {
+                    const res = await fetch(attempt.url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+                    if (res.ok) {
+                        const text = await res.text();
+                        try {
+                            const parsed = JSON.parse(text);
+                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
+                                data = parsed;
+                                break; 
+                            }
+                        } catch (err) { }
+                    }
+                } catch (e) { }
             }
-            pool.value = savedPool || [];
-            blacklist.value = savedBlk || [];
-        };
 
-        watch([accounts, pool, blacklist], saveData, { deep: true });
-
-
-        // ==========================================
-        // 🔒 MÓDULOS DE RESERVA Y BLOQUEADOS (Simples y conservados)
-        // ==========================================
-        
-        const burnDirectlyFromPool = (node) => {
-            if(node && node.id && !blacklist.value.some(b => b.nodeId === node.id)) {
-                blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
-                pool.value = pool.value.filter(n => n.id !== node.id);
+            if (data && Array.isArray(data)) {
+                processNodeData(data);
+            } else {
+                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nUsa tu comando en la consola (curl ... > nodos.json) y cárgalo usando el botón 'Importar JSON'.");
+                syncStatus.value = 'Error.';
             }
         };
 
+        const importPoolJSON = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processNodeData(data); 
+                    event.target.value = null; 
+                } catch (err) { alert("Error JSON."); event.target.value = null; }
+            };
+            reader.readAsText(file);
+        };
+
+        // ==========================================
+        // 🧩 MÓDULO 3: BLOQUEADOS (INTACTO)
+        // ==========================================
         const processBulkBlacklist = () => {
             if(!bulkBlacklistText.value.trim()) return;
             const rawItems = bulkBlacklistText.value.split(/[\n,\s]+/);
@@ -230,46 +254,29 @@ createApp({
             });
             bulkBlacklistText.value = ''; 
         };
-
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
 
-        const importPoolJSON = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    const rawPool = [];
-                    const seenIds = new Set(); 
-                    data.forEach(nodo => {
-                        if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
-                        const idCorto = nodo.provider_id.substring(0, 14);
-                        if(seenIds.has(idCorto) || blacklist.value.some(b => b.nodeId === idCorto)) return;
-                        seenIds.add(idCorto);
-                        rawPool.push({
-                            id: idCorto,
-                            city: nodo.location?.city || 'N/A',
-                            asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`
-                        });
-                    });
-                    pool.value = rawPool;
-                    showStatus(`Reserva Actualizada: ${pool.value.length} nodos`);
-                    event.target.value = null; 
-                } catch (err) { alert("Error JSON."); event.target.value = null; }
-            };
-            reader.readAsText(file);
+
+        // ==========================================
+        // 💾 PERSISTENCIA Y UTILIDADES
+        // ==========================================
+        const saveData = () => {
+            localStorage.setItem('vpnerp_intel_acc', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_v14', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v14', JSON.stringify(blacklist.value));
         };
 
-        const exportDatabase = () => {
-            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `VPN_Radar_Export_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
+        const loadData = () => {
+            const savedAcc = JSON.parse(localStorage.getItem('vpnerp_intel_acc'));
+            const savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v14'));
+            const savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v14'));
+
+            if (savedAcc) accounts.value = savedAcc;
+            if (savedPool) pool.value = savedPool;
+            if (savedBlk) blacklist.value = savedBlk;
         };
+
+        watch([accounts, pool, blacklist], saveData, { deep: true });
 
         const restoreBackup = (event) => {
             const file = event.target.files[0];
@@ -284,23 +291,42 @@ createApp({
                     showStatus('¡Base Restaurada!');
                     event.target.value = null;
                 } catch (err) {
-                    alert("Archivo inválido.");
+                    alert("El archivo de respaldo es inválido.");
                     event.target.value = null;
                 }
             };
             reader.readAsText(file);
         };
 
-        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
+        const exportDatabase = () => {
+            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `VPN_Intel_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        };
+
+        const copyToClipboard = async (text, type = 'Dato') => {
+            try { 
+                await navigator.clipboard.writeText(text); 
+                showStatus(`¡${type} Copiado!`); 
+                setTimeout(() => { syncStatus.value = ''; }, 3000);
+            } catch (err) { console.error(err); }
+        };
+
+        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 4000); };
         
         onMounted(() => { loadData(); });
 
         return {
-            currentTab, accounts, pool, blacklist, syncStatus, bulkImportText, bulkBlacklistText, 
-            processBulkAccounts, reEnrichAccount, clearAccounts, analyzedAccounts,
-            totalCollisions, totalWarnings,
-            burnDirectlyFromPool, processBulkBlacklist, removeBlacklistNode, importPoolJSON,
-            exportDatabase, restoreBackup, saveData
+            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
+            bulkInput, processBulkInput, analyzeAll, isAnalyzing, clearAnalyzer,
+            collisionCount, rangeWarningCount, hasCollision, hasRangeProximity,
+            filters, filteredPool, clearFilters, toggleSortScore,
+            processBulkBlacklist, removeBlacklistNode, 
+            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

@@ -1,349 +1,205 @@
-const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
+const { createApp, ref, computed, watch, onMounted } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
+// Función auxiliar para pausar y evitar saturar la API
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 createApp({
     setup() {
-        const currentTab = ref('accounts');
+        const currentTab = ref('iplookup'); // Nuevo tab por defecto
         const syncStatus = ref('');
         const bulkBlacklistText = ref('');
         
-        const showPoolModal = ref(false);
-        const selectedAccountUid = ref(null);
+        // Estado del Módulo IP Lookup
+        const lookupAccounts = ref([]);
+        const isAnalyzingAll = ref(false);
 
-        const showAccountSelectModal = ref(false);
-        const nodeToAssign = ref(null);
-        
-        const accounts = ref([]);
+        // Estado Módulo Pool / Blacklist
         const pool = ref([]);
         const blacklist = ref([]);
-
-        // ==========================================
-        // 🎯 MOTOR ANTI-SOSPECHAS MEJORADO
-        // ==========================================
-        const lastWorkedIsp = ref('');
-        const suggestionTrigger = ref(0); // Para forzar re-cálculo al saltar
-
-        const getIspName = (fullString) => {
-            if(!fullString) return 'Desconocido';
-            return fullString.split('-').pop().trim().toLowerCase();
-        };
-
-        // CONTADORES
-        const workedCount = computed(() => accounts.value.filter(a => a.nodeId && a.worked).length);
-        const totalValidCount = computed(() => accounts.value.filter(a => a.nodeId).length);
-
-        const skipRecommendation = () => {
-            suggestionTrigger.value++; // Obliga a buscar otro aleatorio
-        };
-
-        const suggestedAccount = computed(() => {
-            suggestionTrigger.value; // Dependencia reactiva para el botón "Saltar"
-            
-            let unworked = accounts.value.filter(a => a.nodeId && a.asn_isp && !a.worked);
-            
-            if(unworked.length === 0) return null; // Todo listo
-            
-            // Intenta buscar uno distinto al último
-            let available = unworked.filter(a => getIspName(a.asn_isp) !== lastWorkedIsp.value);
-            
-            // Si TODOS los que quedan son del mismo ISP, ni modo, tenemos que recomendar uno para no quedarnos pegados
-            if(available.length === 0) {
-                available = unworked;
-            }
-            
-            return available[Math.floor(Math.random() * available.length)];
-        });
-
-        const markAsWorked = (acc) => {
-            acc.worked = true;
-            lastWorkedIsp.value = getIspName(acc.asn_isp);
-            showStatus(`Marcada. Proveedor evitado: ${lastWorkedIsp.value.toUpperCase()}`);
-        };
-
-        const resetWorkedStatus = () => {
-            accounts.value.forEach(a => a.worked = false);
-            lastWorkedIsp.value = '';
-            showStatus('Motor Reiniciado.');
-        };
-
-        // ==========================================
-        // 💎 FILTRO ELITE (Top 5 UK)
-        // ==========================================
-        const TOP_ISPS = ['bt', 'sky', 'virgin', 'talktalk', 'vodafone'];
-        const isTopISP = (ispString) => {
-            if(!ispString) return false;
-            const low = ispString.toLowerCase();
-            return TOP_ISPS.some(t => low.includes(t));
-        };
-
-        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '', onlyTopISP: false });
+        const filters = ref({ nodeId: '', city: '', isp: '' });
         const sortDesc = ref(true); 
         const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
-        
+
         const clearFilters = () => { 
             filters.value.nodeId = ''; 
             filters.value.city = ''; 
             filters.value.isp = ''; 
-            filters.value.minQuality = ''; 
-            filters.value.onlyTopISP = false;
         };
 
         const filteredPool = computed(() => {
             let result = pool.value;
             result = result.filter(n => {
                 const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
-                const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
-                return !inBlacklist && !inUse;
+                return !inBlacklist;
             });
+            if (filters.value.nodeId) result = result.filter(n => n.id.toLowerCase().includes(filters.value.nodeId.toLowerCase().trim()));
+            if (filters.value.city) result = result.filter(n => (n.city || '').toLowerCase().includes(filters.value.city.toLowerCase().trim()));
+            if (filters.value.isp) result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(filters.value.isp.toLowerCase().trim()));
             
-            if (filters.value.onlyTopISP) {
-                result = result.filter(n => isTopISP(n.asn_isp));
-            }
-            if (filters.value.nodeId) {
-                const s = filters.value.nodeId.toLowerCase().trim();
-                result = result.filter(n => n.id.toLowerCase().includes(s));
-            }
-            if (filters.value.city) {
-                const c = filters.value.city.toLowerCase().trim();
-                result = result.filter(n => (n.city || '').toLowerCase().includes(c));
-            }
-            if (filters.value.isp) {
-                const i = filters.value.isp.toLowerCase().trim();
-                result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(i));
-            }
-            if (filters.value.minQuality) {
-                const minQ = parseFloat(filters.value.minQuality);
-                if (!isNaN(minQ)) {
-                    result = result.filter(n => parseFloat(n.q_score) >= minQ);
-                }
-            }
             return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
         });
 
-        // --- CUENTAS (Buscador/Sort) ---
-        const accountSearch = ref('');
-        const accountSort = ref({ field: null, desc: false });
-
-        const toggleAccountSort = (field) => {
-            if (accountSort.value.field === field) {
-                accountSort.value.desc = !accountSort.value.desc;
-            } else {
-                accountSort.value.field = field;
-                accountSort.value.desc = false;
-            }
-        };
-
-        const processedAccounts = computed(() => {
-            let result = accounts.value;
-            if (accountSearch.value) {
-                const s = accountSearch.value.toLowerCase().trim();
-                result = result.filter(a => 
-                    a.name.toLowerCase().includes(s) || 
-                    (a.nodeId || '').toLowerCase().includes(s) || 
-                    (a.ip || '').toLowerCase().includes(s) ||
-                    (a.asn_isp || '').toLowerCase().includes(s)
-                );
-            }
-            if (accountSort.value.field) {
-                result = [...result].sort((a, b) => {
-                    let valA = a[accountSort.value.field] || '';
-                    let valB = b[accountSort.value.field] || '';
-                    if (accountSort.value.field === 'q_score') {
-                        valA = parseFloat(valA) || 0;
-                        valB = parseFloat(valB) || 0;
-                    }
-                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
-                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
-                    return 0;
-                });
-            }
-            return result;
-        });
-
+        // ==========================================
+        // 💾 SISTEMA DE GUARDADO
+        // ==========================================
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v12', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v12', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v12', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_lookup_master', JSON.stringify(lookupAccounts.value));
+            localStorage.setItem('vpnerp_pool_master_v14', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_v14', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v12'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v12'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v12'));
+            let savedLookup = JSON.parse(localStorage.getItem('vpnerp_lookup_master'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v14'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v14'));
 
-            if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v11', 'v10', 'v9', 'master', 'v8'];
-                for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
-                    if (oldAcc && oldAcc.length > 0) {
-                        savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
-                        break;
-                    }
-                }
-            }
-
-            if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ 
-                    ...a, 
-                    uid: a.uid || generateUid(), 
-                    previousIp: a.previousIp || null,
-                    worked: a.worked || false 
-                }));
+            if (savedLookup && savedLookup.length > 0) {
+                lookupAccounts.value = savedLookup;
             } else {
+                // Crear 28 filas por defecto si está vacío
                 const initial = [];
                 for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false });
+                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', analyzing: false, geo: null });
                 }
-                accounts.value = initial;
+                lookupAccounts.value = initial;
             }
             pool.value = savedPool || [];
             blacklist.value = savedBlk || [];
         };
 
-        watch([accounts, pool, blacklist], saveData, { deep: true });
+        watch([lookupAccounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ AUTO IP (CASCADA SILENCIOSA)
+        // 🛰️ MOTOR DE INTELIGENCIA (IPINFO + NOMINATIM)
         // ==========================================
-        const fetchCurrentIP = async (uid) => {
-            const acc = accounts.value.find(a => a.uid === uid);
-            if(!acc) return;
+        const cleanIspName = (orgString) => {
+            if(!orgString) return '-';
+            // Quitar el "ASXXXXX " del inicio si existe
+            return orgString.replace(/^AS\d+\s+/, '').trim();
+        };
 
-            syncStatus.value = 'Detectando IP...';
-            let newIp = null;
+        const analyzeSingle = async (acc) => {
+            if(!acc.ip || acc.ip.trim() === '') return;
+            
+            acc.analyzing = true;
+            syncStatus.value = `Analizando IP: ${acc.ip}...`;
 
             try {
-                const r1 = await fetch("https://api.ipify.org?format=json");
-                if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
-            } catch(e) {}
+                // 1. IPInfo.io (Con tu API Key)
+                const ipRes = await fetch(`https://ipinfo.io/${acc.ip.trim()}/json`, {
+                    headers: { 'Authorization': 'Bearer 8c97cc52a98a48' }
+                });
+                
+                if (!ipRes.ok) throw new Error("Error IPInfo");
+                const ipData = await ipRes.json();
 
-            if(!newIp) {
-                try {
-                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
-                    if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
-                } catch(e) {}
-            }
+                let district = 'No detectado';
+                let borough = 'No detectado';
 
-            if(!newIp) {
-                try {
-                    const r3 = await fetch("https://api.myip.com");
-                    if(r3.ok) { const d3 = await r3.json(); newIp = d3.ip; }
-                } catch(e) {}
-            }
-
-            if(newIp) {
-                if(acc.ip === newIp) { 
-                    syncStatus.value = 'Misma IP.'; 
-                    setTimeout(() => { syncStatus.value = ''; }, 3000);
-                    return; 
+                // 2. Extracción profunda satelital con OpenStreetMap (Gratuita)
+                if(ipData.loc) {
+                    const [lat, lng] = ipData.loc.split(',');
+                    // Zoom 14 apunta al nivel de barrio/suburbio/distrito
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`, {
+                        headers: { 'Accept-Language': 'en' } // Pedir datos en inglés para coincidir con UK
+                    });
+                    
+                    if(geoRes.ok) {
+                        const geoData = await geoRes.json();
+                        if(geoData && geoData.address) {
+                            // Mapeo inteligente de jerarquías de UK
+                            district = geoData.address.city_district || geoData.address.suburb || geoData.address.neighbourhood || geoData.address.village || 'No detectado';
+                            borough = geoData.address.borough || geoData.address.county || geoData.address.state_district || 'No detectado';
+                        }
+                    }
                 }
 
-                const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
-                if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
-                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
-                }
+                // 3. Cálculo de Subred (/24)
+                const octets = acc.ip.trim().split('.');
+                const subnet = octets.length === 4 ? `${octets[0]}.${octets[1]}.${octets[2]}.x` : 'Inválida';
 
-                acc.previousIp = acc.ip; 
-                acc.ip = newIp;
-                triggerCollisionCheck(acc);
-                syncStatus.value = '¡IP extraída!';
-            } else {
-                showStatus('Fallo de Red en Navegador.');
+                // 4. Guardar Data
+                acc.geo = {
+                    isp: cleanIspName(ipData.org || ipData.asn?.name),
+                    city: ipData.city || 'Desconocida',
+                    district: district,
+                    borough: borough,
+                    subnet: subnet
+                };
+
+                syncStatus.value = `¡${acc.ip} Analizada!`;
+
+            } catch (err) {
+                console.error(err);
+                syncStatus.value = `Error analizando ${acc.ip}`;
+                acc.geo = { isp: 'Error API', city: '-', district: '-', borough: '-', subnet: '-' };
             }
+            
+            acc.analyzing = false;
             setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
-        const undoIp = (uid) => {
-            const acc = accounts.value.find(a => a.uid === uid);
-            if(acc && acc.previousIp) {
-                acc.ip = acc.previousIp; 
-                acc.previousIp = null; 
-                triggerCollisionCheck(acc); 
-                syncStatus.value = 'IP Restaurada.';
-                setTimeout(() => { syncStatus.value = ''; }, 3000);
-            }
-        };
+        const analyzeAll = async () => {
+            isAnalyzingAll.value = true;
+            syncStatus.value = 'Iniciando escaneo masivo...';
 
-        const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
-        const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
-        const openAccountSelectModal = (node) => { nodeToAssign.value = node; showAccountSelectModal.value = true; };
-        const closeAccountSelectModal = () => { showAccountSelectModal.value = false; nodeToAssign.value = null; };
-        
-        const triggerCollisionCheck = (currentAccount) => {
-            if(hasCollision(currentAccount)) {
-                alert(`¡ALERTA CRÍTICA!\n\nEl Nodo o IP ingresado YA EXISTE en otra cuenta activa.`);
-            }
-        };
-
-        const hasCollision = (currentAccount) => {
-            if (!currentAccount.ip && !currentAccount.nodeId) return false;
-            return accounts.value.some(acc => {
-                if (acc.uid === currentAccount.uid) return false;
-                const curIp = (currentAccount.ip || '').trim();
-                const accIp = (acc.ip || '').trim();
-                const curNode = (currentAccount.nodeId || '').trim();
-                const accNode = (acc.nodeId || '').trim();
-                return (accIp !== '' && curIp !== '' && accIp === curIp) || 
-                       (accNode !== '' && curNode !== '' && accNode === curNode);
-            });
-        };
-
-        const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
-
-        const assignNodeToAccount = (nodeId) => {
-            if (selectedAccountUid.value) {
-                const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
-                if (acc) {
-                    const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; acc.worked = false;
-                    if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
-                    closePoolModal(); triggerCollisionCheck(acc);
+            const toAnalyze = lookupAccounts.value.filter(a => a.ip && a.ip.trim() !== '');
+            
+            for (let i = 0; i < toAnalyze.length; i++) {
+                await analyzeSingle(toAnalyze[i]);
+                // Esperamos 1.5 segundos entre cada consulta a Nominatim para evitar ban de la API satelital (es gratuita y limita a 1req/s)
+                if (i < toAnalyze.length - 1) {
+                    await sleep(1500); 
                 }
             }
+
+            isAnalyzingAll.value = false;
+            syncStatus.value = '¡Análisis de red completado!';
+            setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
 
-        const confirmAssignFromPool = (accountUid) => {
-            const acc = accounts.value.find(a => a.uid === accountUid);
-            if (acc && nodeToAssign.value) {
-                acc.nodeId = nodeToAssign.value.id;
-                acc.ip = ''; acc.previousIp = null; acc.worked = false;
-                acc.q_score = nodeToAssign.value.q_score;
-                acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
-            }
+        // ==========================================
+        // 🚨 RADAR DE CHOQUES Y PROXIMIDAD
+        // ==========================================
+        const hasSubnetCollision = (acc) => {
+            if(!acc.geo || !acc.geo.subnet || acc.geo.subnet === 'Inválida' || acc.geo.subnet === '-') return false;
+            return lookupAccounts.value.some(other => 
+                other.uid !== acc.uid && 
+                other.geo && 
+                other.geo.subnet === acc.geo.subnet
+            );
         };
 
+        const hasIspCollision = (acc) => {
+            if(!acc.geo || !acc.geo.isp || acc.geo.isp === '-' || acc.geo.isp === 'Error API') return false;
+            return lookupAccounts.value.some(other => 
+                other.uid !== acc.uid && 
+                other.geo && 
+                other.geo.isp === acc.geo.isp
+            );
+        };
+
+        // ==========================================
+        // MÉTODOS DE LA TABLA
+        // ==========================================
+        const addLookupRow = () => {
+            const num = lookupAccounts.value.length + 1;
+            lookupAccounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', analyzing: false, geo: null });
+        };
+        const removeLookupRow = (uid) => { if(confirm("¿Eliminar fila?")) lookupAccounts.value = lookupAccounts.value.filter(a => a.uid !== uid); };
+
+
+        // ==========================================
+        // LOGICA DE POOL Y BLACKLIST ORIGINAL MANTENIDA
+        // ==========================================
         const burnDirectlyFromPool = (node) => {
             if(node && node.id) {
                 if(!blacklist.value.some(b => b.nodeId === node.id)) {
                     blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
                 }
-            }
-        };
-
-        const addAccount = () => {
-            const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null, worked: false });
-        };
-        const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.worked = false;} };
-        
-        const burnNode = (uid) => {
-            const acc = accounts.value.find(a => a.uid === uid);
-            if(acc) {
-                const nodeStr = (acc.nodeId || '').trim();
-                if(nodeStr) {
-                    const truncado = nodeStr.substring(0, 14); 
-                    if(!blacklist.value.some(b => b.nodeId === truncado)) {
-                        blacklist.value.unshift({ nodeId: truncado, ip: acc.ip || 'Desconocida' });
-                    }
-                }
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; acc.worked = false;
             }
         };
 
@@ -373,9 +229,8 @@ createApp({
                 if(seenIds.has(idCorto)) return;
                 
                 const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
-                const isUsed = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
                 
-                if (!isBlacklisted && !isUsed) {
+                if (!isBlacklisted) {
                     seenIds.add(idCorto);
                     rawPool.push({
                         id: idCorto,
@@ -389,9 +244,6 @@ createApp({
             showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
         };
 
-        // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES
-        // ==========================================
         const fetchAPI = async () => {
             syncStatus.value = 'Conectando a Mysterium...';
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
@@ -422,19 +274,15 @@ createApp({
                                 console.log(`¡Éxito usando: ${attempt.name}!`);
                                 break; 
                             }
-                        } catch (err) {
-                            console.warn(`Respuesta falsa del proxy en ${attempt.name}`);
-                        }
+                        } catch (err) { }
                     }
-                } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}:`, e.message);
-                }
+                } catch (e) { }
             }
 
             if (data && Array.isArray(data)) {
                 processNodeData(data);
             } else {
-                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nNingún proxy logró burlar la seguridad de tu red/navegador para Mysterium.\n\nSOLUCIÓN RÁPIDA: \nUsa tu comando en la consola (curl ... > nodos.json) y cárgalo usando el botón 'Importar JSON'.");
+                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nPor favor, usa tu consola (curl ... > nodos.json) y súbelo usando el botón 'Importar JSON'.");
                 syncStatus.value = 'Error de conexión.';
             }
         };
@@ -453,26 +301,6 @@ createApp({
             reader.readAsText(file);
         };
 
-        const restoreBackup = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.accounts) accounts.value = data.accounts;
-                    if(data.pool) pool.value = data.pool;
-                    if(data.blacklist) blacklist.value = data.blacklist;
-                    showStatus('¡Base Restaurada!');
-                    event.target.value = null;
-                } catch (err) {
-                    alert("El archivo de respaldo es inválido.");
-                    event.target.value = null;
-                }
-            };
-            reader.readAsText(file);
-        };
-
         const copyToClipboard = async (text, type = 'Dato') => {
             try { 
                 await navigator.clipboard.writeText(text); 
@@ -482,12 +310,12 @@ createApp({
         };
 
         const exportDatabase = () => {
-            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
+            const dataStr = JSON.stringify({ lookupAccounts: lookupAccounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `VPN_ERP_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `VPN_Radar_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
         };
 
@@ -496,16 +324,13 @@ createApp({
         onMounted(() => { loadData(); });
 
         return {
-            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
-            showPoolModal, selectedAccountUid, showAccountSelectModal, nodeToAssign,
-            collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
-            filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
-            addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
-            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
-            openPoolModal, closePoolModal, assignNodeToAccount,
-            openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp, lastWorkedIsp, suggestedAccount, markAsWorked, resetWorkedStatus,
-            workedCount, totalValidCount, skipRecommendation
+            currentTab, pool, blacklist, syncStatus, bulkBlacklistText, 
+            filters, filteredPool, toggleSortScore, clearFilters, 
+            burnDirectlyFromPool, processBulkBlacklist, removeBlacklistNode, 
+            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase,
+            // Módulo Lookup
+            lookupAccounts, isAnalyzingAll, addLookupRow, removeLookupRow, analyzeSingle, analyzeAll,
+            hasSubnetCollision, hasIspCollision
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

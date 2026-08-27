@@ -1,457 +1,246 @@
-const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
+// --- CONFIGURACIÓN INICIAL ---
+const IPINFO_TOKEN = "8c97cc52a98a48"; 
+let accounts = JSON.parse(localStorage.getItem('node_accounts')) || generateInitialAccounts();
+let blacklist = JSON.parse(localStorage.getItem('node_blacklist')) || [];
 
-const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
+// Generar lon-01 a lon-27 si es la primera vez
+function generateInitialAccounts() {
+    let accs = [];
+    for (let i = 1; i <= 27; i++) {
+        let name = "lon-" + String(i).padStart(2, '0');
+        accs.push({ id: name, nodeId: "Sin Asignar", ip: "0.0.0.0", location: "Desconocida" });
+    }
+    return accs;
+}
 
-createApp({
-    setup() {
-        const currentTab = ref('accounts');
-        const syncStatus = ref('');
-        const bulkBlacklistText = ref('');
+// Guardar en LocalStorage
+function saveData() {
+    localStorage.setItem('node_accounts', JSON.stringify(accounts));
+    localStorage.setItem('node_blacklist', JSON.stringify(blacklist));
+    renderAccounts();
+    renderBlacklist();
+}
+
+// Navegación de pestañas
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
+
+// --- RENDERIZAR CUENTAS ---
+function renderAccounts() {
+    const grid = document.getElementById('accountsGrid');
+    grid.innerHTML = '';
+    accounts.forEach(acc => {
+        grid.innerHTML += `
+            <div class="account-card">
+                <h3>${acc.id}</h3>
+                <p>Nodo ID: <span class="data">${acc.nodeId}</span></p>
+                <p>IP: <span class="data">${acc.ip}</span></p>
+                <p>Ubicación: <span>${acc.location}</span></p>
+                <button onclick="liberarCuenta('${acc.id}')">Liberar / Quemar Nodo</button>
+            </div>
+        `;
+    });
+}
+
+function liberarCuenta(accountId) {
+    let acc = accounts.find(a => a.id === accountId);
+    if(confirm(`¿Deseas desechar el nodo de ${accountId} y enviarlo a la blacklist?`)) {
+        if(acc.nodeId !== "Sin Asignar") {
+            blacklist.push(acc.nodeId);
+            blacklist.push(acc.ip);
+        }
+        acc.nodeId = "Sin Asignar";
+        acc.ip = "0.0.0.0";
+        acc.location = "Desconocida";
+        saveData();
+    }
+}
+
+// --- LÓGICA DE PROXIMIDAD DE IP ---
+function verificarProximidadIP(nuevaIp) {
+    let octetosNueva = nuevaIp.split('.');
+    
+    // 1. Verificar Blacklist
+    if (blacklist.includes(nuevaIp)) return { valid: false, msg: "IP está en la Blacklist." };
+
+    // 2. Verificar choques con otras cuentas
+    for (let acc of accounts) {
+        if (acc.ip === "0.0.0.0") continue;
         
-        const showPoolModal = ref(false);
-        const selectedAccountUid = ref(null);
-
-        const showAccountSelectModal = ref(false);
-        const nodeToAssign = ref(null);
+        let octetosAcc = acc.ip.split('.');
         
-        const accounts = ref([]);
-        const pool = ref([]);
-        const blacklist = ref([]);
+        // Mismo bloque /24 (3 primeros octetos iguales) - RECHAZO TOTAL
+        if (octetosNueva[0] === octetosAcc[0] && 
+            octetosNueva[1] === octetosAcc[1] && 
+            octetosNueva[2] === octetosAcc[2]) {
+            return { valid: false, msg: `Choque crítico (/24) con la cuenta ${acc.id}. ¡Muy cerca!` };
+        }
+    }
+    return { valid: true, msg: "IP Limpia y Distanciada" };
+}
 
-        // ==========================================
-        // 💎 FILTRO ELITE (Top 5 UK) PARA EL POOL
-        // ==========================================
-        const TOP_ISPS = ['bt', 'sky', 'virgin', 'talktalk', 'vodafone'];
-        const isTopISP = (ispString) => {
-            if(!ispString) return false;
-            const low = ispString.toLowerCase();
-            return TOP_ISPS.some(t => low.includes(t));
-        };
+// --- MÓDULO POOL Y MYSTERIUM ---
+async function fetchMysteriumNodes() {
+    const tbody = document.getElementById('poolBody');
+    tbody.innerHTML = '<tr><td colspan="5">Buscando y triangulando nodos...</td></tr>';
+    
+    const qualityMin = parseFloat(document.getElementById('qualityFilter').value);
+    
+    // Usamos AllOrigins como proxy CORS
+    const url = encodeURIComponent(`https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential`);
+    const proxyUrl = `https://api.allorigins.win/get?url=${url}`;
 
-        const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '', onlyTopISP: false });
-        const sortDesc = ref(true); 
-        const toggleSortScore = () => { sortDesc.value = !sortDesc.value; };
+    try {
+        const res = await fetch(proxyUrl);
+        const data = await res.json();
+        const proposals = JSON.parse(data.contents); 
         
-        const clearFilters = () => { 
-            filters.value.nodeId = ''; 
-            filters.value.city = ''; 
-            filters.value.isp = ''; 
-            filters.value.minQuality = ''; 
-            filters.value.onlyTopISP = false;
-        };
+        tbody.innerHTML = '';
+        let validos = 0;
 
-        const filteredPool = computed(() => {
-            let result = pool.value;
-            result = result.filter(n => {
-                const inBlacklist = blacklist.value.some(b => b.nodeId === n.id);
-                const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
-                return !inBlacklist && !inUse;
-            });
+        for (let p of proposals) {
+            if (validos >= 15) break; // Límite para no saturar la API al buscar
             
-            if (filters.value.onlyTopISP) {
-                result = result.filter(n => isTopISP(n.asn_isp));
+            if (p.quality >= qualityMin && p.provider_id) {
+                let idCorto = p.provider_id.substring(0, 14);
+                let ip = p.endpoint ? p.endpoint.split(':')[0] : "Sin IP"; 
+                
+                // Si la IP o ID están en blacklist, saltar
+                if(blacklist.includes(idCorto) || blacklist.includes(ip)) continue;
+
+                // Validación de proximidad
+                let ipCheck = verificarProximidadIP(ip);
+                if (!ipCheck.valid) continue; 
+
+                // Añadir a la tabla con botón para triangular
+                tbody.innerHTML += `
+                    <tr id="row-${idCorto}">
+                        <td style="font-family: monospace;">${idCorto}</td>
+                        <td>${ip}</td>
+                        <td>${p.quality}</td>
+                        <td id="loc-${idCorto}"><button onclick="triangularIP('${ip}', '${idCorto}')">🗺️ Triangular Datos</button></td>
+                        <td><button onclick="asignarACuenta('${idCorto}', '${ip}')">Asignar a Cuenta</button></td>
+                    </tr>
+                `;
+                validos++;
             }
-            if (filters.value.nodeId) {
-                const s = filters.value.nodeId.toLowerCase().trim();
-                result = result.filter(n => n.id.toLowerCase().includes(s));
-            }
-            if (filters.value.city) {
-                const c = filters.value.city.toLowerCase().trim();
-                result = result.filter(n => (n.city || '').toLowerCase().includes(c));
-            }
-            if (filters.value.isp) {
-                const i = filters.value.isp.toLowerCase().trim();
-                result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(i));
-            }
-            if (filters.value.minQuality) {
-                const minQ = parseFloat(filters.value.minQuality);
-                if (!isNaN(minQ)) {
-                    result = result.filter(n => parseFloat(n.q_score) >= minQ);
-                }
-            }
-            return result.sort((a, b) => sortDesc.value ? b.q_score - a.q_score : a.q_score - b.q_score);
+        }
+        if(validos === 0) tbody.innerHTML = '<tr><td colspan="5">No se encontraron nodos que cumplan tus reglas de IP/Calidad.</td></tr>';
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Error de conexión: ${error.message}</td></tr>`;
+    }
+}
+
+// --- TRIANGULACIÓN (IPInfo + Nominatim) ---
+async function triangularIP(ip, idCorto) {
+    const tdLoc = document.getElementById(`loc-${idCorto}`);
+    tdLoc.innerHTML = "Consultando...";
+    
+    try {
+        // 1. Obtener Lat/Lon de IPInfo
+        const resIp = await fetch(`https://api.ipinfo.io/lite/${ip}`, {
+            headers: { 'Authorization': `Bearer ${IPINFO_TOKEN}` }
         });
-
-        // --- CUENTAS (Buscador/Sort) ---
-        const accountSearch = ref('');
-        const accountSort = ref({ field: null, desc: false });
-
-        const toggleAccountSort = (field) => {
-            if (accountSort.value.field === field) {
-                accountSort.value.desc = !accountSort.value.desc;
-            } else {
-                accountSort.value.field = field;
-                accountSort.value.desc = false;
-            }
-        };
-
-        const processedAccounts = computed(() => {
-            let result = accounts.value;
-            if (accountSearch.value) {
-                const s = accountSearch.value.toLowerCase().trim();
-                result = result.filter(a => 
-                    a.name.toLowerCase().includes(s) || 
-                    (a.nodeId || '').toLowerCase().includes(s) || 
-                    (a.ip || '').toLowerCase().includes(s) ||
-                    (a.asn_isp || '').toLowerCase().includes(s)
-                );
-            }
-            if (accountSort.value.field) {
-                result = [...result].sort((a, b) => {
-                    let valA = a[accountSort.value.field] || '';
-                    let valB = b[accountSort.value.field] || '';
-                    if (accountSort.value.field === 'q_score') {
-                        valA = parseFloat(valA) || 0;
-                        valB = parseFloat(valB) || 0;
-                    }
-                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
-                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
-                    return 0;
-                });
-            }
-            return result;
-        });
-
-        const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_final', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_final', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_final', JSON.stringify(blacklist.value));
-        };
-
-        const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_final'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_final'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_final'));
-
-            if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v14', 'v13', 'v12', 'v11', 'v10', 'v9', 'master', 'v8'];
-                for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
-                    if (oldAcc && oldAcc.length > 0) {
-                        savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
-                        break;
-                    }
-                }
-            }
-
-            if (savedAcc && savedAcc.length > 0) {
-                accounts.value = savedAcc.map(a => ({ 
-                    ...a, 
-                    uid: a.uid || generateUid(), 
-                    previousIp: a.previousIp || null
-                }));
-            } else {
-                const initial = [];
-                for(let i = 1; i <= 28; i++) {
-                    const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
-                }
-                accounts.value = initial;
-            }
-            pool.value = savedPool || [];
-            blacklist.value = savedBlk || [];
-        };
-
-        watch([accounts, pool, blacklist], saveData, { deep: true });
-
-        // ==========================================
-        // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
-        // ==========================================
-        const fetchCurrentIP = async (uid) => {
-            const acc = accounts.value.find(a => a.uid === uid);
-            if(!acc) return;
-
-            syncStatus.value = 'Detectando IP...';
-            let newIp = null;
-
-            try {
-                const r1 = await fetch("https://api.ipify.org?format=json");
-                if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
-            } catch(e) {}
-
-            if(!newIp) {
-                try {
-                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
-                    if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
-                } catch(e) {}
-            }
-
-            if(!newIp) {
-                try {
-                    const r3 = await fetch("https://api.myip.com");
-                    if(r3.ok) { const d3 = await r3.json(); newIp = d3.ip; }
-                } catch(e) {}
-            }
-
-            if(newIp) {
-                if(acc.ip === newIp) { 
-                    syncStatus.value = 'Misma IP.'; 
-                    setTimeout(() => { syncStatus.value = ''; }, 3000);
-                    return; 
-                }
-
-                const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
-                if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
-                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
-                }
-
-                acc.previousIp = acc.ip; 
-                acc.ip = newIp;
-                triggerCollisionCheck(acc);
-                syncStatus.value = '¡IP extraída!';
-            } else {
-                showStatus('Fallo de Red en Navegador.');
-            }
-            setTimeout(() => { syncStatus.value = ''; }, 3000);
-        };
-
-        const undoIp = (uid) => {
-            const acc = accounts.value.find(a => a.uid === uid);
-            if(acc && acc.previousIp) {
-                acc.ip = acc.previousIp; 
-                acc.previousIp = null; 
-                triggerCollisionCheck(acc); 
-                syncStatus.value = 'IP Restaurada.';
-                setTimeout(() => { syncStatus.value = ''; }, 3000);
-            }
-        };
-
-        const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
-        const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
-        const openAccountSelectModal = (node) => { nodeToAssign.value = node; showAccountSelectModal.value = true; };
-        const closeAccountSelectModal = () => { showAccountSelectModal.value = false; nodeToAssign.value = null; };
+        const dataIp = await resIp.json();
         
-        const triggerCollisionCheck = (currentAccount) => {
-            if(hasCollision(currentAccount)) {
-                alert(`¡ALERTA CRÍTICA!\n\nEl Nodo o IP ingresado YA EXISTE en otra cuenta activa.`);
-            }
-        };
+        if (!dataIp.loc) throw new Error("Sin coordenadas");
+        const [lat, lon] = dataIp.loc.split(',');
 
-        const hasCollision = (currentAccount) => {
-            if (!currentAccount.ip && !currentAccount.nodeId) return false;
-            return accounts.value.some(acc => {
-                if (acc.uid === currentAccount.uid) return false;
-                const curIp = (currentAccount.ip || '').trim();
-                const accIp = (acc.ip || '').trim();
-                const curNode = (currentAccount.nodeId || '').trim();
-                const accNode = (acc.nodeId || '').trim();
-                return (accIp !== '' && curIp !== '' && accIp === curIp) || 
-                       (accNode !== '' && curNode !== '' && accNode === curNode);
-            });
-        };
-
-        const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
-
-        const assignNodeToAccount = (nodeId) => {
-            if (selectedAccountUid.value) {
-                const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
-                if (acc) {
-                    const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; 
-                    if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
-                    closePoolModal(); triggerCollisionCheck(acc);
-                }
-            }
-        };
-
-        const confirmAssignFromPool = (accountUid) => {
-            const acc = accounts.value.find(a => a.uid === accountUid);
-            if (acc && nodeToAssign.value) {
-                acc.nodeId = nodeToAssign.value.id;
-                acc.ip = ''; acc.previousIp = null; 
-                acc.q_score = nodeToAssign.value.q_score;
-                acc.asn_isp = nodeToAssign.value.asn_isp;
-                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
-            }
-        };
-
-        const burnDirectlyFromPool = (node) => {
-            if(node && node.id) {
-                if(!blacklist.value.some(b => b.nodeId === node.id)) {
-                    blacklist.value.unshift({ nodeId: node.id, ip: 'Quemado desde Pool' });
-                }
-            }
-        };
-
-        const addAccount = () => {
-            const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
-        };
-        const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; } };
+        // 2. Triangular con OpenStreetMap (Nominatim)
+        const resNom = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+        const dataNom = await resNom.json();
         
-        const burnNode = (uid) => {
-            const acc = accounts.value.find(a => a.uid === uid);
-            if(acc) {
-                const nodeStr = (acc.nodeId || '').trim();
-                if(nodeStr) {
-                    const truncado = nodeStr.substring(0, 14); 
-                    if(!blacklist.value.some(b => b.nodeId === truncado)) {
-                        blacklist.value.unshift({ nodeId: truncado, ip: acc.ip || 'Desconocida' });
-                    }
-                }
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; 
-            }
-        };
+        let district = dataNom.address.city_district || dataNom.address.suburb || dataNom.address.county || "";
+        let borough = dataNom.address.borough || dataNom.address.city || dataIp.city;
+        
+        let locationFinal = `${district}, ${borough}`.replace(/^, | ,/g, '').trim();
+        tdLoc.innerHTML = locationFinal;
+        tdLoc.dataset.loc = locationFinal; 
 
-        const processBulkBlacklist = () => {
-            if(!bulkBlacklistText.value.trim()) return;
-            const rawItems = bulkBlacklistText.value.split(/[\n,\s]+/);
-            rawItems.forEach(item => {
-                const limpio = item.trim();
-                if(limpio.length >= 10) { 
-                    const truncado = limpio.substring(0, 14); 
-                    if(!blacklist.value.some(b => b.nodeId === truncado)) {
-                        blacklist.value.unshift({ nodeId: truncado, ip: 'Carga Masiva' });
-                    }
-                }
-            });
-            bulkBlacklistText.value = ''; 
-        };
-        const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
+    } catch (e) {
+        tdLoc.innerHTML = "Error al triangular";
+        tdLoc.dataset.loc = "Solo IP";
+    }
+}
 
-        const processNodeData = (data) => {
-            const rawPool = [];
-            const seenIds = new Set(); 
-            data.forEach(nodo => {
-                if (nodo.service_type !== "wireguard" || !nodo.provider_id) return;
-                
-                const idCorto = nodo.provider_id.substring(0, 14);
-                if(seenIds.has(idCorto)) return;
-                
-                const isBlacklisted = blacklist.value.some(b => b.nodeId === idCorto);
-                const isUsed = accounts.value.some(a => (a.nodeId || '').trim() === idCorto);
-                
-                if (!isBlacklisted && !isUsed) {
-                    seenIds.add(idCorto);
-                    rawPool.push({
-                        id: idCorto,
-                        city: nodo.location?.city || 'N/A',
-                        asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'N/A'}`,
-                        q_score: (nodo.quality?.quality || 0).toFixed(2)
-                    });
-                }
-            });
-            pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
-            showStatus(`Pool Actualizado: ${pool.value.length} nodos guardados`);
-        };
+// --- ASIGNAR NODO A CUENTA ---
+function asignarACuenta(nodeId, ip) {
+    let location = document.getElementById(`loc-${nodeId}`).dataset.loc || "Triangulación pendiente";
+    
+    // Buscar la primera cuenta vacía
+    let cuentaLibre = accounts.find(a => a.nodeId === "Sin Asignar");
+    if (!cuentaLibre) {
+        alert("¡No tienes cuentas libres! Ve a 'Mis Cuentas' y libera una.");
+        return;
+    }
 
-        // ==========================================
-        // 🚀 CASCADA MYSTERIUM 5 NIVELES
-        // ==========================================
-        const fetchAPI = async () => {
-            syncStatus.value = 'Conectando a Mysterium...';
-            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            let data = null;
+    cuentaLibre.nodeId = nodeId;
+    cuentaLibre.ip = ip;
+    cuentaLibre.location = location;
+    saveData();
+    alert(`Asignado exitosamente a ${cuentaLibre.id}`);
+    
+    // Quitar de la tabla visualmente
+    document.getElementById(`row-${nodeId}`).remove();
+}
 
-            const attempts = [
-                { name: 'Directo', url: targetUrl },
-                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
-                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
-            ];
+// --- MÓDULO BLACKLIST ---
+function renderBlacklist() {
+    const ul = document.getElementById('blacklistUl');
+    ul.innerHTML = '';
+    blacklist.forEach((item, index) => {
+        ul.innerHTML += `<li>${item} <button style="background: #ff4c4c; padding: 5px 10px;" onclick="quitarBlacklist(${index})">Eliminar</button></li>`;
+    });
+}
+function addToBlacklist() {
+    const val = document.getElementById('newBlacklist').value.trim();
+    if (val && !blacklist.includes(val)) {
+        blacklist.push(val);
+        document.getElementById('newBlacklist').value = '';
+        saveData();
+    }
+}
+function quitarBlacklist(index) {
+    blacklist.splice(index, 1);
+    saveData();
+}
 
-            for (let attempt of attempts) {
-                syncStatus.value = `Intentando: ${attempt.name}...`;
-                try {
-                    const res = await fetch(attempt.url, { 
-                        headers: { 'Accept': 'application/json' },
-                        cache: 'no-store'
-                    });
-                    
-                    if (res.ok) {
-                        const text = await res.text();
-                        try {
-                            const parsed = JSON.parse(text);
-                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
-                                data = parsed;
-                                console.log(`¡Éxito usando: ${attempt.name}!`);
-                                break; 
-                            }
-                        } catch (err) { }
-                    }
-                } catch (e) { }
-            }
+// --- JSON IMPORT/EXPORT ---
+function exportJSON() {
+    const dataStr = JSON.stringify({ accounts, blacklist }, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "node_backup.json";
+    a.click();
+}
 
-            if (data && Array.isArray(data)) {
-                processNodeData(data);
+function importJSON() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) return alert("Selecciona un archivo");
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.accounts && data.blacklist) {
+                accounts = data.accounts;
+                blacklist = data.blacklist;
+                saveData();
+                alert("Respaldo restaurado con éxito.");
             } else {
-                alert("🚫 BLOQUEO SEVERO CORS DETECTADO\n\nNingún proxy logró burlar la seguridad de tu red/navegador para Mysterium.\n\nSOLUCIÓN RÁPIDA: \nUsa tu comando en la consola (curl ... > nodos.json) y cárgalo usando el botón 'Importar JSON'.");
-                syncStatus.value = 'Error de conexión.';
+                alert("El archivo JSON no tiene el formato correcto.");
             }
-        };
+        } catch(err) {
+            alert("Error leyendo el archivo.");
+        }
+    };
+    reader.readAsText(file);
+}
 
-        const importPoolJSON = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    processNodeData(data); 
-                    event.target.value = null; 
-                } catch (err) { alert("Error JSON."); event.target.value = null; }
-            };
-            reader.readAsText(file);
-        };
-
-        const restoreBackup = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.accounts) accounts.value = data.accounts;
-                    if(data.pool) pool.value = data.pool;
-                    if(data.blacklist) blacklist.value = data.blacklist;
-                    showStatus('¡Base Restaurada!');
-                    event.target.value = null;
-                } catch (err) {
-                    alert("El archivo de respaldo es inválido.");
-                    event.target.value = null;
-                }
-            };
-            reader.readAsText(file);
-        };
-
-        const copyToClipboard = async (text, type = 'Dato') => {
-            try { 
-                await navigator.clipboard.writeText(text); 
-                showStatus(`¡${type} Copiado!`); 
-                setTimeout(() => { syncStatus.value = ''; }, 3000);
-            } catch (err) { console.error(err); }
-        };
-
-        const exportDatabase = () => {
-            const dataStr = JSON.stringify({ accounts: accounts.value, pool: pool.value, blacklist: blacklist.value }, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `VPN_ERP_Respaldo_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-        };
-
-        const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
-        
-        onMounted(() => { loadData(); });
-
-        return {
-            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
-            showPoolModal, selectedAccountUid, showAccountSelectModal, nodeToAssign,
-            collisionCount, accountSearch, accountSort, processedAccounts, toggleAccountSort, 
-            filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
-            addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
-            importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
-            openPoolModal, closePoolModal, assignNodeToAccount,
-            openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
-            fetchCurrentIP, undoIp
-        };
-    },
-    updated() { if(window.lucide) { lucide.createIcons(); } }
-}).mount('#app');
+// Inicializar
+renderAccounts();
+renderBlacklist();

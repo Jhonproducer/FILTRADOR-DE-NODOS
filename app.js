@@ -15,17 +15,24 @@ createApp({
         const blacklist = ref([]);
         const filters = ref({ minQuality: 2.5 });
 
+        // Buscadores y ordenadores restaurados
+        const accountSearch = ref('');
+        const accountSort = ref({ field: null, desc: false });
+        
+        const poolSearch = ref('');
+        const poolSort = ref({ field: null, desc: false });
+
         // ==========================================
         // 🔄 PERSISTENCIA LOCALSTORAGE
         // ==========================================
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_v13', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_blk_v13', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_v14', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_blk_v14', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v13'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_v13'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v14'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_v14'));
 
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc;
@@ -49,8 +56,8 @@ createApp({
                 if (partes.length >= 2) {
                     nuevasCuentas.push({
                         uid: generateUid(),
-                        name: partes[0], // LON-XX
-                        fecha: partes[1], // Fecha
+                        name: partes[0] || "",
+                        fecha: partes[1] || "",
                         nodeId: partes.length >= 3 ? partes[2] : "",
                         ip: partes.length >= 4 ? partes[3] : ""
                     });
@@ -92,7 +99,7 @@ createApp({
                     const octAcc = accIp.split('.');
                     
                     if (octCur.length === 4 && octAcc.length === 4) {
-                        // Ej: 86.172.94.228 choca con 86.172.94.10
+                        // Ej: 86.172.94.228 choca con 86.172.94.10 -> Bloquea
                         if (octCur[0] === octAcc[0] && 
                             octCur[1] === octAcc[1] && 
                             octCur[2] === octAcc[2]) {
@@ -105,6 +112,94 @@ createApp({
         };
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
+
+        // ==========================================
+        // 🔍 ORDENAMIENTO Y BÚSQUEDA (CUENTAS)
+        // ==========================================
+        const toggleAccountSort = (field) => {
+            if (accountSort.value.field === field) {
+                accountSort.value.desc = !accountSort.value.desc;
+            } else {
+                accountSort.value.field = field;
+                accountSort.value.desc = false;
+            }
+        };
+
+        const processedAccounts = computed(() => {
+            let result = accounts.value;
+            
+            // Búsqueda
+            if (accountSearch.value) {
+                const s = accountSearch.value.toLowerCase().trim();
+                result = result.filter(a => 
+                    (a.name || '').toLowerCase().includes(s) || 
+                    (a.fecha || '').toLowerCase().includes(s) ||
+                    (a.nodeId || '').toLowerCase().includes(s) || 
+                    (a.ip || '').toLowerCase().includes(s)
+                );
+            }
+
+            // Ordenamiento por clic
+            if (accountSort.value.field) {
+                result = [...result].sort((a, b) => {
+                    let valA = (a[accountSort.value.field] || '').toLowerCase();
+                    let valB = (b[accountSort.value.field] || '').toLowerCase();
+                    if (valA < valB) return accountSort.value.desc ? 1 : -1;
+                    if (valA > valB) return accountSort.value.desc ? -1 : 1;
+                    return 0;
+                });
+            }
+            return result;
+        });
+
+        // ==========================================
+        // 🔍 ORDENAMIENTO Y BÚSQUEDA (POOL)
+        // ==========================================
+        const togglePoolSort = (field) => {
+            if (poolSort.value.field === field) {
+                poolSort.value.desc = !poolSort.value.desc;
+            } else {
+                poolSort.value.field = field;
+                poolSort.value.desc = false;
+            }
+        };
+
+        const processedPool = computed(() => {
+            let result = pool.value;
+
+            // Búsqueda en Pool
+            if (poolSearch.value) {
+                const s = poolSearch.value.toLowerCase().trim();
+                result = result.filter(a => 
+                    (a.id || '').toLowerCase().includes(s) || 
+                    (a.ip || '').toLowerCase().includes(s) ||
+                    (a.city || '').toLowerCase().includes(s) || 
+                    (a.asn_isp || '').toLowerCase().includes(s)
+                );
+            }
+
+            // Ordenamiento por clic en Pool
+            if (poolSort.value.field) {
+                result = [...result].sort((a, b) => {
+                    let valA = a[poolSort.value.field] || '';
+                    let valB = b[poolSort.value.field] || '';
+                    
+                    // Si ordenas por calidad, convertir a número
+                    if (poolSort.value.field === 'q_score') {
+                        valA = parseFloat(valA) || 0;
+                        valB = parseFloat(valB) || 0;
+                    } else {
+                        valA = valA.toString().toLowerCase();
+                        valB = valB.toString().toLowerCase();
+                    }
+
+                    if (valA < valB) return poolSort.value.desc ? 1 : -1;
+                    if (valA > valB) return poolSort.value.desc ? -1 : 1;
+                    return 0;
+                });
+            }
+            return result;
+        });
 
         // ==========================================
         // 🚀 CASCADA MYSTERIUM (ANTI-FALLOS)
@@ -126,7 +221,7 @@ createApp({
                 const ip = nodo.endpoint ? nodo.endpoint.split(':')[0] : null;
                 if (!ip) return;
 
-                // Verificamos si choca con tus reglas antes de meterlo a la pool visible
+                // Verificamos si choca con la Blacklist o con el Motor (Regla /24) ANTES de mostrarlo
                 const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: ip };
                 const isBlacklisted = blacklist.value.includes(idCorto) || blacklist.value.includes(ip);
                 
@@ -141,7 +236,7 @@ createApp({
                     });
                 }
             });
-            pool.value = rawPool.sort((a, b) => b.q_score - a.q_score);
+            pool.value = rawPool;
             showStatus(`Pool Actualizado: ${pool.value.length} nodos limpios`);
         };
 
@@ -150,7 +245,7 @@ createApp({
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             let data = null;
 
-            // CASCADA DE PROXIES PARA EVITAR EL FALLO DE LA API
+            // CASCADA DE PROXIES
             const attempts = [
                 { name: 'Proxy 1 (AllOrigins)', url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'allorigins' },
                 { name: 'Proxy 2 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'direct' },
@@ -173,7 +268,7 @@ createApp({
 
                         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
                             data = parsed;
-                            break; // Si tiene éxito, sale del bucle
+                            break; 
                         }
                     }
                 } catch (e) {
@@ -224,16 +319,16 @@ createApp({
 
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
         
-        // El Pool Filtrado es directo porque ya se filtró en processNodeData
-        const filteredPool = computed(() => pool.value);
-        
         onMounted(() => { loadData(); });
 
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
             collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, 
             removeBlacklistNode, fetchAPI, copyToClipboard, exportDatabase,
-            filteredPool, filters, showBulkLoadModal, bulkLoadText, processBulkLoad
+            filters, showBulkLoadModal, bulkLoadText, processBulkLoad,
+            // Variables de búsqueda y orden
+            accountSearch, toggleAccountSort, processedAccounts,
+            poolSearch, togglePoolSort, processedPool
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

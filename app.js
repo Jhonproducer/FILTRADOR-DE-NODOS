@@ -1,4 +1,4 @@
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
 const generateUid = () => Date.now().toString(36) + Math.random().toString(36).substring(2);
 
@@ -11,6 +11,9 @@ createApp({
         const showPoolModal = ref(false);
         const selectedAccountUid = ref(null);
 
+        const showAccountSelectModal = ref(false);
+        const nodeToAssign = ref(null);
+        
         const accounts = ref([]);
         const pool = ref([]);
         const blacklist = ref([]);
@@ -23,11 +26,6 @@ createApp({
             if(!ispString) return false;
             const low = ispString.toLowerCase();
             return TOP_ISPS.some(t => low.includes(t));
-        };
-
-        const getIspName = (fullString) => {
-            if(!fullString) return '';
-            return fullString.split('-').pop().trim().toLowerCase();
         };
 
         const filters = ref({ nodeId: '', city: '', isp: '', minQuality: '', onlyTopISP: false });
@@ -95,8 +93,7 @@ createApp({
                     a.name.toLowerCase().includes(s) || 
                     (a.nodeId || '').toLowerCase().includes(s) || 
                     (a.ip || '').toLowerCase().includes(s) ||
-                    (a.asn_isp || '').toLowerCase().includes(s) ||
-                    (a.geo_isp || '').toLowerCase().includes(s)
+                    (a.asn_isp || '').toLowerCase().includes(s)
                 );
             }
             if (accountSort.value.field) {
@@ -116,24 +113,24 @@ createApp({
         });
 
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_master_v15', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_pool_master_v15', JSON.stringify(pool.value));
-            localStorage.setItem('vpnerp_blk_master_v15', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpnerp_acc_master_final', JSON.stringify(accounts.value));
+            localStorage.setItem('vpnerp_pool_master_final', JSON.stringify(pool.value));
+            localStorage.setItem('vpnerp_blk_master_final', JSON.stringify(blacklist.value));
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_v15'));
-            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_v15'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_v15'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_master_final'));
+            let savedPool = JSON.parse(localStorage.getItem('vpnerp_pool_master_final'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_master_final'));
 
             if (!savedAcc || savedAcc.length === 0) {
-                const oldKeys = ['v14', 'v13', 'v12', 'v11'];
+                const oldKeys = ['v14', 'v13', 'v12', 'v11', 'v10', 'v9', 'master', 'v8'];
                 for (let v of oldKeys) {
-                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`));
+                    let oldAcc = JSON.parse(localStorage.getItem(`vpnerp_acc_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_acc_${v}`));
                     if (oldAcc && oldAcc.length > 0) {
                         savedAcc = oldAcc;
-                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`));
-                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`));
+                        savedPool = JSON.parse(localStorage.getItem(`vpnerp_pool_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_pool_${v}`));
+                        savedBlk = JSON.parse(localStorage.getItem(`vpnerp_blk_master_${v}`)) || JSON.parse(localStorage.getItem(`vpnerp_blk_${v}`));
                         break;
                     }
                 }
@@ -142,17 +139,14 @@ createApp({
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({ 
                     ...a, 
-                    uid: a.uid || generateUid(),
-                    geo_city: a.geo_city || '',
-                    geo_region: a.geo_region || '',
-                    geo_postal: a.geo_postal || '',
-                    geo_isp: a.geo_isp || ''
+                    uid: a.uid || generateUid(), 
+                    previousIp: a.previousIp || null
                 }));
             } else {
                 const initial = [];
-                for(let i = 1; i <= 27; i++) {
+                for(let i = 1; i <= 28; i++) {
                     const num = i < 10 ? '0'+i : i;
-                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', geo_city: '', geo_region: '', geo_postal: '', geo_isp: '' });
+                    initial.push({ uid: generateUid(), name: `LON-${num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
                 }
                 accounts.value = initial;
             }
@@ -163,160 +157,89 @@ createApp({
         watch([accounts, pool, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // ⚡ API IPINFO ENRIQUECIMIENTO DE RED
+        // ⚡ AUTO IP (CASCADA SILENCIOSA CON TOKEN)
         // ==========================================
         const fetchCurrentIP = async (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(!acc) return;
 
-            syncStatus.value = 'Extrayendo IP y Geolocalización...';
-            let extractedData = null;
+            syncStatus.value = 'Detectando IP...';
+            let newIp = null;
 
             try {
-                // Llamada directa usando el Token proporcionado por el arquitecto
-                const res = await fetch("https://ipinfo.io/json", { 
-                    headers: { 'Authorization': 'Bearer 8c97cc52a98a48', 'Accept': 'application/json' },
-                    cache: 'no-store'
-                });
-                
-                if(res.ok) { 
-                    extractedData = await res.json(); 
-                }
-            } catch(e) {
-                console.warn("Fallo IPINFO, intentando proxy alterno");
+                const r1 = await fetch("https://api.ipify.org?format=json");
+                if(r1.ok) { const d1 = await r1.json(); newIp = d1.ip; }
+            } catch(e) {}
+
+            if(!newIp) {
                 try {
-                    const res2 = await fetch("https://api.ipify.org?format=json");
-                    if(res2.ok) { extractedData = await res2.json(); }
-                } catch(e2) {}
+                    const r2 = await fetch("https://ipinfo.io/json", { headers: { 'Authorization': 'Bearer 8c97cc52a98a48' } });
+                    if(r2.ok) { const d2 = await r2.json(); newIp = d2.ip; }
+                } catch(e) {}
             }
 
-            if(extractedData && extractedData.ip) {
-                const newIp = extractedData.ip;
-                
-                if(acc.ip === newIp && acc.geo_isp === extractedData.org) { 
-                    syncStatus.value = 'Misma IP registrada.'; 
+            if(!newIp) {
+                try {
+                    const r3 = await fetch("https://api.myip.com");
+                    if(r3.ok) { const d3 = await r3.json(); newIp = d3.ip; }
+                } catch(e) {}
+            }
+
+            if(newIp) {
+                if(acc.ip === newIp) { 
+                    syncStatus.value = 'Misma IP.'; 
                     setTimeout(() => { syncStatus.value = ''; }, 3000);
                     return; 
                 }
 
-                // Detector de Colisión Activo
                 const collides = accounts.value.some(a => a.uid !== uid && a.ip === newIp);
                 if(collides) {
-                    const proceed = confirm(`⚠️ ALERTA DE CORRELACIÓN CIBERNÉTICA\n\nLa IP detectada (${newIp}) YA EXISTE en otra cuenta activa.\nEsto causará baneo por ráfaga. ¿Forzar inyección?`);
-                    if(!proceed) { syncStatus.value = 'Inyección Abortada.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
+                    const proceed = confirm(`⚠️ ALERTA DE COLISIÓN\n\nLa IP detectada (${newIp}) YA ESTÁ en otra cuenta.\n¿Sobrescribir de todos modos?`);
+                    if(!proceed) { syncStatus.value = 'Cancelado.'; setTimeout(() => { syncStatus.value = ''; }, 3000); return; }
                 }
 
-                // Inyección de Data OSINT
+                acc.previousIp = acc.ip; 
                 acc.ip = newIp;
-                acc.geo_isp = extractedData.org || '';
-                acc.geo_city = extractedData.city || '';
-                acc.geo_region = extractedData.region || '';
-                acc.geo_postal = extractedData.postal || '';
-
                 triggerCollisionCheck(acc);
-                syncStatus.value = '¡Extracción y Enriquecimiento Completo!';
+                syncStatus.value = '¡IP extraída!';
             } else {
-                alert("Bloqueo de infraestructura de red local detectado. Verifica la extensión de VPN.");
-                syncStatus.value = '';
+                showStatus('Fallo de Red en Navegador.');
             }
             setTimeout(() => { syncStatus.value = ''; }, 3000);
         };
 
-        // ==========================================
-        // 🔄 ALGORITMO DE REORDENAMIENTO ANTICHOQUE
-        // ==========================================
-        const executeAntiCollisionSort = () => {
-            syncStatus.value = "Ejecutando motor de reordenamiento...";
-            
-            // 1. Separar cuentas con Nodo/IP de las vacías
-            let active = accounts.value.filter(a => a.nodeId || a.ip);
-            let inactive = accounts.value.filter(a => !a.nodeId && !a.ip);
-
-            // 2. Agrupar por ISP Normalizado
-            let ispGroups = {};
-            active.forEach(a => {
-                let ispKey = getIspName(a.geo_isp || a.asn_isp || 'desconocido');
-                if(!ispGroups[ispKey]) ispGroups[ispKey] = [];
-                ispGroups[ispKey].push(a);
-            });
-
-            // 3. Ordenar grupos por tamaño para intercalarlos bien
-            let sortedKeys = Object.keys(ispGroups).sort((a, b) => ispGroups[b].length - ispGroups[a].length);
-            
-            let interleaved = [];
-            let totalActive = active.length;
-
-            // 4. Lógica de Intercalado (Round-Robin Greedy)
-            while(interleaved.length < totalActive) {
-                let addedInRound = false;
-                for(let key of sortedKeys) {
-                    if(ispGroups[key].length > 0) {
-                        let lastAdded = interleaved[interleaved.length - 1];
-                        let lastIsp = lastAdded ? getIspName(lastAdded.geo_isp || lastAdded.asn_isp || 'desconocido') : null;
-
-                        // Si el ISP es distinto al último, lo metemos
-                        if (key !== lastIsp || sortedKeys.length === 1) {
-                            interleaved.push(ispGroups[key].shift());
-                            addedInRound = true;
-                        }
-                    }
-                }
-                // Si no pudo agregar sin chocar (quedan puros del mismo), los mete a la fuerza
-                if(!addedInRound) {
-                    for(let key of sortedKeys) {
-                        if(ispGroups[key].length > 0) {
-                             interleaved.push(ispGroups[key].shift());
-                        }
-                    }
-                }
+        const undoIp = (uid) => {
+            const acc = accounts.value.find(a => a.uid === uid);
+            if(acc && acc.previousIp) {
+                acc.ip = acc.previousIp; 
+                acc.previousIp = null; 
+                triggerCollisionCheck(acc); 
+                syncStatus.value = 'IP Restaurada.';
+                setTimeout(() => { syncStatus.value = ''; }, 3000);
             }
-
-            // 5. Unir y renombrar cuentas secuencialmente
-            let finalArray = [...interleaved, ...inactive];
-            finalArray.forEach((acc, index) => {
-                let num = index + 1;
-                acc.name = `LON-${num < 10 ? '0'+num : num}`;
-            });
-
-            accounts.value = finalArray;
-            alert("✅ REESTRUCTURACIÓN COMPLETADA\n\nLas cuentas han sido reordenadas para mitigar baneos corporativos por cercanía de ISP. Revisa la tabla del LON-01 en adelante.");
-            syncStatus.value = "";
         };
 
         const openPoolModal = (uid) => { selectedAccountUid.value = uid; clearFilters(); showPoolModal.value = true; };
         const closePoolModal = () => { showPoolModal.value = false; selectedAccountUid.value = null; };
+        const openAccountSelectModal = (node) => { nodeToAssign.value = node; showAccountSelectModal.value = true; };
+        const closeAccountSelectModal = () => { showAccountSelectModal.value = false; nodeToAssign.value = null; };
         
         const triggerCollisionCheck = (currentAccount) => {
             if(hasCollision(currentAccount)) {
-                // Alerta nativa compacta
+                alert(`¡ALERTA CRÍTICA!\n\nEl Nodo o IP ingresado YA EXISTE en otra cuenta activa.`);
             }
         };
 
-        // Regla Antichoque en vivo (Subred C y D)
         const hasCollision = (currentAccount) => {
             if (!currentAccount.ip && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
                 if (acc.uid === currentAccount.uid) return false;
-                
                 const curIp = (currentAccount.ip || '').trim();
                 const accIp = (acc.ip || '').trim();
                 const curNode = (currentAccount.nodeId || '').trim();
                 const accNode = (acc.nodeId || '').trim();
-
-                // Colisión Directa de IP o Nodo
-                if ((accIp !== '' && curIp !== '' && accIp === curIp) || 
-                    (accNode !== '' && curNode !== '' && accNode === curNode)) {
-                    return true;
-                }
-
-                // Detección de proximidad Clase C (Ej: 192.168.1.X)
-                if (accIp && curIp) {
-                    let accSubnet = accIp.split('.').slice(0,3).join('.');
-                    let curSubnet = curIp.split('.').slice(0,3).join('.');
-                    if (accSubnet === curSubnet) return true;
-                }
-
-                return false;
+                return (accIp !== '' && curIp !== '' && accIp === curIp) || 
+                       (accNode !== '' && curNode !== '' && accNode === curNode);
             });
         };
 
@@ -327,10 +250,21 @@ createApp({
                 const acc = accounts.value.find(a => a.uid === selectedAccountUid.value);
                 if (acc) {
                     const nodeData = pool.value.find(n => n.id === nodeId);
-                    acc.nodeId = nodeId; acc.ip = ''; acc.geo_city = ''; acc.geo_isp = '';
+                    acc.nodeId = nodeId; acc.ip = ''; acc.previousIp = null; 
                     if(nodeData) { acc.q_score = nodeData.q_score; acc.asn_isp = nodeData.asn_isp; }
                     closePoolModal(); triggerCollisionCheck(acc);
                 }
+            }
+        };
+
+        const confirmAssignFromPool = (accountUid) => {
+            const acc = accounts.value.find(a => a.uid === accountUid);
+            if (acc && nodeToAssign.value) {
+                acc.nodeId = nodeToAssign.value.id;
+                acc.ip = ''; acc.previousIp = null; 
+                acc.q_score = nodeToAssign.value.q_score;
+                acc.asn_isp = nodeToAssign.value.asn_isp;
+                closeAccountSelectModal(); triggerCollisionCheck(acc); showStatus(`Asignado a ${acc.name}`);
             }
         };
 
@@ -344,10 +278,10 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', geo_city: '', geo_region: '', geo_postal: '', geo_isp: '' });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, nodeId: '', ip: '', q_score: '', asn_isp: '', previousIp: null });
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
-        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.geo_city = ''; acc.geo_isp = '';} };
+        const releaseNode = (uid) => { const acc = accounts.value.find(a => a.uid === uid); if(acc) { acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; } };
         
         const burnNode = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
@@ -359,7 +293,7 @@ createApp({
                         blacklist.value.unshift({ nodeId: truncado, ip: acc.ip || 'Desconocida' });
                     }
                 }
-                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.geo_city = ''; acc.geo_isp = '';
+                acc.nodeId = ''; acc.ip = ''; acc.q_score = ''; acc.asn_isp = ''; acc.previousIp = null; 
             }
         };
 
@@ -415,10 +349,10 @@ createApp({
 
             const attempts = [
                 { name: 'Directo', url: targetUrl },
-                { name: 'Proxy 1', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 2', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 3', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
-                { name: 'Proxy 4', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
+                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
+                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
             ];
 
             for (let attempt of attempts) {
@@ -435,6 +369,7 @@ createApp({
                             const parsed = JSON.parse(text);
                             if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
                                 data = parsed;
+                                console.log(`¡Éxito usando: ${attempt.name}!`);
                                 break; 
                             }
                         } catch (err) { }
@@ -513,8 +448,9 @@ createApp({
             filters, filteredPool, toggleSortScore, clearFilters, hasCollision, triggerCollisionCheck, 
             addAccount, removeAccount, releaseNode, burnNode, processBulkBlacklist, removeBlacklistNode, 
             importPoolJSON, fetchAPI, copyToClipboard, exportDatabase, restoreBackup,
-            openPoolModal, closePoolModal, assignNodeToAccount, getIspName,
-            fetchCurrentIP, executeAntiCollisionSort
+            openPoolModal, closePoolModal, assignNodeToAccount,
+            openAccountSelectModal, closeAccountSelectModal, confirmAssignFromPool, burnDirectlyFromPool,
+            fetchCurrentIP, undoIp
         };
     },
     updated() { if(window.lucide) { lucide.createIcons(); } }

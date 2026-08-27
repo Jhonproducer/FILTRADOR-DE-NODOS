@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VPN Intelligence | Geo-Analyzer</title>
+    <title>VPN Manager | Enterprise UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -11,30 +11,30 @@
         [v-cloak] { display: none; } 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans h-screen flex overflow-hidden antialiased selection:bg-indigo-200">
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden antialiased selection:bg-indigo-200">
     <div id="app" v-cloak class="w-full flex h-full relative">
         
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR PREMIUM -->
         <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col h-full shadow-2xl z-20 shrink-0">
             <div class="p-8 pb-6 border-b border-slate-800 flex flex-col items-center text-center">
-                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-emerald-500/30">
-                    <i data-lucide="radar" class="text-white w-7 h-7"></i>
+                <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/30">
+                    <i data-lucide="shield-check" class="text-white w-7 h-7"></i>
                 </div>
-                <h1 class="text-xl font-black tracking-widest text-white">VPN<span class="text-emerald-400">INTEL</span></h1>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-2 font-bold">Network Analyzer</p>
+                <h1 class="text-xl font-bold tracking-widest text-white">VPN<span class="text-indigo-400">ERP</span></h1>
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 mt-2 font-bold">Arquitectura Antifraude</p>
             </div>
             
             <nav class="flex-1 px-4 py-6 space-y-2">
-                <button @click="currentTab = 'analyzer'" :class="{'bg-emerald-600 text-white shadow-md': currentTab === 'analyzer', 'hover:bg-slate-800 hover:text-white': currentTab !== 'analyzer'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
-                    <i data-lucide="activity" class="w-5 h-5"></i> Analizador IPs
+                <button @click="currentTab = 'accounts'" :class="{'bg-indigo-600 text-white shadow-md': currentTab === 'accounts', 'hover:bg-slate-800 hover:text-white': currentTab !== 'accounts'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layers" class="w-5 h-5"></i> Cuentas
                 </button>
-                <button @click="currentTab = 'pool'" :class="{'bg-emerald-600 text-white shadow-md': currentTab === 'pool', 'hover:bg-slate-800 hover:text-white': currentTab !== 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+                <button @click="currentTab = 'pool'" :class="{'bg-indigo-600 text-white shadow-md': currentTab === 'pool', 'hover:bg-slate-800 hover:text-white': currentTab !== 'pool'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
                     <i data-lucide="server" class="w-5 h-5"></i> Pool Nodos
                 </button>
                 <button @click="currentTab = 'blacklist'" :class="{'bg-rose-600 text-white shadow-md': currentTab === 'blacklist', 'hover:bg-slate-800 hover:text-white': currentTab !== 'blacklist'}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
@@ -42,162 +42,148 @@
                 </button>
             </nav>
 
-            <div class="p-6 space-y-2">
-                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300">
-                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Respaldar
+            <div class="p-6">
+                <!-- BOTÓN TÁCTICO: REORDENAMIENTO ANTICHOQUE -->
+                <button @click="executeAntiCollisionSort" class="w-full mb-2 flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 px-4 py-3 rounded-xl text-sm font-bold transition-all text-white shadow-lg shadow-emerald-900/50">
+                    <i data-lucide="shuffle" class="w-4 h-4"></i> Mezcla Antichoque
                 </button>
+
+                <button @click="exportDatabase" class="w-full flex justify-center items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white mt-4">
+                    <i data-lucide="download-cloud" class="w-4 h-4"></i> Respaldar Base
+                </button>
+                <label class="w-full mt-2 flex justify-center items-center gap-2 bg-slate-800 hover:bg-indigo-600 border border-slate-700 hover:border-indigo-500 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:text-white cursor-pointer shadow-sm">
+                    <i data-lucide="upload-cloud" class="w-4 h-4"></i> Restaurar
+                    <input type="file" @change="restoreBackup" accept=".json" class="hidden">
+                </label>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col overflow-hidden h-full bg-slate-50">
+        <main class="flex-1 flex flex-col overflow-hidden h-full">
             
-            <header class="bg-white shadow-sm border-b border-slate-200 px-10 py-5 flex justify-between items-center z-10">
-                <h2 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                    <i v-if="currentTab === 'analyzer'" data-lucide="network" class="w-6 h-6 text-emerald-600"></i>
-                    <i v-if="currentTab === 'pool'" data-lucide="globe" class="w-6 h-6 text-indigo-600"></i>
-                    <i v-if="currentTab === 'blacklist'" data-lucide="shield-off" class="w-6 h-6 text-rose-600"></i>
-                    {{ currentTab === 'analyzer' ? 'Centro de Análisis e Inteligencia IP' : currentTab === 'pool' ? 'Base de Datos de Nodos (Pool)' : 'Registro de Nodos Quemados' }}
+            <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200 px-10 py-5 flex justify-between items-center z-10 sticky top-0">
+                <h2 class="text-xl font-bold text-slate-800 tracking-tight">
+                    {{ currentTab === 'accounts' ? 'Gestión de Cuentas' : currentTab === 'pool' ? 'Base de Datos de Nodos' : 'Registro de Nodos Bloqueados' }}
                 </h2>
-                <div v-if="syncStatus" class="px-5 py-2 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-100 shadow-sm flex items-center gap-2 animate-pulse">
-                    <i data-lucide="radio" class="w-4 h-4"></i> {{ syncStatus }}
-                </div>
+                <transition name="fade">
+                    <div v-if="syncStatus" class="px-5 py-2 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100 shadow-sm flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4"></i> {{ syncStatus }}
+                    </div>
+                </transition>
             </header>
 
-            <div class="flex-1 overflow-hidden flex flex-col p-6">
+            <div class="flex-1 overflow-auto p-8">
                 
-                <!-- ==================== VISTA: ANALIZADOR DE IPs ==================== -->
-                <div v-show="currentTab === 'analyzer'" class="flex flex-col h-full gap-6">
-                    
-                    <!-- PANEL SUPERIOR: CARGA Y ESTADÍSTICAS -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
-                        
-                        <!-- Módulo de Carga -->
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col">
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i data-lucide="braces" class="w-4 h-4 text-emerald-500"></i> Carga Masiva (Data Bruta)</h3>
-                                <button @click="clearAnalyzer" class="text-xs text-rose-500 hover:text-rose-700 font-bold underline">Limpiar Todo</button>
+                <!-- ==================== VISTA: CUENTAS ==================== -->
+                <div v-show="currentTab === 'accounts'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-full overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50/50">
+                        <button @click="addAccount" class="bg-slate-900 hover:bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Nueva Fila
+                        </button>
+                        <div class="relative w-96 flex-shrink-0">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                             </div>
-                            <textarea v-model="bulkInput" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none" placeholder="Pega aquí tus cuentas. Ej:&#10;LON-01   0x1234567890abcd   8.8.8.8&#10;LON-02   0x0987654321ffff   1.1.1.1"></textarea>
-                            <button @click="processBulkInput" class="mt-3 w-full bg-slate-900 hover:bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm">
-                                Procesar Datos Mágicamente
-                            </button>
+                            <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, ID, proveedor..." class="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-center font-medium placeholder-slate-400">
+                            <button v-if="accountSearch" @click="accountSearch=''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500"><i data-lucide="x-circle" class="w-4 h-4"></i></button>
                         </div>
-
-                        <!-- Panel de Control y Ejecución -->
-                        <div class="bg-indigo-900 rounded-2xl shadow-lg border border-indigo-800 p-5 flex flex-col justify-center relative overflow-hidden">
-                            <div class="absolute -right-10 -top-10 opacity-10"><i data-lucide="satellite" class="w-40 h-40 text-white"></i></div>
-                            <h3 class="font-black text-white text-lg relative z-10">Motor de Geolocalización Inversa</h3>
-                            <p class="text-indigo-200 text-xs font-medium mt-1 mb-4 relative z-10">Conecta con IPInfo y OpenStreetMap en vivo.</p>
-                            
-                            <button @click="analyzeAll" :disabled="isAnalyzing || accounts.length === 0" class="relative z-10 w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-600 text-slate-900 disabled:text-slate-400 py-3 rounded-xl text-sm font-black transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2 uppercase tracking-wider">
-                                <i v-if="isAnalyzing" data-lucide="loader" class="w-5 h-5 animate-spin"></i>
-                                <i v-else data-lucide="radar" class="w-5 h-5"></i>
-                                {{ isAnalyzing ? 'Analizando en vivo...' : 'Iniciar Escaneo Profundo' }}
-                            </button>
+                        <div class="min-w-[120px] text-right">
+                            <span v-if="collisionCount > 0" class="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-200 shadow-sm animate-pulse">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i> {{ collisionCount }} ALERTAS
+                            </span>
                         </div>
-
-                        <!-- Panel de Riesgos -->
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
-                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2"><i data-lucide="shield-alert" class="w-4 h-4 text-rose-500"></i> Radar de Riesgos</h3>
-                            
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center bg-rose-50 p-2.5 rounded-lg border border-rose-100">
-                                    <span class="text-xs font-bold text-rose-700">Choques Exactos (IP/Nodo)</span>
-                                    <span class="px-2.5 py-1 bg-rose-600 text-white rounded-md text-xs font-black">{{ collisionCount }}</span>
-                                </div>
-                                <div class="flex justify-between items-center bg-amber-50 p-2.5 rounded-lg border border-amber-100">
-                                    <span class="text-xs font-bold text-amber-700">Proximidad de Rango (Subred)</span>
-                                    <span class="px-2.5 py-1 bg-amber-500 text-white rounded-md text-xs font-black">{{ rangeWarningCount }}</span>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                     
-                    <!-- TABLA PRINCIPAL DE INTELIGENCIA -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex-1 flex flex-col overflow-hidden">
-                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                            <span class="text-sm font-bold text-slate-600">Cuentas Monitoreadas: <span class="text-indigo-600">{{ accounts.length }}</span></span>
-                            <span class="text-xs text-slate-400 font-medium italic"><i data-lucide="info" class="w-3 h-3 inline"></i> Subredes y Localidades idénticas se marcarán para evitar baneos.</span>
-                        </div>
-                        <div class="flex-1 overflow-auto">
-                            <table class="w-full text-left border-collapse min-w-[1200px]">
-                                <thead class="sticky top-0 z-10 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
-                                    <tr class="text-slate-400 text-[10px] uppercase tracking-widest bg-slate-50">
-                                        <th class="p-4 font-bold text-center w-[8%]">Cuenta</th>
-                                        <th class="p-4 font-bold text-center w-[15%]">Nodo</th>
-                                        <th class="p-4 font-bold text-center w-[12%]">IP Actual</th>
-                                        <th class="p-4 font-bold text-center w-[12%]">Rango (Subred)</th>
-                                        <th class="p-4 font-bold w-[20%]">Proveedor (ASN / ISP)</th>
-                                        <th class="p-4 font-bold w-[25%]">Geo-Inteligencia (Ciudad, Distrito, Condado)</th>
-                                        <th class="p-4 font-bold text-center w-[8%]">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-slate-100">
-                                    <tr v-for="(acc, index) in accounts" :key="index" class="hover:bg-slate-50 transition-colors" :class="{'bg-rose-50/40': hasCollision(acc), 'bg-amber-50/40': !hasCollision(acc) && hasRangeProximity(acc)}">
-                                        
-                                        <td class="p-3 align-middle text-center font-bold text-slate-700">{{ acc.name }}</td>
-                                        
-                                        <td class="p-3 align-middle text-center">
-                                            <span class="font-mono text-xs font-bold text-slate-600 uppercase tracking-wide bg-slate-100 px-2 py-1 rounded border border-slate-200">{{ acc.nodeId || 'N/A' }}</span>
-                                        </td>
-                                        
-                                        <td class="p-3 align-middle text-center">
-                                            <span class="font-mono text-xs font-bold text-indigo-600">{{ acc.ip || 'N/A' }}</span>
-                                        </td>
-
-                                        <!-- SUBRED CALCULADA -->
-                                        <td class="p-3 align-middle text-center">
-                                            <span v-if="acc.subnet" class="font-mono text-[11px] font-bold px-2 py-1 rounded" :class="hasRangeProximity(acc) ? 'bg-amber-200 text-amber-800 border border-amber-300' : 'bg-slate-100 text-slate-500 border border-slate-200'">{{ acc.subnet }}</span>
-                                            <span v-else class="text-slate-300">-</span>
-                                        </td>
-
-                                        <td class="p-3 align-middle">
-                                            <div v-if="acc.loading" class="flex items-center gap-2 text-slate-400 text-xs"><i data-lucide="loader" class="w-3 h-3 animate-spin"></i> Consultando...</div>
-                                            <div v-else-if="acc.isp" class="text-xs font-bold text-slate-700 truncate" :title="acc.isp">{{ acc.isp }}</div>
-                                            <span v-else class="text-slate-300 text-xs">-</span>
-                                        </td>
-
-                                        <td class="p-3 align-middle">
-                                            <div v-if="acc.loading" class="flex items-center gap-2 text-emerald-400 text-xs"><i data-lucide="satellite" class="w-3 h-3 animate-pulse"></i> Triangulando...</div>
-                                            <div v-else-if="acc.analyzed" class="flex flex-wrap gap-1">
-                                                <span v-if="acc.city" class="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold uppercase tracking-wider" title="Ciudad">{{ acc.city }}</span>
-                                                <span v-if="acc.district" class="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded text-[10px] font-bold uppercase tracking-wider" title="Distrito / Borough">{{ acc.district }}</span>
-                                                <span v-if="acc.county" class="px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-200 rounded text-[10px] font-bold uppercase tracking-wider" title="Condado">{{ acc.county }}</span>
-                                                <span v-if="!acc.city && !acc.district && !acc.county" class="text-xs text-slate-400 italic">Geodata no disponible</span>
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse table-fixed min-w-[900px]">
+                            <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                                <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
+                                    <th class="p-4 font-bold w-[10%] text-center">Cuenta</th>
+                                    <th class="p-4 font-bold w-[20%] text-center">Nodo (14)</th>
+                                    <th class="p-4 font-bold w-[16%] text-center">Proveedor ISP</th>
+                                    <th class="p-4 font-bold w-[22%] text-center">Datos OSINT Geo</th>
+                                    <th class="p-4 font-bold w-[16%] text-center">IP Pública</th>
+                                    <th class="p-4 font-bold w-[6%] text-center">Estado</th>
+                                    <th class="p-4 font-bold w-[10%] text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-slate-100">
+                                <tr v-for="acc in processedAccounts" :key="acc.uid" :class="{'bg-rose-50/50': hasCollision(acc), 'hover:bg-slate-50 transition-colors': !hasCollision(acc)}">
+                                    
+                                    <td class="p-3 align-middle">
+                                        <input v-model="acc.name" :title="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-2 text-center font-bold text-slate-700 outline-none transition-all cursor-text">
+                                    </td>
+                                    
+                                    <td class="p-3 align-middle">
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <input v-model="acc.nodeId" @change="triggerCollisionCheck(acc)" :title="acc.nodeId" placeholder="Vacío" maxlength="14" class="w-full max-w-[120px] bg-transparent border-2 border-transparent hover:border-slate-200 focus:border-indigo-500 focus:bg-white rounded-lg p-1.5 text-center font-mono font-bold text-slate-600 outline-none transition-all uppercase tracking-wide cursor-text text-xs">
+                                            <div class="flex gap-1 shrink-0">
+                                                <button @click="openPoolModal(acc.uid)" class="w-6 h-6 flex items-center justify-center rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors" title="Buscar en Pool"><i data-lucide="search" class="w-3.5 h-3.5"></i></button>
+                                                <button v-if="acc.nodeId" @click="copyToClipboard(acc.nodeId, 'Nodo')" class="w-6 h-6 flex items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID Nodo"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                                             </div>
-                                            <span v-else class="text-slate-300 text-xs">-</span>
-                                        </td>
+                                        </div>
+                                    </td>
 
-                                        <td class="p-3 align-middle text-center">
-                                            <div v-if="hasCollision(acc)" class="inline-flex items-center justify-center w-7 h-7 bg-rose-100 text-rose-700 rounded-full animate-pulse cursor-help" title="Choque Crítico (IP o Nodo repetido)"><i data-lucide="shield-alert" class="w-4 h-4"></i></div>
-                                            <div v-else-if="hasRangeProximity(acc)" class="inline-flex items-center justify-center w-7 h-7 bg-amber-100 text-amber-700 rounded-full cursor-help" title="Proximidad (Misma Subred)"><i data-lucide="radio-tower" class="w-4 h-4"></i></div>
-                                            <div v-else-if="acc.analyzed" class="inline-flex items-center justify-center w-7 h-7 bg-emerald-100 text-emerald-600 rounded-full cursor-help" title="Limpio y Seguro"><i data-lucide="check-shield" class="w-4 h-4"></i></div>
-                                            <span v-else class="text-slate-300">-</span>
-                                        </td>
+                                    <td class="p-3 align-middle text-center">
+                                        <span v-if="acc.asn_isp || acc.geo_isp" :title="(acc.geo_isp || acc.asn_isp)" class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-[11px] font-bold truncate max-w-[140px] cursor-help uppercase tracking-wider">{{ getIspName(acc.geo_isp || acc.asn_isp) }}</span>
+                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
+                                    </td>
 
-                                    </tr>
-                                    <tr v-if="accounts.length === 0">
-                                        <td colspan="7" class="p-20 text-center flex flex-col items-center justify-center text-slate-400">
-                                            <i data-lucide="radar" class="w-12 h-12 mb-3 opacity-20"></i>
-                                            <p class="font-bold">El Radar está vacío.</p>
-                                            <p class="text-xs font-medium mt-1">Pega tus datos en la caja superior para comenzar el análisis.</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                    <!-- DATOS GEOLOCALIZADOS OSINT -->
+                                    <td class="p-3 align-middle text-center">
+                                        <div v-if="acc.geo_city || acc.geo_region" class="flex flex-col items-center justify-center">
+                                            <span class="text-[10px] font-black text-indigo-600 uppercase">{{ acc.geo_city || 'City' }}</span>
+                                            <span class="text-[10px] text-slate-500 font-semibold truncate max-w-[140px]">{{ acc.geo_region || 'Region' }}</span>
+                                            <span v-if="acc.geo_postal" class="text-[9px] text-slate-400 bg-slate-100 px-1.5 rounded mt-0.5">{{ acc.geo_postal }}</span>
+                                        </div>
+                                        <span v-else class="text-slate-300 text-xs font-medium italic">Sin Enriquecer</span>
+                                    </td>
+                                    
+                                    <td class="p-3 align-middle">
+                                        <div class="flex items-center justify-center gap-1.5 w-full">
+                                            <div class="relative">
+                                                <input v-model="acc.ip" @change="triggerCollisionCheck(acc)" :title="acc.ip" placeholder="0.0.0.0" class="w-28 bg-white border border-slate-200 hover:border-indigo-300 focus:border-indigo-500 rounded-lg p-1.5 text-center text-slate-700 font-mono font-bold text-xs outline-none transition-all shadow-sm cursor-text">
+                                            </div>
+                                            
+                                            <div class="flex flex-col gap-1 shrink-0">
+                                                <button @click="fetchCurrentIP(acc.uid)" class="w-6 h-5 flex items-center justify-center rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-500 hover:text-white transition-colors border border-emerald-200" title="Extraer IP & Enriquecer OSINT">
+                                                    <i data-lucide="zap" class="w-3 h-3"></i>
+                                                </button>
+                                                <button v-if="acc.ip" @click="copyToClipboard(acc.ip, 'IP')" class="w-6 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-700 hover:text-white transition-colors border border-slate-200" title="Copiar IP">
+                                                    <i data-lucide="copy" class="w-3 h-3"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="p-3 align-middle text-center">
+                                        <div v-if="hasCollision(acc)" title="Hay otra cuenta usando este mismo Nodo o Rango de IP" class="inline-flex items-center justify-center w-6 h-6 bg-rose-100 text-rose-700 rounded-full animate-pulse cursor-help"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
+                                        <div v-else-if="acc.nodeId" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>
+                                        <span v-else class="text-slate-300 text-xs font-medium">-</span>
+                                    </td>
+                                    
+                                    <td class="p-3 align-middle text-center">
+                                        <div class="flex items-center justify-center gap-1" v-if="acc.nodeId">
+                                            <button @click="releaseNode(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors" title="Liberar al Pool"><i data-lucide="unlock" class="w-3.5 h-3.5"></i></button>
+                                            <button @click="burnNode(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition-colors" title="Quemar a Bloqueados"><i data-lucide="flame" class="w-3.5 h-3.5"></i></button>
+                                        </div>
+                                        <div class="flex justify-center" v-else>
+                                            <button @click="removeAccount(acc.uid)" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-colors" title="Eliminar fila"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- ==================== VISTA: POOL NODOS (INTACTA) ==================== -->
-                <!-- Se mantiene la vista original de la Pool sin alterar la estructura -->
+                <!-- ==================== VISTA: POOL ==================== -->
+                <!-- Se mantiene igual, compacto -->
                 <div v-show="currentTab === 'pool'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
                     <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <div class="flex gap-3">
                             <button @click="fetchAPI" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 shadow-sm">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar API (Cascada 5 Capas)
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Mysterium
                             </button>
                             <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center gap-2 shadow-sm">
                                 <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar JSON
@@ -208,22 +194,29 @@
                     </div>
 
                     <div class="p-5 bg-white border-b border-slate-100 flex flex-wrap gap-4 items-center justify-center">
-                        <div class="w-40"><input type="text" v-model="filters.nodeId" placeholder="Filtrar por ID..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-center font-medium"></div>
-                        <div class="w-40"><input type="text" v-model="filters.city" placeholder="Filtrar por Ciudad..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-center font-medium"></div>
-                        <div class="w-40"><input type="text" v-model="filters.isp" placeholder="Filtrar por ISP..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-center font-medium"></div>
+                        <div class="w-40"><input type="text" v-model="filters.nodeId" placeholder="Filtrar por ID..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
+                        <div class="w-40"><input type="text" v-model="filters.city" placeholder="Filtrar por Ciudad..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
+                        <div class="w-40"><input type="text" v-model="filters.isp" placeholder="Filtrar por ISP..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-center font-medium"></div>
                         
-                        <button @click="clearFilters" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold rounded-xl transition-colors border border-rose-200">Limpiar Filtros</button>
+                        <!-- BOTÓN ELITE TOP 5 UK -->
+                        <button @click="filters.onlyTopISP = !filters.onlyTopISP" 
+                                :class="filters.onlyTopISP ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'"
+                                class="px-4 py-2 border rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+                            <i data-lucide="star" class="w-4 h-4"></i> Elite Top 5 UK
+                        </button>
+
+                        <button @click="clearFilters" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold rounded-xl transition-colors border border-rose-200">Limpiar</button>
                     </div>
 
                     <div class="flex-1 overflow-auto">
                         <table class="w-full text-left border-collapse">
                             <thead class="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
                                 <tr class="text-slate-500 text-[11px] uppercase tracking-wider">
-                                    <th class="p-4 font-bold text-center w-[30%]">ID Nodo (14 Chars)</th>
+                                    <th class="p-4 font-bold text-center w-[25%]">ID (14 Chars)</th>
                                     <th class="p-4 font-bold text-center w-[20%]">Ciudad</th>
-                                    <th class="p-4 font-bold text-center w-[25%]">Proveedor ISP</th>
-                                    <th class="p-4 font-bold text-center w-[15%]">Calidad</th>
-                                    <th class="p-4 font-bold text-center w-[10%]">Copiar</th>
+                                    <th class="p-4 font-bold text-center w-[20%]">Proveedor</th>
+                                    <th class="p-4 font-bold text-center w-[15%] cursor-pointer hover:text-indigo-600 transition-colors flex items-center justify-center gap-1" @click="toggleSortScore">Calidad <i data-lucide="arrow-up-down" class="w-3 h-3"></i></th>
+                                    <th class="p-4 font-bold text-center w-[20%]">Manejo Directo</th>
                                 </tr>
                             </thead>
                             <tbody class="text-sm divide-y divide-slate-100">
@@ -231,11 +224,15 @@
                                     <td class="p-4 align-middle text-center">
                                         <span class="font-mono font-bold text-slate-700 uppercase tracking-wider bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">{{ node.id }}</span>
                                     </td>
-                                    <td class="p-4 align-middle text-center font-medium text-slate-600">{{ node.city }}</td>
-                                    <td class="p-4 align-middle text-center text-slate-600 font-bold">{{ node.asn_isp }}</td>
+                                    <td class="p-4 align-middle text-center font-medium text-slate-600" :title="node.city">{{ node.city }}</td>
+                                    <td class="p-4 align-middle text-center text-slate-600" :title="node.asn_isp">{{ node.asn_isp }}</td>
                                     <td class="p-4 align-middle text-center"><span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">{{ node.q_score }}</span></td>
                                     <td class="p-4 align-middle text-center">
-                                        <button @click="copyToClipboard(node.id, 'Nodo')" class="w-8 h-8 mx-auto flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button @click="copyToClipboard(node.id, 'Nodo')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-colors border border-slate-200" title="Copiar ID"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                                            <button @click="openAccountSelectModal(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors border border-indigo-100" title="Asignar a Cuenta..."><i data-lucide="user-plus" class="w-4 h-4"></i></button>
+                                            <button @click="burnDirectlyFromPool(node)" class="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-50 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors border border-rose-100" title="Falló Prueba: Quemar"><i data-lucide="flame" class="w-4 h-4"></i></button>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -243,7 +240,8 @@
                     </div>
                 </div>
 
-                <!-- ==================== VISTA: LISTA NEGRA (INTACTA) ==================== -->
+                <!-- ==================== VISTA: LISTA NEGRA ==================== -->
+                <!-- Se mantiene oculta para ahorrar espacio en la vista, está intacta -->
                 <div v-show="currentTab === 'blacklist'" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-8 border-b border-slate-100 bg-rose-50/30 flex flex-col gap-4 text-center">
                         <div class="flex justify-center items-center gap-3">
@@ -251,7 +249,7 @@
                             <h3 class="text-lg font-bold text-slate-800">Carga Masiva de Bloqueados</h3>
                         </div>
                         <div class="max-w-2xl mx-auto w-full relative">
-                            <textarea v-model="bulkBlacklistText" rows="3" class="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-mono outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-center shadow-sm resize-none" placeholder="Pega IDs de nodos aquí..."></textarea>
+                            <textarea v-model="bulkBlacklistText" rows="3" class="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-mono outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 text-center shadow-sm resize-none" placeholder="Pega IDs aquí..."></textarea>
                         </div>
                         <div class="flex justify-center mt-2">
                             <button @click="processBulkBlacklist" class="bg-rose-600 hover:bg-rose-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm">Bloquear Nodos</button>
@@ -282,6 +280,39 @@
 
             </div>
         </main>
+
+        <!-- MODALES DE ASIGNACIÓN -->
+        <transition name="fade">
+            <div v-if="showPoolModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden border border-slate-200">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center text-center relative bg-slate-50/50">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-slate-800">Seleccionar Nodo</h3>
+                            <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">Destino: <span class="text-indigo-600">{{ accounts.find(a => a.uid === selectedAccountUid)?.name }}</span></p>
+                        </div>
+                        <button @click="closePoolModal" class="absolute right-6 top-6 w-8 h-8 bg-slate-200 hover:bg-rose-100 hover:text-rose-600 rounded-full transition-colors flex items-center justify-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="p-5 border-b border-slate-100 flex gap-4 justify-center bg-white">
+                        <input type="text" v-model="filters.nodeId" placeholder="ID (14)" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                        <input type="text" v-model="filters.city" placeholder="Ciudad" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                        <input type="text" v-model="filters.isp" placeholder="Proveedor" class="w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:border-indigo-500 outline-none text-center font-medium">
+                    </div>
+                    <div class="flex-1 overflow-auto p-6 bg-slate-50">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div v-for="node in filteredPool" :key="node.id" @click="assignNodeToAccount(node.id)" class="bg-white border border-slate-200 rounded-2xl p-5 hover:border-indigo-500 hover:shadow-lg cursor-pointer transition-all group flex flex-col justify-between h-full text-center">
+                                <div>
+                                    <div class="inline-flex items-center justify-center px-2 py-1 rounded-lg text-[10px] font-black border mb-3" :class="node.q_score >= 2.8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-blue-50 text-blue-600 border-blue-200'">Q: {{ node.q_score }}</div>
+                                    <h4 class="font-mono font-bold text-slate-800 text-sm uppercase tracking-wide group-hover:text-indigo-600 transition-colors mb-2">{{ node.id }}</h4>
+                                    <p class="text-xs text-slate-500 font-medium mb-1 truncate cursor-help" :title="node.city">{{ node.city }}</p>
+                                    <p class="text-xs text-slate-600 font-bold truncate cursor-help" :title="node.asn_isp">{{ node.asn_isp }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
     </div>
 
     <script src="app.js"></script>

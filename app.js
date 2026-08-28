@@ -13,7 +13,6 @@ createApp({
         const accountSort = ref({ field: null, desc: false });
         
         const pool = ref([]);
-        // Multiples variables de filtros separadas
         const poolFilters = ref({ nodeId: '', ip: '', isp: '', minQuality: '2.5' });
         const poolSort = ref({ field: null, desc: false });
 
@@ -168,18 +167,14 @@ createApp({
                 }
             });
             pool.value = rawPool;
-            showStatus(`Radar completado: ${pool.value.length} nodos obtenidos.`);
+            showStatus(`Radar completado: ${pool.value.length} nodos limpios obtenidos.`);
         };
 
-        // ==========================================
-        // 🚀 CASCADA MYSTERIUM (EXTRACCIÓN AGRESIVA V2)
-        // ==========================================
         const fetchMysteriumAPI = async () => {
-            syncStatus.value = 'Extracción Agresiva Múltiple en progreso...';
+            syncStatus.value = 'Extracción Agresiva en progreso...';
             const rawUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             const encodedUrl = encodeURIComponent(rawUrl);
 
-            // Disparamos múltiples peticiones al mismo tiempo para ganar velocidad
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodedUrl}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
@@ -187,38 +182,59 @@ createApp({
             ];
 
             try {
-                // Promise.any toma la primera respuesta EXITOSA de los 3 proxies. 
-                // Esto es la máxima optimización posible en Frontend puro.
                 const requests = proxies.map(url => 
                     fetch(url, { cache: 'no-store' }).then(res => {
                         if (!res.ok) throw new Error('Fallo proxy');
                         return res.json();
                     })
                 );
-
                 const data = await Promise.any(requests);
-
                 if (Array.isArray(data) && data.length > 0 && data[0].provider_id) {
                     processNodeData(data);
                 } else {
                     throw new Error("Datos vacíos");
                 }
             } catch (e) {
-                alert("🚫 ERROR: Todos los servidores fallaron. Es posible que los Escudos de Brave estén bloqueando la conexión. Apágalos para esta página.");
-                syncStatus.value = 'Red bloqueada.';
+                alert("🚫 ERROR: La red bloqueó la conexión automática. Utiliza el botón verde 'Subir JSON Manual' cargando el archivo descargado de Mysterium.");
+                syncStatus.value = 'Extracción bloqueada.';
             }
             setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
 
         // ==========================================
-        // 🗑️ BOTÓN DE BLOQUEO DIRECTO (POOL)
+        // 📥 LÓGICA DE IMPORTACIÓN MANUAL (JSON)
         // ==========================================
+        const importPoolJSON = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // Verificamos si es un array puro o si viene envuelto por alguna herramienta
+                    if (Array.isArray(data)) {
+                        processNodeData(data);
+                        showStatus('JSON Manual cargado exitosamente.');
+                    } else if (data.contents) {
+                        processNodeData(JSON.parse(data.contents));
+                        showStatus('JSON Manual cargado exitosamente.');
+                    } else {
+                        throw new Error("Formato JSON inválido");
+                    }
+                } catch (err) {
+                    alert("🚫 Error al leer el archivo JSON. Verifica que sea el formato original de la API.");
+                    syncStatus.value = 'Error de formato.';
+                }
+                event.target.value = null; // Reiniciar input para permitir cargar el mismo archivo
+            };
+            reader.readAsText(file);
+        };
+
         const burnDirectlyFromPool = (nodeId) => {
             if (!blacklist.value.includes(nodeId)) {
                 blacklist.value.unshift(nodeId);
-                // Remover visualmente de la tabla del pool de inmediato
                 pool.value = pool.value.filter(n => n.id !== nodeId);
-                showStatus(`Nodo ${nodeId} bloqueado.`);
+                showStatus(`Nodo ${nodeId} bloqueado directamente.`);
             }
         };
 
@@ -230,7 +246,6 @@ createApp({
 
         const filteredPool = computed(() => {
             let result = pool.value;
-            // 4 Cajas de búsqueda independientes
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -333,7 +348,7 @@ createApp({
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
             collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, removeBlacklistNode,
-            fetchMysteriumAPI, copyToClipboard, burnDirectlyFromPool,
+            fetchMysteriumAPI, importPoolJSON, copyToClipboard, burnDirectlyFromPool,
             filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,

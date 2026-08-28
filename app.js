@@ -78,7 +78,7 @@ createApp({
         const forceEnrichmentSweep = async () => {
             syncStatus.value = 'Escaneando proveedores ISP...';
             for (let acc of accounts.value) {
-                if (acc.ip && (!acc.isp || acc.isp === 'Desconocido')) {
+                if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido')) {
                     await fetchSingleISP(acc);
                     await new Promise(r => setTimeout(r, 200));
                 }
@@ -86,6 +86,38 @@ createApp({
             syncStatus.value = '¡Escaneo Completado!';
             setTimeout(() => { syncStatus.value = ''; }, 3000);
             updateCharts();
+        };
+
+        // AUTO DETECTAR IP DESDE EL BOTÓN DEL RAYO
+        const autoDetectIP = async (acc) => {
+            syncStatus.value = `Detectando red para ${acc.name}...`;
+            try {
+                const res = await fetch("https://api.ipify.org?format=json");
+                const data = await res.json();
+                acc.ip = data.ip;
+                await fetchSingleISP(acc);
+                
+                if (hasCollision(acc)) {
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (los primeros 3 bloques son idénticos). Quema este nodo inmediatamente.`);
+                } else {
+                    showStatus('IP Limpia. Conexión segura.');
+                }
+            } catch(e) {
+                alert("Error detectando IP. Verifica tu conexión.");
+            }
+            syncStatus.value = "";
+            updateCharts();
+        };
+
+        // CHEQUEO MANUAL AL ESCRIBIR LA IP
+        const manualIPCheck = async (acc) => {
+            if (acc.ip && acc.ip.includes('.')) {
+                if (hasCollision(acc)) {
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con los primeros 3 bloques de otra cuenta activa. Deséchala.`);
+                }
+                await fetchSingleISP(acc);
+                updateCharts();
+            }
         };
 
         const addAccount = () => {
@@ -96,16 +128,19 @@ createApp({
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
 
         const hasCollision = (currentAccount) => {
-            if (!currentAccount.ip && !currentAccount.nodeId) return false;
+            if ((!currentAccount.ip || currentAccount.ip === 'Pendiente') && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
                 if (acc.uid === currentAccount.uid) return false;
+                
+                // Chequeo Nodo ID
                 const curNode = (currentAccount.nodeId || '').trim();
                 const accNode = (acc.nodeId || '').trim();
                 if (accNode !== '' && curNode !== '' && accNode === curNode) return true;
 
+                // Chequeo Subred IP (/24)
                 const curIp = (currentAccount.ip || '').trim();
                 const accIp = (acc.ip || '').trim();
-                if (curIp && accIp) {
+                if (curIp && accIp && curIp !== 'Pendiente' && accIp !== 'Pendiente') {
                     const octCur = curIp.split('.');
                     const octAcc = accIp.split('.');
                     if (octCur.length === 4 && octAcc.length === 4) {
@@ -149,17 +184,14 @@ createApp({
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return; 
                 
-                const ip = nodo.endpoint ? nodo.endpoint.split(':')[0] : null;
-                if (!ip) return;
-
-                const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: ip };
-                const isBlacklisted = blacklist.value.includes(idCorto) || blacklist.value.includes(ip);
+                const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: '' }; // IP ignorada aquí
+                const isBlacklisted = blacklist.value.includes(idCorto);
                 
                 if (!isBlacklisted && !hasCollision(dummyAccount)) {
                     seenIds.add(idCorto);
                     rawPool.push({
                         id: idCorto,
-                        ip: ip,
+                        ip: 'Pendiente', // La IP ya no viene en el JSON de Mysterium
                         city: nodo.location?.city || 'Desconocida',
                         asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
                         q_score: (nodo.quality?.quality || 0).toFixed(2)
@@ -178,7 +210,8 @@ createApp({
             const proxies = [
                 `https://api.allorigins.win/raw?url=${encodedUrl}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
-                `https://corsproxy.io/?${encodedUrl}`
+                `https://corsproxy.io/?${encodedUrl}`,
+                rawUrl // Directo por si acaso
             ];
 
             try {
@@ -195,15 +228,12 @@ createApp({
                     throw new Error("Datos vacíos");
                 }
             } catch (e) {
-                alert("🚫 ERROR: La red bloqueó la conexión automática. Utiliza el botón verde 'Subir JSON Manual' cargando el archivo descargado de Mysterium.");
+                alert("🚫 ERROR: Usa el botón verde 'Subir JSON Manual' cargando el archivo descargado de Mysterium.");
                 syncStatus.value = 'Extracción bloqueada.';
             }
             setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
 
-        // ==========================================
-        // 📥 LÓGICA DE IMPORTACIÓN MANUAL (JSON)
-        // ==========================================
         const importPoolJSON = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -211,7 +241,6 @@ createApp({
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    // Verificamos si es un array puro o si viene envuelto por alguna herramienta
                     if (Array.isArray(data)) {
                         processNodeData(data);
                         showStatus('JSON Manual cargado exitosamente.');
@@ -219,13 +248,12 @@ createApp({
                         processNodeData(JSON.parse(data.contents));
                         showStatus('JSON Manual cargado exitosamente.');
                     } else {
-                        throw new Error("Formato JSON inválido");
+                        throw new Error("Formato inválido");
                     }
                 } catch (err) {
-                    alert("🚫 Error al leer el archivo JSON. Verifica que sea el formato original de la API.");
-                    syncStatus.value = 'Error de formato.';
+                    alert("🚫 Error al leer el archivo JSON.");
                 }
-                event.target.value = null; // Reiniciar input para permitir cargar el mismo archivo
+                event.target.value = null; 
             };
             reader.readAsText(file);
         };
@@ -249,10 +277,6 @@ createApp({
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
-            }
-            if (poolFilters.value.ip) {
-                const s = poolFilters.value.ip.toLowerCase().trim();
-                result = result.filter(n => (n.ip || '').toLowerCase().includes(s));
             }
             if (poolFilters.value.isp) {
                 const s = poolFilters.value.isp.toLowerCase().trim();
@@ -281,7 +305,7 @@ createApp({
 
         const ispStats = computed(() => {
             const counts = {};
-            const accountsWithIp = accounts.value.filter(a => a.ip).length || 1; 
+            const accountsWithIp = accounts.value.filter(a => a.ip && a.ip !== 'Pendiente').length || 1; 
             accounts.value.forEach(acc => {
                 if (acc.isp && acc.isp !== 'Desconocido') {
                     let shortIsp = acc.isp.split(',')[0].substring(0, 18);
@@ -352,7 +376,7 @@ createApp({
             filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,
-            ispStats
+            ispStats, autoDetectIP, manualIPCheck
         };
     }
 }).mount('#app');

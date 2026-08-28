@@ -26,15 +26,22 @@ createApp({
 
         let chartInstance = null;
 
+        // ==========================================
+        // 🔄 PERSISTENCIA LOCALSTORAGE (CORREGIDA)
+        // ==========================================
         const saveData = () => {
             localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
             localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
+            // ¡NUEVO! Guardamos la Pool para que no se borre al cerrar el navegador
+            localStorage.setItem('vpn_nexus_pool', JSON.stringify(pool.value)); 
             updateCharts();
         };
 
         const loadData = () => {
             let savedAcc = JSON.parse(localStorage.getItem('vpn_nexus_acc'));
             let savedBlk = JSON.parse(localStorage.getItem('vpn_nexus_blk'));
+            let savedPool = JSON.parse(localStorage.getItem('vpn_nexus_pool')); 
+
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({
                     ...a,
@@ -43,10 +50,17 @@ createApp({
                 }));
             }
             blacklist.value = savedBlk || [];
+            if (savedPool && savedPool.length > 0) {
+                pool.value = savedPool; 
+            }
         };
 
-        watch([accounts, blacklist], saveData, { deep: true });
+        // Escuchamos cambios en accounts, blacklist y AHORA TAMBIÉN en pool
+        watch([accounts, blacklist, pool], saveData, { deep: true });
 
+        // ==========================================
+        // 📥 CARGA MASIVA 
+        // ==========================================
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
             const lineas = bulkLoadText.value.trim().split('\n');
@@ -74,7 +88,7 @@ createApp({
             forceEnrichmentSweep();
         };
 
-        // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
+        // --- ENRIQUECIMIENTO (IPINFO + NOMINATIM) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
             try {
@@ -84,26 +98,21 @@ createApp({
                     let org = data.org || 'Desconocido';
                     acc.isp = org.replace(/^AS\d+\s/, '').trim();
                     
-                    // EXTRAER REGIÓN LOCAL CON NOMINATIM
                     if (data.loc) {
                         const [lat, lon] = data.loc.split(',');
                         try {
                             const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                             const nomData = await nomRes.json();
                             if (nomData && nomData.address) {
-                                // Buscar el mejor nivel territorial (Ignorando nombres de país)
                                 let div = nomData.address.state_district || nomData.address.county || nomData.address.city || data.city;
                                 const ignorar = ['england', 'scotland', 'wales', 'northern ireland', 'united kingdom', 'uk', 'great britain'];
                                 
                                 if (div && ignorar.includes(div.toLowerCase())) {
                                     div = nomData.address.city || nomData.address.town || nomData.address.municipality || data.city || 'Desconocida';
                                 }
-                                
-                                // Ajuste específico para Londres
                                 if (div.toLowerCase() === 'london' && nomData.address.state_district) {
-                                    div = nomData.address.state_district; // Suele traer "Greater London"
+                                    div = nomData.address.state_district; 
                                 }
-
                                 acc.county = div;
                             } else {
                                 acc.county = data.city || data.region || 'Desconocido';
@@ -123,7 +132,6 @@ createApp({
             for (let acc of accounts.value) {
                 if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido' || acc.county === 'England' || acc.county === 'Desconocido')) {
                     await fetchSingleISP(acc);
-                    // Nominatim exige 1 segundo de pausa entre consultas para no bloquear tu IP (Hard Limit)
                     await new Promise(r => setTimeout(r, 1100)); 
                 }
             }
@@ -132,7 +140,7 @@ createApp({
             updateCharts();
         };
 
-        // --- SISTEMA ANTI-ERROR (RAYITO Y DESHACER) ---
+        // --- SISTEMA ANTI-ERROR ---
         const autoDetectIP = async (acc) => {
             if (acc.ip && acc.ip !== '0.0.0.0' && acc.ip !== 'Pendiente') {
                 const confirmed = confirm(`¿Aseguraste que el VPN de [${acc.name}] está encendido?\n\nEsto reemplazará la IP: ${acc.ip}`);
@@ -150,7 +158,7 @@ createApp({
                 await fetchSingleISP(acc);
                 
                 if (hasCollision(acc)) {
-                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón Deshacer (Giro hacia atrás) si fue un error.`);
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón Deshacer.`);
                 } else {
                     showStatus('IP Limpia. Conexión segura.');
                 }
@@ -188,6 +196,7 @@ createApp({
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
 
+        // --- MOTOR DE COLISIONES ---
         const hasCollision = (currentAccount) => {
             if ((!currentAccount.ip || currentAccount.ip === 'Pendiente') && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
@@ -235,7 +244,9 @@ createApp({
             return result;
         });
 
-        // --- SISTEMA POOL CON MEMORIA ---
+        // ==========================================
+        // 🚀 EXTRACCIÓN MYSTERIUM (RESTAURADA VERSIÓN ANTIGUA)
+        // ==========================================
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
@@ -252,8 +263,6 @@ createApp({
                 });
             });
 
-            // Triangulación invisible: El computed `filteredPool` se encargará de ocultarlos,
-            // pero también los limpiamos del array base por memoria
             const rawPool = [];
             currentPoolMap.forEach(n => {
                 const isBlacklisted = blacklist.value.includes(n.id);
@@ -268,33 +277,50 @@ createApp({
         };
 
         const fetchMysteriumAPI = async () => {
-            syncStatus.value = 'Extracción en progreso...';
-            const rawUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            const encodedUrl = encodeURIComponent(rawUrl);
+            syncStatus.value = 'Conectando a Mysterium...';
+            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+            let data = null;
 
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodedUrl}`,
-                `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
-                `https://corsproxy.io/?${encodedUrl}`,
-                rawUrl 
+            // EL ALGORITMO ANTIGUO QUE SÍ FUNCIONABA, LEYENDO COMO TEXTO Y CON FOR...OF
+            const attempts = [
+                { name: 'Directo', url: targetUrl },
+                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
+                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
             ];
 
-            try {
-                const requests = proxies.map(url => 
-                    fetch(url, { cache: 'no-store' }).then(res => {
-                        if (!res.ok) throw new Error('Fallo proxy');
-                        return res.json();
-                    })
-                );
-                const data = await Promise.any(requests);
-                if (Array.isArray(data) && data.length > 0 && data[0].provider_id) {
-                    processNodeData(data);
-                } else {
-                    throw new Error("Datos vacíos");
+            for (let attempt of attempts) {
+                syncStatus.value = `Intentando: ${attempt.name}...`;
+                try {
+                    const res = await fetch(attempt.url, { 
+                        headers: { 'Accept': 'application/json' },
+                        cache: 'no-store'
+                    });
+                    
+                    if (res.ok) {
+                        const text = await res.text();
+                        try {
+                            const parsed = JSON.parse(text);
+                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
+                                data = parsed;
+                                console.log(`¡Éxito usando: ${attempt.name}!`);
+                                break; 
+                            }
+                        } catch (err) {
+                            console.warn(`Respuesta falsa del proxy en ${attempt.name}`);
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Fallo en ${attempt.name}:`, e.message);
                 }
-            } catch (e) {
-                alert("🚫 ERROR: Todos los proxies de red fallaron. Usa el botón verde 'Subir JSON Manual' cargando el archivo descargado de Mysterium.");
-                syncStatus.value = 'Extracción bloqueada.';
+            }
+
+            if (data && Array.isArray(data)) {
+                processNodeData(data);
+            } else {
+                alert("🚫 ERROR: Ningún proxy logró la conexión. Usa el botón verde 'Subir JSON Manual'.");
+                syncStatus.value = 'Error de conexión.';
             }
             setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
@@ -308,10 +334,10 @@ createApp({
                     const data = JSON.parse(e.target.result);
                     if (Array.isArray(data)) {
                         processNodeData(data);
-                        showStatus('JSON añadido al pool exitosamente sin borrar los anteriores.');
+                        showStatus('JSON Manual añadido al pool exitosamente.');
                     } else if (data.contents) {
                         processNodeData(JSON.parse(data.contents));
-                        showStatus('JSON añadido al pool exitosamente.');
+                        showStatus('JSON Manual añadido al pool exitosamente.');
                     } else {
                         throw new Error("Formato inválido");
                     }
@@ -326,12 +352,12 @@ createApp({
         const burnDirectlyFromPool = (nodeId) => {
             if (!blacklist.value.includes(nodeId)) {
                 blacklist.value.unshift(nodeId);
-                // pool.value se filtrará automáticamente por el computed, pero lo forzamos visual
                 pool.value = pool.value.filter(n => n.id !== nodeId);
                 showStatus(`Nodo ${nodeId} enviado a cuarentena.`);
             }
         };
 
+        // --- ASIGNACIÓN DE NODO A CUENTA DESDE POOL ---
         const openAccountSelectModal = (nodeId) => {
             nodeToAssign.value = nodeId;
             showAccountSelectModal.value = true;
@@ -362,7 +388,6 @@ createApp({
         const filteredPool = computed(() => {
             let result = pool.value;
 
-            // FILTRO ESTRICTO REACTIVO DE BLACKLIST
             result = result.filter(n => !blacklist.value.includes(n.id));
 
             if (poolFilters.value.nodeId) {
@@ -394,6 +419,7 @@ createApp({
             return result;
         });
 
+        // --- DASHBOARD CHARTS ---
         const ispStats = computed(() => {
             const counts = {};
             const accountsWithIp = accounts.value.filter(a => a.ip && a.ip !== 'Pendiente').length || 1; 

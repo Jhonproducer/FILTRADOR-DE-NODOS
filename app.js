@@ -29,7 +29,6 @@ createApp({
         const saveData = () => {
             localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
             localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
-            // No guardamos el pool en storage para que no pese tanto, pero podrías hacerlo.
             updateCharts();
         };
 
@@ -75,7 +74,7 @@ createApp({
             forceEnrichmentSweep();
         };
 
-        // --- ENRIQUECIMIENTO (COUNTY CON NOMINATIM Y PINFO) ---
+        // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
             try {
@@ -85,21 +84,27 @@ createApp({
                     let org = data.org || 'Desconocido';
                     acc.isp = org.replace(/^AS\d+\s/, '').trim();
                     
-                    // EXTRAER CONDADO REAL CON NOMINATIM / OPENSTREETMAP
+                    // EXTRAER REGIÓN LOCAL CON NOMINATIM
                     if (data.loc) {
                         const [lat, lon] = data.loc.split(',');
                         try {
                             const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                             const nomData = await nomRes.json();
                             if (nomData && nomData.address) {
-                                // Buscar el mejor nivel de detalle territorial
-                                let county = nomData.address.county || nomData.address.state_district || nomData.address.city_district || nomData.address.region || nomData.address.state || data.city;
+                                // Buscar el mejor nivel territorial (Ignorando nombres de país)
+                                let div = nomData.address.state_district || nomData.address.county || nomData.address.city || data.city;
+                                const ignorar = ['england', 'scotland', 'wales', 'northern ireland', 'united kingdom', 'uk', 'great britain'];
                                 
-                                // Si solo dice "England" o "UK", bajamos un nivel al distrito o ciudad
-                                if (county.toLowerCase() === 'england' || county.toLowerCase() === 'united kingdom') {
-                                    county = nomData.address.city_district || nomData.address.municipality || data.city || 'Desconocido';
+                                if (div && ignorar.includes(div.toLowerCase())) {
+                                    div = nomData.address.city || nomData.address.town || nomData.address.municipality || data.city || 'Desconocida';
                                 }
-                                acc.county = county;
+                                
+                                // Ajuste específico para Londres
+                                if (div.toLowerCase() === 'london' && nomData.address.state_district) {
+                                    div = nomData.address.state_district; // Suele traer "Greater London"
+                                }
+
+                                acc.county = div;
                             } else {
                                 acc.county = data.city || data.region || 'Desconocido';
                             }
@@ -114,7 +119,7 @@ createApp({
         };
 
         const forceEnrichmentSweep = async () => {
-            syncStatus.value = 'Escaneando proveedores y condados...';
+            syncStatus.value = 'Escaneando proveedores y regiones...';
             for (let acc of accounts.value) {
                 if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido' || acc.county === 'England' || acc.county === 'Desconocido')) {
                     await fetchSingleISP(acc);
@@ -130,7 +135,7 @@ createApp({
         // --- SISTEMA ANTI-ERROR (RAYITO Y DESHACER) ---
         const autoDetectIP = async (acc) => {
             if (acc.ip && acc.ip !== '0.0.0.0' && acc.ip !== 'Pendiente') {
-                const confirmed = confirm(`¿Estás seguro de que tu VPN está encendido con el Nodo correcto para [${acc.name}]?\n\nEsto reemplazará la IP: ${acc.ip}`);
+                const confirmed = confirm(`¿Aseguraste que el VPN de [${acc.name}] está encendido?\n\nEsto reemplazará la IP: ${acc.ip}`);
                 if (!confirmed) return;
             }
 
@@ -139,13 +144,13 @@ createApp({
                 const res = await fetch("https://api.ipify.org?format=json");
                 const data = await res.json();
                 
-                acc.previousIp = acc.ip; // Guardar por si acaso se equivocó
+                acc.previousIp = acc.ip; 
                 acc.ip = data.ip;
                 
                 await fetchSingleISP(acc);
                 
                 if (hasCollision(acc)) {
-                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón rojo de Deshacer (Giro hacia atrás) si fue un error.`);
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón Deshacer (Giro hacia atrás) si fue un error.`);
                 } else {
                     showStatus('IP Limpia. Conexión segura.');
                 }
@@ -230,11 +235,9 @@ createApp({
             return result;
         });
 
-        // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
+        // --- SISTEMA POOL CON MEMORIA ---
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
-            
-            // Mantener nodos anteriores que ya habías extraído (No los borramos)
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
 
             data.forEach(nodo => {
@@ -249,12 +252,12 @@ createApp({
                 });
             });
 
-            // Triangulación final: Limpiar nodos que ya se asignaron o bloquearon
+            // Triangulación invisible: El computed `filteredPool` se encargará de ocultarlos,
+            // pero también los limpiamos del array base por memoria
             const rawPool = [];
             currentPoolMap.forEach(n => {
                 const isBlacklisted = blacklist.value.includes(n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
-                
                 if (!isBlacklisted && !inUse) {
                     rawPool.push(n);
                 }
@@ -273,7 +276,7 @@ createApp({
                 `https://api.allorigins.win/raw?url=${encodedUrl}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
                 `https://corsproxy.io/?${encodedUrl}`,
-                rawUrl // Directo
+                rawUrl 
             ];
 
             try {
@@ -305,10 +308,10 @@ createApp({
                     const data = JSON.parse(e.target.result);
                     if (Array.isArray(data)) {
                         processNodeData(data);
-                        showStatus('JSON Manual añadido al pool exitosamente.');
+                        showStatus('JSON añadido al pool exitosamente sin borrar los anteriores.');
                     } else if (data.contents) {
                         processNodeData(JSON.parse(data.contents));
-                        showStatus('JSON Manual añadido al pool exitosamente.');
+                        showStatus('JSON añadido al pool exitosamente.');
                     } else {
                         throw new Error("Formato inválido");
                     }
@@ -323,12 +326,12 @@ createApp({
         const burnDirectlyFromPool = (nodeId) => {
             if (!blacklist.value.includes(nodeId)) {
                 blacklist.value.unshift(nodeId);
+                // pool.value se filtrará automáticamente por el computed, pero lo forzamos visual
                 pool.value = pool.value.filter(n => n.id !== nodeId);
                 showStatus(`Nodo ${nodeId} enviado a cuarentena.`);
             }
         };
 
-        // Modal para asignar Nodo a Cuenta
         const openAccountSelectModal = (nodeId) => {
             nodeToAssign.value = nodeId;
             showAccountSelectModal.value = true;
@@ -358,6 +361,10 @@ createApp({
 
         const filteredPool = computed(() => {
             let result = pool.value;
+
+            // FILTRO ESTRICTO REACTIVO DE BLACKLIST
+            result = result.filter(n => !blacklist.value.includes(n.id));
+
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));

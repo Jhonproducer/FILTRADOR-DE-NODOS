@@ -13,7 +13,8 @@ createApp({
         const accountSort = ref({ field: null, desc: false });
         
         const pool = ref([]);
-        const poolFilters = ref({ nodeId: '', ip: '', isp: '', minQuality: '2.5' });
+        // Ya no buscamos IP en la Pool
+        const poolFilters = ref({ nodeId: '', isp: '', minQuality: '2.5' });
         const poolSort = ref({ field: null, desc: false });
 
         const blacklist = ref([]);
@@ -109,7 +110,6 @@ createApp({
             updateCharts();
         };
 
-        // CHEQUEO MANUAL AL ESCRIBIR LA IP
         const manualIPCheck = async (acc) => {
             if (acc.ip && acc.ip.includes('.')) {
                 if (hasCollision(acc)) {
@@ -132,12 +132,10 @@ createApp({
             return accounts.value.some(acc => {
                 if (acc.uid === currentAccount.uid) return false;
                 
-                // Chequeo Nodo ID
                 const curNode = (currentAccount.nodeId || '').trim();
                 const accNode = (acc.nodeId || '').trim();
                 if (accNode !== '' && curNode !== '' && accNode === curNode) return true;
 
-                // Chequeo Subred IP (/24)
                 const curIp = (currentAccount.ip || '').trim();
                 const accIp = (acc.ip || '').trim();
                 if (curIp && accIp && curIp !== 'Pendiente' && accIp !== 'Pendiente') {
@@ -184,14 +182,14 @@ createApp({
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return; 
                 
-                const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: '' }; // IP ignorada aquí
+                // La IP ya no importa en el Pool, solo filtramos por ID
+                const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: '' }; 
                 const isBlacklisted = blacklist.value.includes(idCorto);
                 
                 if (!isBlacklisted && !hasCollision(dummyAccount)) {
                     seenIds.add(idCorto);
                     rawPool.push({
                         id: idCorto,
-                        ip: 'Pendiente', // La IP ya no viene en el JSON de Mysterium
                         city: nodo.location?.city || 'Desconocida',
                         asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
                         q_score: (nodo.quality?.quality || 0).toFixed(2)
@@ -203,7 +201,7 @@ createApp({
         };
 
         const fetchMysteriumAPI = async () => {
-            syncStatus.value = 'Extracción Agresiva en progreso...';
+            syncStatus.value = 'Extracción en progreso...';
             const rawUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             const encodedUrl = encodeURIComponent(rawUrl);
 
@@ -211,7 +209,7 @@ createApp({
                 `https://api.allorigins.win/raw?url=${encodedUrl}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
                 `https://corsproxy.io/?${encodedUrl}`,
-                rawUrl // Directo por si acaso
+                rawUrl // Directo
             ];
 
             try {
@@ -278,6 +276,7 @@ createApp({
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
             }
+            // Eliminado el buscador de IP en el frontend del pool
             if (poolFilters.value.isp) {
                 const s = poolFilters.value.isp.toLowerCase().trim();
                 result = result.filter(n => (n.city || '').toLowerCase().includes(s) || (n.asn_isp || '').toLowerCase().includes(s));

@@ -7,10 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- MOTOR GRÁFICO -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style> 
         [v-cloak] { display: none; } 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #4338ca; }
@@ -28,12 +28,12 @@
                     <i data-lucide="network" class="text-white w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-widest text-white">VPN<span class="text-indigo-500">NEXUS</span></h1>
-                <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-2 font-bold">Motor Analítico V3</p>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-2 font-bold">Motor Analítico V4</p>
             </div>
             
             <nav class="flex-1 px-4 py-6 space-y-3">
                 <button @click="currentTab = 'dashboard'" :class="{'bg-indigo-600 text-white shadow-lg': currentTab === 'dashboard', 'hover:bg-slate-800 hover:text-white text-slate-400': currentTab !== 'dashboard'}" class="w-full flex items-center gap-3 px-5 py-4 rounded-xl text-sm font-bold transition-all duration-200">
-                    <i data-lucide="pie-chart" class="w-5 h-5"></i> Dashboard ISP
+                    <i data-lucide="pie-chart" class="w-5 h-5"></i> Dashboard de Equilibrio
                 </button>
                 <button @click="currentTab = 'accounts'" :class="{'bg-indigo-600 text-white shadow-lg': currentTab === 'accounts', 'hover:bg-slate-800 hover:text-white text-slate-400': currentTab !== 'accounts'}" class="w-full flex items-center gap-3 px-5 py-4 rounded-xl text-sm font-bold transition-all duration-200">
                     <i data-lucide="server-cog" class="w-5 h-5"></i> Granja de Cuentas
@@ -52,7 +52,7 @@
             
             <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-10 py-6 flex justify-between items-center z-10 sticky top-0">
                 <h2 class="text-2xl font-black text-white tracking-tight uppercase">
-                    {{ currentTab === 'accounts' ? 'Gestor de Cuentas' : currentTab === 'pool' ? 'Radar de Nodos Seguros' : currentTab === 'dashboard' ? 'Analítica de Red (ISP)' : 'Registro de Cuarentena' }}
+                    {{ currentTab === 'accounts' ? 'Gestor de Cuentas' : currentTab === 'pool' ? 'Radar de Nodos Seguros' : currentTab === 'dashboard' ? 'Control de Equilibrio ISP' : 'Registro de Cuarentena' }}
                 </h2>
                 <transition name="fade">
                     <div v-if="syncStatus" class="px-5 py-2 bg-indigo-500/20 text-indigo-400 rounded-full text-xs font-bold border border-indigo-500/50 shadow-sm flex items-center gap-2 animate-pulse">
@@ -63,64 +63,77 @@
 
             <div class="flex-1 overflow-auto p-8">
                 
-                <!-- ==================== VISTA: DASHBOARD GRÁFICO ==================== -->
+                <!-- ==================== VISTA: DASHBOARD GRÁFICO (REDISEÑADO) ==================== -->
                 <div v-show="currentTab === 'dashboard'" class="h-full flex flex-col gap-6">
+                    <!-- Tarjetas Superiores MÁS PEQUEÑAS -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Tarjetas de Resumen -->
-                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 flex items-center gap-6 shadow-lg">
-                            <div class="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30"><i data-lucide="users" class="w-8 h-8"></i></div>
-                            <div>
-                                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Cuentas Totales</p>
-                                <h3 class="text-4xl font-black text-white">{{ accounts.length }}</h3>
-                            </div>
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-5 flex items-center gap-5 shadow-lg">
+                            <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400"><i data-lucide="users" class="w-6 h-6"></i></div>
+                            <div><p class="text-[11px] font-bold text-slate-400 uppercase">Cuentas Totales</p><h3 class="text-3xl font-black text-white">{{ accounts.length }}</h3></div>
                         </div>
-                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 flex items-center gap-6 shadow-lg">
-                            <div class="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30"><i data-lucide="shield-check" class="w-8 h-8"></i></div>
-                            <div>
-                                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Nodos Asignados</p>
-                                <h3 class="text-4xl font-black text-white">{{ accounts.filter(a => a.nodeId && a.ip).length }}</h3>
-                            </div>
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-5 flex items-center gap-5 shadow-lg">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i data-lucide="shield-check" class="w-6 h-6"></i></div>
+                            <div><p class="text-[11px] font-bold text-slate-400 uppercase">Nodos Asignados</p><h3 class="text-3xl font-black text-white">{{ accounts.filter(a => a.nodeId && a.ip).length }}</h3></div>
                         </div>
-                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 flex items-center gap-6 shadow-lg">
-                            <div class="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 border border-rose-500/30"><i data-lucide="alert-triangle" class="w-8 h-8"></i></div>
-                            <div>
-                                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">Choques (Red /24)</p>
-                                <h3 class="text-4xl font-black text-white">{{ collisionCount }}</h3>
-                            </div>
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-5 flex items-center gap-5 shadow-lg">
+                            <div class="w-12 h-12 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400"><i data-lucide="alert-triangle" class="w-6 h-6"></i></div>
+                            <div><p class="text-[11px] font-bold text-slate-400 uppercase">Choques (Red /24)</p><h3 class="text-3xl font-black text-white">{{ collisionCount }}</h3></div>
                         </div>
                     </div>
 
-                    <!-- Gráficos -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
-                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 shadow-lg flex flex-col">
-                            <h3 class="text-lg font-bold text-white mb-4 border-b border-slate-700 pb-2">Distribución de Proveedores (ISP)</h3>
-                            <div class="flex-1 relative min-h-[300px]">
+                    <!-- Panel Analítico de 3 Columnas (No hay que bajar) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-[300px]">
+                        
+                        <!-- Col 1: Gráfica Visual -->
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 shadow-lg flex flex-col justify-center items-center">
+                            <h3 class="text-sm font-bold text-slate-300 mb-2 uppercase tracking-widest border-b border-slate-700 pb-2 w-full text-center">Visión General</h3>
+                            <div class="relative w-full h-[250px] flex justify-center mt-2">
                                 <canvas id="ispChart"></canvas>
                             </div>
                         </div>
+
+                        <!-- Col 2: Cantidades Exactas para Equilibrar -->
                         <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 shadow-lg flex flex-col">
-                            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
-                                <h3 class="text-lg font-bold text-white">Escáner IPInfo (Enriquecimiento)</h3>
-                                <button @click="forceEnrichmentSweep" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
-                                    <i data-lucide="radar" class="w-4 h-4"></i> Forzar Escaneo Global
-                                </button>
-                            </div>
-                            <div class="flex-1 overflow-auto">
-                                <ul class="space-y-3">
-                                    <li v-for="acc in accounts.filter(a => a.ip)" :key="acc.uid" class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
-                                        <span class="font-bold text-indigo-400">{{ acc.name }}</span>
-                                        <span class="font-mono text-sm text-slate-400">{{ acc.ip }}</span>
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold" :class="acc.isp === 'Desconocido' ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'">{{ acc.isp || 'Desconocido' }}</span>
-                                    </li>
-                                </ul>
+                            <h3 class="text-sm font-bold text-slate-300 mb-4 uppercase tracking-widest border-b border-slate-700 pb-2">Equilibrio de Cantidades</h3>
+                            <div class="flex-1 overflow-auto space-y-3 pr-2">
+                                <div v-for="stat in ispStats" :key="stat.name" class="bg-slate-900 p-3 rounded-lg border border-slate-700">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold text-indigo-400 text-sm truncate" :title="stat.name">{{ stat.name }}</span>
+                                        <!-- AQUÍ VES EXACTAMENTE CUÁNTAS TIENES -->
+                                        <span class="font-mono font-black text-sm" :class="stat.count > 5 ? 'text-rose-400' : 'text-emerald-400'">
+                                            {{ stat.count }} <span class="text-slate-500 font-normal">/ {{ accounts.filter(a => a.ip).length || 1 }}</span>
+                                        </span>
+                                    </div>
+                                    <div class="w-full bg-slate-800 rounded-full h-2">
+                                        <div class="h-2 rounded-full transition-all" :class="stat.count > 5 ? 'bg-rose-500' : 'bg-indigo-500'" :style="{ width: stat.percentage + '%' }"></div>
+                                    </div>
+                                </div>
+                                <div v-if="ispStats.length === 0" class="text-center text-slate-500 mt-10 font-bold">Carga cuentas para ver el equilibrio</div>
                             </div>
                         </div>
+
+                        <!-- Col 3: Escáner IPInfo (Enriquecimiento) -->
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 shadow-lg flex flex-col">
+                            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                                <h3 class="text-sm font-bold text-slate-300 uppercase tracking-widest">Escáner IPInfo</h3>
+                                <button @click="forceEnrichmentSweep" class="bg-indigo-600 hover:bg-indigo-500 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-md">
+                                    <i data-lucide="radar" class="w-3.5 h-3.5"></i> Escanear Global
+                                </button>
+                            </div>
+                            <div class="flex-1 overflow-auto pr-2 space-y-2">
+                                <div v-for="acc in accounts.filter(a => a.ip)" :key="acc.uid" class="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-700">
+                                    <span class="font-bold text-slate-200 text-xs w-16">{{ acc.name }}</span>
+                                    <span class="font-mono text-xs text-slate-400">{{ acc.ip }}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-black truncate max-w-[90px]" :class="acc.isp === 'Desconocido' ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'">{{ (acc.isp || 'Desconocido').substring(0, 15) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
                 <!-- ==================== VISTA: CUENTAS ==================== -->
                 <div v-show="currentTab === 'accounts'" class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 flex flex-col h-full overflow-hidden">
-                    
                     <div class="p-6 border-b border-slate-700 flex flex-wrap gap-4 justify-between items-center bg-slate-900/50">
                         <div class="flex gap-3">
                             <button @click="addAccount" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2">
@@ -130,15 +143,11 @@
                                 <i data-lucide="clipboard-paste" class="w-4 h-4"></i> Carga Masiva (Bulk)
                             </button>
                         </div>
-                        
                         <div class="relative w-96 flex-shrink-0">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <i data-lucide="search" class="w-4 h-4 text-slate-500"></i>
-                            </div>
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i data-lucide="search" class="w-4 h-4 text-slate-500"></i></div>
                             <input type="text" v-model="accountSearch" placeholder="Buscar cuenta, IP o ISP..." class="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:border-indigo-500 outline-none transition-all shadow-inner text-white">
                         </div>
                     </div>
-                    
                     <div class="flex-1 overflow-auto">
                         <table class="w-full text-left border-collapse table-fixed min-w-[1000px]">
                             <thead class="sticky top-0 z-10 bg-slate-900 shadow-md border-b border-slate-700">
@@ -157,19 +166,15 @@
                                     <td class="p-3 align-middle text-center"><input v-model="acc.name" class="w-full bg-transparent border-2 border-transparent hover:border-slate-600 focus:border-indigo-500 focus:bg-slate-900 rounded-lg p-2 text-center font-bold text-white outline-none transition-all"></td>
                                     <td class="p-3 align-middle text-center"><input v-model="acc.fecha" class="w-full bg-transparent border-2 border-transparent hover:border-slate-600 focus:border-indigo-500 focus:bg-slate-900 rounded-lg p-2 text-center font-medium text-slate-400 outline-none transition-all text-xs"></td>
                                     <td class="p-3 align-middle text-center"><input v-model="acc.nodeId" maxlength="14" class="w-full bg-transparent border-2 border-transparent hover:border-slate-600 focus:border-indigo-500 focus:bg-slate-900 rounded-lg p-2 text-center font-mono font-bold text-indigo-400 outline-none uppercase tracking-widest text-xs"></td>
-                                    
-                                    <!-- Celda IP con botón de escaneo manual individual -->
                                     <td class="p-3 align-middle text-center relative group">
                                         <div class="flex items-center justify-center gap-1">
                                             <input v-model="acc.ip" @blur="fetchSingleISP(acc)" class="w-32 bg-slate-900 border border-slate-600 hover:border-indigo-500 focus:border-indigo-500 rounded-lg p-2 text-center text-white font-mono font-bold text-xs outline-none">
-                                            <button @click="fetchSingleISP(acc)" class="w-7 h-7 flex items-center justify-center rounded bg-slate-700 hover:bg-indigo-600 text-slate-300 transition-colors" title="Forzar Escaneo de Proveedor"><i data-lucide="radar" class="w-3.5 h-3.5"></i></button>
+                                            <button @click="fetchSingleISP(acc)" class="w-7 h-7 flex items-center justify-center rounded bg-slate-700 hover:bg-indigo-600 text-slate-300 transition-colors" title="Forzar Escaneo ISP"><i data-lucide="radar" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                     </td>
-                                    
                                     <td class="p-3 align-middle text-center"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border" :class="acc.isp === 'Desconocido' ? 'bg-slate-800 text-slate-500 border-slate-700' : 'bg-indigo-900/50 text-indigo-300 border-indigo-700/50'" :title="acc.isp">{{ (acc.isp || 'Desconocido').substring(0, 20) }}</span></td>
-                                    
                                     <td class="p-3 align-middle text-center">
-                                        <div v-if="hasCollision(acc)" title="¡Alerta! Choque /24 o Nodo Repetido" class="inline-flex items-center justify-center w-6 h-6 bg-rose-500/20 text-rose-400 border border-rose-500/50 rounded-full animate-pulse"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
+                                        <div v-if="hasCollision(acc)" title="¡Alerta! Choque /24" class="inline-flex items-center justify-center w-6 h-6 bg-rose-500/20 text-rose-400 border border-rose-500/50 rounded-full animate-pulse"><i data-lucide="alert-triangle" class="w-3 h-3"></i></div>
                                         <div v-else-if="acc.nodeId && acc.ip" class="inline-flex items-center justify-center w-6 h-6 bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 rounded-full"><i data-lucide="check" class="w-3 h-3"></i></div>
                                         <span v-else class="text-slate-600 font-bold">-</span>
                                     </td>
@@ -182,19 +187,17 @@
                     </div>
                 </div>
 
-                <!-- ==================== VISTA: POOL ==================== -->
+                <!-- ==================== VISTA: POOL (RADAR) ==================== -->
                 <div v-show="currentTab === 'pool'" class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
                     <div class="p-6 bg-slate-900/50 border-b border-slate-700 flex flex-wrap gap-4 items-center justify-between">
                         <button @click="fetchMysteriumAPI" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-[0_0_15px_rgba(79,70,229,0.4)] flex items-center gap-3">
-                            <i data-lucide="satellite" class="w-5 h-5"></i> Extraer Nodos (Cascada 6x)
+                            <i data-lucide="satellite" class="w-5 h-5"></i> Extraer Nodos Seguros (V1)
                         </button>
-                        
                         <div class="flex gap-3">
                             <input type="text" v-model="poolFilters.nodeId" placeholder="Filtrar ID..." class="w-32 px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:border-indigo-500 outline-none font-bold text-white">
                             <input type="number" step="0.1" v-model="poolFilters.minQuality" placeholder="Min Q" class="w-24 px-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:border-indigo-500 outline-none text-center font-black text-indigo-400">
                         </div>
                     </div>
-
                     <div class="flex-1 overflow-auto">
                         <table class="w-full text-left border-collapse">
                             <thead class="sticky top-0 z-10 bg-slate-900 shadow-md border-b border-slate-700">
@@ -217,7 +220,7 @@
                                     </td>
                                 </tr>
                                 <tr v-if="filteredPool.length === 0">
-                                    <td colspan="5" class="p-16 text-center text-slate-500 font-bold text-lg border-dashed border-2 border-slate-700 m-4 rounded-xl">Inicia el Radar. El motor de colisión filtrará las IPs.</td>
+                                    <td colspan="5" class="p-16 text-center text-slate-500 font-bold text-lg border-dashed border-2 border-slate-700 m-4 rounded-xl">Inicia el Radar. El motor de colisión ocultará las IPs que choquen con tus cuentas.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -245,7 +248,7 @@
             <div v-if="showBulkLoadModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
                 <div class="bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden border border-slate-700 p-8">
                     <h3 class="text-2xl font-black text-white mb-2">Motor de Carga Masiva</h3>
-                    <p class="text-sm text-slate-400 mb-6 font-bold">Pega tu lista: LON-01 (tab) fecha (tab) nodo (tab) ip.</p>
+                    <p class="text-sm text-slate-400 mb-6 font-bold">Pega tu lista: LON-01 (espacio/tab) fecha (espacio) nodo (espacio) ip.</p>
                     <textarea v-model="bulkLoadText" rows="12" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-5 text-sm font-mono text-indigo-300 outline-none focus:border-indigo-500 shadow-inner resize-none" placeholder="LON-01	26/8/2026	0x844e14dd880e	86.172.94.228"></textarea>
                     <div class="mt-6 flex justify-end gap-4">
                         <button @click="showBulkLoadModal = false" class="px-6 py-3 text-slate-400 font-bold hover:text-white transition-colors">Cancelar</button>

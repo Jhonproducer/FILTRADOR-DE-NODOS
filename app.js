@@ -5,6 +5,7 @@ const generateUid = () => Date.now().toString(36) + Math.random().toString(36).s
 createApp({
     setup() {
         const currentTab = ref('dashboard');
+        const isSidebarOpen = ref(true); // Control de Menú Retráctil
         const syncStatus = ref('');
         const ipinfoToken = '8c97cc52a98a48'; 
         
@@ -26,13 +27,15 @@ createApp({
 
         let chartInstance = null;
 
-        // ==========================================
-        // 🔄 PERSISTENCIA LOCALSTORAGE (CORREGIDA)
-        // ==========================================
+        const toggleSidebar = () => {
+            isSidebarOpen.value = !isSidebarOpen.value;
+            // Se fuerza el redibujado de las gráficas al colapsar el menú para que se ajusten
+            setTimeout(() => { updateCharts(); }, 350); 
+        };
+
         const saveData = () => {
             localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
             localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
-            // ¡NUEVO! Guardamos la Pool para que no se borre al cerrar el navegador
             localStorage.setItem('vpn_nexus_pool', JSON.stringify(pool.value)); 
             updateCharts();
         };
@@ -55,12 +58,8 @@ createApp({
             }
         };
 
-        // Escuchamos cambios en accounts, blacklist y AHORA TAMBIÉN en pool
         watch([accounts, blacklist, pool], saveData, { deep: true });
 
-        // ==========================================
-        // 📥 CARGA MASIVA 
-        // ==========================================
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
             const lineas = bulkLoadText.value.trim().split('\n');
@@ -88,7 +87,7 @@ createApp({
             forceEnrichmentSweep();
         };
 
-        // --- ENRIQUECIMIENTO (IPINFO + NOMINATIM) ---
+        // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
             try {
@@ -98,21 +97,26 @@ createApp({
                     let org = data.org || 'Desconocido';
                     acc.isp = org.replace(/^AS\d+\s/, '').trim();
                     
+                    // EXTRAER REGIÓN LOCAL CON NOMINATIM
                     if (data.loc) {
                         const [lat, lon] = data.loc.split(',');
                         try {
                             const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                             const nomData = await nomRes.json();
                             if (nomData && nomData.address) {
+                                // Buscar el mejor nivel territorial (Ignorando nombres de país)
                                 let div = nomData.address.state_district || nomData.address.county || nomData.address.city || data.city;
                                 const ignorar = ['england', 'scotland', 'wales', 'northern ireland', 'united kingdom', 'uk', 'great britain'];
                                 
                                 if (div && ignorar.includes(div.toLowerCase())) {
                                     div = nomData.address.city || nomData.address.town || nomData.address.municipality || data.city || 'Desconocida';
                                 }
+                                
+                                // Ajuste específico para Londres
                                 if (div.toLowerCase() === 'london' && nomData.address.state_district) {
-                                    div = nomData.address.state_district; 
+                                    div = nomData.address.state_district; // Suele traer "Greater London"
                                 }
+
                                 acc.county = div;
                             } else {
                                 acc.county = data.city || data.region || 'Desconocido';
@@ -132,6 +136,7 @@ createApp({
             for (let acc of accounts.value) {
                 if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido' || acc.county === 'England' || acc.county === 'Desconocido')) {
                     await fetchSingleISP(acc);
+                    // Nominatim exige 1 segundo de pausa entre consultas para no bloquear tu IP (Hard Limit)
                     await new Promise(r => setTimeout(r, 1100)); 
                 }
             }
@@ -158,7 +163,7 @@ createApp({
                 await fetchSingleISP(acc);
                 
                 if (hasCollision(acc)) {
-                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón Deshacer.`);
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón Deshacer (Giro hacia atrás) si fue un error.`);
                 } else {
                     showStatus('IP Limpia. Conexión segura.');
                 }
@@ -196,7 +201,6 @@ createApp({
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
 
-        // --- MOTOR DE COLISIONES ---
         const hasCollision = (currentAccount) => {
             if ((!currentAccount.ip || currentAccount.ip === 'Pendiente') && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
@@ -244,9 +248,7 @@ createApp({
             return result;
         });
 
-        // ==========================================
-        // 🚀 EXTRACCIÓN MYSTERIUM (RESTAURADA VERSIÓN ANTIGUA)
-        // ==========================================
+        // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
@@ -281,7 +283,6 @@ createApp({
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             let data = null;
 
-            // EL ALGORITMO ANTIGUO QUE SÍ FUNCIONABA, LEYENDO COMO TEXTO Y CON FOR...OF
             const attempts = [
                 { name: 'Directo', url: targetUrl },
                 { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
@@ -388,6 +389,7 @@ createApp({
         const filteredPool = computed(() => {
             let result = pool.value;
 
+            // EL FILTRO EN TIEMPO REAL: LA LISTA NEGRA BORRA DE INMEDIATO DEL POOL
             result = result.filter(n => !blacklist.value.includes(n.id));
 
             if (poolFilters.value.nodeId) {
@@ -487,7 +489,7 @@ createApp({
         });
 
         return {
-            currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
+            currentTab, isSidebarOpen, toggleSidebar, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
             collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, removeBlacklistNode,
             fetchMysteriumAPI, importPoolJSON, copyToClipboard, burnDirectlyFromPool,
             filteredPool, poolFilters, poolSort, togglePoolSort,

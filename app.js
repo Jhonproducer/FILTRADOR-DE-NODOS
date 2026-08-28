@@ -21,7 +21,6 @@ createApp({
         const showBulkLoadModal = ref(false);
         const bulkLoadText = ref('');
 
-        // Variables Asignación Rápida
         const showAccountSelectModal = ref(false);
         const nodeToAssign = ref('');
 
@@ -30,6 +29,7 @@ createApp({
         const saveData = () => {
             localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
             localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
+            // No guardamos el pool en storage para que no pese tanto, pero podrías hacerlo.
             updateCharts();
         };
 
@@ -37,7 +37,6 @@ createApp({
             let savedAcc = JSON.parse(localStorage.getItem('vpn_nexus_acc'));
             let savedBlk = JSON.parse(localStorage.getItem('vpn_nexus_blk'));
             if (savedAcc && savedAcc.length > 0) {
-                // Ensure all accounts have the new fields so legacy data doesn't break
                 accounts.value = savedAcc.map(a => ({
                     ...a,
                     county: a.county || 'Desconocido',
@@ -76,7 +75,7 @@ createApp({
             forceEnrichmentSweep();
         };
 
-        // --- ENRIQUECIMIENTO (COUNTY + ISP) ---
+        // --- ENRIQUECIMIENTO (COUNTY CON NOMINATIM Y PINFO) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
             try {
@@ -85,17 +84,42 @@ createApp({
                     const data = await res.json();
                     let org = data.org || 'Desconocido';
                     acc.isp = org.replace(/^AS\d+\s/, '').trim();
-                    acc.county = data.region || 'Desconocido'; // AQUI GUARDAMOS EL COUNTY
+                    
+                    // EXTRAER CONDADO REAL CON NOMINATIM / OPENSTREETMAP
+                    if (data.loc) {
+                        const [lat, lon] = data.loc.split(',');
+                        try {
+                            const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                            const nomData = await nomRes.json();
+                            if (nomData && nomData.address) {
+                                // Buscar el mejor nivel de detalle territorial
+                                let county = nomData.address.county || nomData.address.state_district || nomData.address.city_district || nomData.address.region || nomData.address.state || data.city;
+                                
+                                // Si solo dice "England" o "UK", bajamos un nivel al distrito o ciudad
+                                if (county.toLowerCase() === 'england' || county.toLowerCase() === 'united kingdom') {
+                                    county = nomData.address.city_district || nomData.address.municipality || data.city || 'Desconocido';
+                                }
+                                acc.county = county;
+                            } else {
+                                acc.county = data.city || data.region || 'Desconocido';
+                            }
+                        } catch (e) {
+                            acc.county = data.city || data.region || 'Desconocido';
+                        }
+                    } else {
+                        acc.county = data.city || data.region || 'Desconocido';
+                    }
                 }
             } catch (error) {}
         };
 
         const forceEnrichmentSweep = async () => {
-            syncStatus.value = 'Escaneando proveedores ISP y Regiones...';
+            syncStatus.value = 'Escaneando proveedores y condados...';
             for (let acc of accounts.value) {
-                if (acc.ip && acc.ip !== 'Pendiente') {
+                if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido' || acc.county === 'England' || acc.county === 'Desconocido')) {
                     await fetchSingleISP(acc);
-                    await new Promise(r => setTimeout(r, 200));
+                    // Nominatim exige 1 segundo de pausa entre consultas para no bloquear tu IP (Hard Limit)
+                    await new Promise(r => setTimeout(r, 1100)); 
                 }
             }
             syncStatus.value = '¡Escaneo Completado!';
@@ -105,9 +129,8 @@ createApp({
 
         // --- SISTEMA ANTI-ERROR (RAYITO Y DESHACER) ---
         const autoDetectIP = async (acc) => {
-            // Confirmación de seguridad
             if (acc.ip && acc.ip !== '0.0.0.0' && acc.ip !== 'Pendiente') {
-                const confirmed = confirm(`¿Estás seguro de que quieres detectar tu red actual?\n\nEsto reemplazará la IP actual de ${acc.name}: ${acc.ip}`);
+                const confirmed = confirm(`¿Estás seguro de que tu VPN está encendido con el Nodo correcto para [${acc.name}]?\n\nEsto reemplazará la IP: ${acc.ip}`);
                 if (!confirmed) return;
             }
 
@@ -116,19 +139,18 @@ createApp({
                 const res = await fetch("https://api.ipify.org?format=json");
                 const data = await res.json();
                 
-                // Guardar la IP anterior por si fue un error (Ej: IP de Venezuela)
-                acc.previousIp = acc.ip; 
+                acc.previousIp = acc.ip; // Guardar por si acaso se equivocó
                 acc.ip = data.ip;
                 
                 await fetchSingleISP(acc);
                 
                 if (hasCollision(acc)) {
-                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (los primeros 3 bloques son idénticos). Quema este nodo inmediatamente o usa el botón Deshacer.`);
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (mismo bloque /24). Quema este nodo o usa el botón rojo de Deshacer (Giro hacia atrás) si fue un error.`);
                 } else {
                     showStatus('IP Limpia. Conexión segura.');
                 }
             } catch(e) {
-                alert("Error detectando IP. Verifica tu conexión.");
+                alert("Error detectando IP. Verifica tu conexión a internet.");
             }
             syncStatus.value = "";
             updateCharts();
@@ -138,7 +160,7 @@ createApp({
             if (acc.previousIp) {
                 acc.ip = acc.previousIp;
                 acc.previousIp = null;
-                showStatus('¡Se restauró la IP anterior!');
+                showStatus('¡Se restauró la IP anterior por seguridad!');
                 await fetchSingleISP(acc);
                 updateCharts();
             }
@@ -147,7 +169,7 @@ createApp({
         const manualIPCheck = async (acc) => {
             if (acc.ip && acc.ip.includes('.')) {
                 if (hasCollision(acc)) {
-                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con los primeros 3 bloques de otra cuenta activa. Deséchala.`);
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta activa.`);
                 }
                 await fetchSingleISP(acc);
                 updateCharts();
@@ -208,30 +230,38 @@ createApp({
             return result;
         });
 
-        // --- SISTEMA POOL Y ASIGNACIÓN DIRECTA ---
+        // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
         const processNodeData = (data) => {
-            const rawPool = [];
-            const seenIds = new Set(); 
+            const currentPoolMap = new Map();
+            
+            // Mantener nodos anteriores que ya habías extraído (No los borramos)
+            pool.value.forEach(n => currentPoolMap.set(n.id, n));
+
             data.forEach(nodo => {
                 if (!nodo.provider_id) return;
                 const idCorto = nodo.provider_id.substring(0, 14);
-                if(seenIds.has(idCorto)) return; 
                 
-                const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: '' }; 
-                const isBlacklisted = blacklist.value.includes(idCorto);
+                currentPoolMap.set(idCorto, {
+                    id: idCorto,
+                    city: nodo.location?.city || 'Desconocida',
+                    asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
+                    q_score: (nodo.quality?.quality || 0).toFixed(2)
+                });
+            });
+
+            // Triangulación final: Limpiar nodos que ya se asignaron o bloquearon
+            const rawPool = [];
+            currentPoolMap.forEach(n => {
+                const isBlacklisted = blacklist.value.includes(n.id);
+                const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 
-                if (!isBlacklisted && !hasCollision(dummyAccount)) {
-                    seenIds.add(idCorto);
-                    rawPool.push({
-                        id: idCorto,
-                        city: nodo.location?.city || 'Desconocida',
-                        asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
-                        q_score: (nodo.quality?.quality || 0).toFixed(2)
-                    });
+                if (!isBlacklisted && !inUse) {
+                    rawPool.push(n);
                 }
             });
+
             pool.value = rawPool;
-            showStatus(`Radar completado: ${pool.value.length} nodos limpios obtenidos.`);
+            showStatus(`Radar completado: ${pool.value.length} nodos limpios disponibles.`);
         };
 
         const fetchMysteriumAPI = async () => {
@@ -260,7 +290,7 @@ createApp({
                     throw new Error("Datos vacíos");
                 }
             } catch (e) {
-                alert("🚫 ERROR: Usa el botón verde 'Subir JSON Manual' cargando el archivo descargado de Mysterium.");
+                alert("🚫 ERROR: Todos los proxies de red fallaron. Usa el botón verde 'Subir JSON Manual' cargando el archivo descargado de Mysterium.");
                 syncStatus.value = 'Extracción bloqueada.';
             }
             setTimeout(() => { syncStatus.value = ''; }, 4000);
@@ -275,10 +305,10 @@ createApp({
                     const data = JSON.parse(e.target.result);
                     if (Array.isArray(data)) {
                         processNodeData(data);
-                        showStatus('JSON Manual cargado exitosamente.');
+                        showStatus('JSON Manual añadido al pool exitosamente.');
                     } else if (data.contents) {
                         processNodeData(JSON.parse(data.contents));
-                        showStatus('JSON Manual cargado exitosamente.');
+                        showStatus('JSON Manual añadido al pool exitosamente.');
                     } else {
                         throw new Error("Formato inválido");
                     }
@@ -309,14 +339,13 @@ createApp({
             const acc = accounts.value.find(a => a.uid === uid);
             if(acc) {
                 acc.nodeId = nodeToAssign.value;
-                acc.ip = ''; // Se resetea la IP para forzar al usuario a detectarla con el VPN prendido
+                acc.ip = ''; 
                 acc.isp = 'Desconocido';
                 acc.county = 'Desconocido';
                 acc.previousIp = null;
                 showAccountSelectModal.value = false;
                 showStatus(`Nodo asignado con éxito a ${acc.name}`);
                 
-                // Remueve el nodo del pool visible automáticamente
                 pool.value = pool.value.filter(n => n.id !== nodeToAssign.value);
             }
         };

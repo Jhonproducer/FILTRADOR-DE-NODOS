@@ -4,8 +4,9 @@ const generateUid = () => Date.now().toString(36) + Math.random().toString(36).s
 
 createApp({
     setup() {
-        const currentTab = ref('accounts');
+        const currentTab = ref('dashboard'); // Iniciamos en el panel Futurista
         const syncStatus = ref('');
+        const ipinfoToken = '8c97cc52a98a48'; // Tu token real
         
         // --- VARIABLES DE CUENTAS ---
         const accounts = ref([]);
@@ -14,7 +15,7 @@ createApp({
         
         // --- VARIABLES DE POOL ---
         const pool = ref([]);
-        const poolFilters = ref({ nodeId: '', city: '', isp: '', minQuality: '2.5' });
+        const poolFilters = ref({ nodeId: '', minQuality: '2.5' });
         const poolSort = ref({ field: null, desc: false });
 
         // --- VARIABLES DE CARGA Y BLACKLIST ---
@@ -23,17 +24,21 @@ createApp({
         const showBulkLoadModal = ref(false);
         const bulkLoadText = ref('');
 
+        // Variables Gráficos
+        let chartInstance = null;
+
         // ==========================================
         // 🔄 PERSISTENCIA LOCALSTORAGE
         // ==========================================
         const saveData = () => {
-            localStorage.setItem('vpnerp_acc_v14', JSON.stringify(accounts.value));
-            localStorage.setItem('vpnerp_blk_v14', JSON.stringify(blacklist.value));
+            localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
+            localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
+            updateCharts(); // Actualizar gráfico al guardar
         };
 
         const loadData = () => {
-            let savedAcc = JSON.parse(localStorage.getItem('vpnerp_acc_v14'));
-            let savedBlk = JSON.parse(localStorage.getItem('vpnerp_blk_v14'));
+            let savedAcc = JSON.parse(localStorage.getItem('vpn_nexus_acc'));
+            let savedBlk = JSON.parse(localStorage.getItem('vpn_nexus_blk'));
             if (savedAcc && savedAcc.length > 0) accounts.value = savedAcc;
             blacklist.value = savedBlk || [];
         };
@@ -41,7 +46,7 @@ createApp({
         watch([accounts, blacklist], saveData, { deep: true });
 
         // ==========================================
-        // 📥 CARGA MASIVA DE TEXTO (TU FORMATO)
+        // 📥 CARGA MASIVA Y ENRIQUECIMIENTO (IPINFO)
         // ==========================================
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
@@ -53,10 +58,11 @@ createApp({
                 if (partes.length >= 2) {
                     nuevasCuentas.push({
                         uid: generateUid(),
-                        name: partes[0], // LON-XX
-                        fecha: partes[1], // Fecha
+                        name: partes[0],
+                        fecha: partes[1],
                         nodeId: partes.length >= 3 ? partes[2] : "",
-                        ip: partes.length >= 4 ? partes[3] : ""
+                        ip: partes.length >= 4 ? partes[3] : "",
+                        isp: 'Desconocido' // Se llenará con la API
                     });
                 }
             });
@@ -64,19 +70,52 @@ createApp({
             accounts.value = nuevasCuentas;
             showBulkLoadModal.value = false;
             bulkLoadText.value = '';
-            showStatus(`¡Cargadas ${nuevasCuentas.length} cuentas!`);
+            showStatus(`¡Cargadas ${nuevasCuentas.length} cuentas! Iniciando enriquecimiento...`);
             reinitIcons();
+            
+            // Disparar enriquecimiento automático tras la carga
+            forceEnrichmentSweep();
+        };
+
+        // --- MOTOR DE ENRIQUECIMIENTO (API IPINFO) ---
+        const fetchSingleISP = async (acc) => {
+            if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
+            try {
+                const res = await fetch(`https://ipinfo.io/${acc.ip}/json?token=${ipinfoToken}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    let org = data.org || 'Desconocido';
+                    // Limpiamos la basura de "AS1234 "
+                    acc.isp = org.replace(/^AS\d+\s/, '').trim();
+                }
+            } catch (error) {
+                console.warn(`Error obteniendo ISP para ${acc.ip}`);
+            }
+        };
+
+        const forceEnrichmentSweep = async () => {
+            syncStatus.value = 'Escaneando proveedores ISP...';
+            for (let acc of accounts.value) {
+                if (acc.ip && acc.isp === 'Desconocido') {
+                    await fetchSingleISP(acc);
+                    // Pequeña pausa para no saturar IPInfo
+                    await new Promise(r => setTimeout(r, 300));
+                }
+            }
+            syncStatus.value = '¡Escaneo Global Completado!';
+            setTimeout(() => { syncStatus.value = ''; }, 3000);
+            updateCharts();
         };
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', ip: '' });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', ip: '', isp: 'Desconocido' });
             reinitIcons();
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
 
         // ==========================================
-        // 🔴 MOTOR DE COLISIÓN (REGLA DE LOS 3 BLOQUES)
+        // 🔴 MOTOR DE COLISIÓN ESTRICTO (REGLA /24)
         // ==========================================
         const hasCollision = (currentAccount) => {
             if (!currentAccount.ip && !currentAccount.nodeId) return false;
@@ -84,12 +123,10 @@ createApp({
             return accounts.value.some(acc => {
                 if (acc.uid === currentAccount.uid) return false;
 
-                // 1. Choque si el Nodo ID es el mismo
                 const curNode = (currentAccount.nodeId || '').trim();
                 const accNode = (acc.nodeId || '').trim();
                 if (accNode !== '' && curNode !== '' && accNode === curNode) return true;
 
-                // 2. Choque de IP (Los 3 primeros bloques son idénticos)
                 const curIp = (currentAccount.ip || '').trim();
                 const accIp = (acc.ip || '').trim();
                 
@@ -108,9 +145,6 @@ createApp({
 
         const collisionCount = computed(() => accounts.value.filter(acc => hasCollision(acc)).length);
 
-        // ==========================================
-        // 🔍 ORDEN Y FILTRADO: CUENTAS
-        // ==========================================
         const toggleAccountSort = (field) => {
             if (accountSort.value.field === field) accountSort.value.desc = !accountSort.value.desc;
             else { accountSort.value.field = field; accountSort.value.desc = false; }
@@ -119,16 +153,15 @@ createApp({
 
         const processedAccounts = computed(() => {
             let result = accounts.value;
-            // 1. Buscador global
             if (accountSearch.value) {
                 const s = accountSearch.value.toLowerCase().trim();
                 result = result.filter(a => 
                     (a.name || '').toLowerCase().includes(s) || 
                     (a.nodeId || '').toLowerCase().includes(s) || 
-                    (a.ip || '').toLowerCase().includes(s)
+                    (a.ip || '').toLowerCase().includes(s) ||
+                    (a.isp || '').toLowerCase().includes(s)
                 );
             }
-            // 2. Orden al hacer clic en columnas
             if (accountSort.value.field) {
                 result = [...result].sort((a, b) => {
                     let valA = (a[accountSort.value.field] || '').toLowerCase();
@@ -142,7 +175,7 @@ createApp({
         });
 
         // ==========================================
-        // 🚀 CASCADA MYSTERIUM CON 5 PROXIES
+        // 🚀 MOTOR CASCADA MYSTERIUM (NIVEL DIOS)
         // ==========================================
         const processNodeData = (data) => {
             const rawPool = [];
@@ -157,7 +190,6 @@ createApp({
                 const ip = nodo.endpoint ? nodo.endpoint.split(':')[0] : null;
                 if (!ip) return;
 
-                // Verificamos si choca antes de agregarlo al Pool visible
                 const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: ip };
                 const isBlacklisted = blacklist.value.includes(idCorto) || blacklist.value.includes(ip);
                 
@@ -167,36 +199,37 @@ createApp({
                         id: idCorto,
                         ip: ip,
                         city: nodo.location?.city || 'Desconocida',
-                        asn_isp: `${nodo.location?.asn || ''} - ${nodo.location?.isp || 'Desconocido'}`,
+                        asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
                         q_score: (nodo.quality?.quality || 0).toFixed(2)
                     });
                 }
             });
             pool.value = rawPool;
-            showStatus(`Pool Actualizado: ${pool.value.length} nodos limpios`);
+            showStatus(`¡Radar finalizado! ${pool.value.length} nodos limpios obtenidos.`);
         };
 
-        const fetchAPI = async () => {
-            syncStatus.value = 'Conectando (5 Proxies)...';
+        const fetchMysteriumAPI = async () => {
+            syncStatus.value = 'Iniciando ataque a CORS (Cascada de 6 Proxies)...';
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             let data = null;
 
-            // 5 PROXIES para asegurar que siempre haya conexión
+            // ESTE ES EL ALGORITMO INMORTAL. Intenta métodos de extracción cruda.
             const attempts = [
-                { name: 'Proxy 1 (AllOrigins)', url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'allorigins' },
-                { name: 'Proxy 2 (CorsProxy.io)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'direct' },
-                { name: 'Proxy 3 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'direct' },
-                { name: 'Proxy 4 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}`, type: 'direct' },
-                { name: 'Proxy 5 (Sin Proxy)', url: targetUrl, type: 'direct' }
+                { name: 'Proxy 1 (AllOrigins Raw)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`, type: 'json' },
+                { name: 'Proxy 2 (CORSProxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, type: 'json' },
+                { name: 'Proxy 3 (AllOrigins Get)', url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, type: 'allorigins_wrapper' },
+                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`, type: 'json' },
+                { name: 'Proxy 5 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}`, type: 'json' },
+                { name: 'Petición Directa', url: targetUrl, type: 'json' }
             ];
 
             for (let attempt of attempts) {
                 syncStatus.value = `Intentando: ${attempt.name}...`;
                 try {
-                    const res = await fetch(attempt.url, { cache: 'no-store' });
+                    const res = await fetch(attempt.url, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
                     if (res.ok) {
                         let parsed = null;
-                        if (attempt.type === 'allorigins') {
+                        if (attempt.type === 'allorigins_wrapper') {
                             const proxyData = await res.json();
                             parsed = JSON.parse(proxyData.contents);
                         } else {
@@ -205,83 +238,109 @@ createApp({
 
                         if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
                             data = parsed;
-                            break;
+                            console.log(`Logrado con: ${attempt.name}`);
+                            break; // SALE DEL BUCLE AL PRIMER ÉXITO
                         }
                     }
                 } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}`);
+                    console.warn(`Fallo estructural en ${attempt.name}`);
                 }
             }
 
             if (data && Array.isArray(data)) {
                 processNodeData(data);
             } else {
-                alert("🚫 Todos los servidores fallaron. Intenta más tarde.");
-                syncStatus.value = 'Error de conexión.';
+                alert("🚫 ERROR CRÍTICO: Los 6 motores proxy han sido bloqueados por la red actual. Espera 10 minutos o cambia tu propia VPN.");
+                syncStatus.value = 'Fracaso en la extracción.';
             }
-            setTimeout(() => { syncStatus.value = ''; }, 3000);
+            setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
 
-        // ==========================================
-        // 🔍 ORDEN Y FILTRADO: POOL
-        // ==========================================
         const togglePoolSort = (field) => {
             if (poolSort.value.field === field) poolSort.value.desc = !poolSort.value.desc;
             else { poolSort.value.field = field; poolSort.value.desc = false; }
             reinitIcons();
         };
 
-        const clearPoolFilters = () => {
-            poolFilters.value = { nodeId: '', city: '', isp: '', minQuality: '2.5' };
-        };
-
         const filteredPool = computed(() => {
             let result = pool.value;
-
-            // Filtros de barra de búsqueda
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
-            }
-            if (poolFilters.value.city) {
-                const c = poolFilters.value.city.toLowerCase().trim();
-                result = result.filter(n => n.city.toLowerCase().includes(c));
-            }
-            if (poolFilters.value.isp) {
-                const i = poolFilters.value.isp.toLowerCase().trim();
-                result = result.filter(n => n.asn_isp.toLowerCase().includes(i));
             }
             if (poolFilters.value.minQuality) {
                 const minQ = parseFloat(poolFilters.value.minQuality);
                 if (!isNaN(minQ)) result = result.filter(n => parseFloat(n.q_score) >= minQ);
             }
 
-            // Ordenamiento por clic en la columna
             if (poolSort.value.field) {
                 result = [...result].sort((a, b) => {
                     let valA = a[poolSort.value.field] || '';
                     let valB = b[poolSort.value.field] || '';
                     if (poolSort.value.field === 'q_score') {
-                        valA = parseFloat(valA);
-                        valB = parseFloat(valB);
-                    } else {
-                        valA = valA.toLowerCase();
-                        valB = valB.toLowerCase();
+                        return poolSort.value.desc ? parseFloat(valA) - parseFloat(valB) : parseFloat(valB) - parseFloat(valA);
                     }
+                    valA = valA.toLowerCase(); valB = valB.toLowerCase();
                     if (valA < valB) return poolSort.value.desc ? 1 : -1;
                     if (valA > valB) return poolSort.value.desc ? -1 : 1;
                     return 0;
                 });
             } else {
-                // Por defecto, mostrar mayor calidad primero
                 result = [...result].sort((a, b) => parseFloat(b.q_score) - parseFloat(a.q_score));
             }
             return result;
         });
 
         // ==========================================
-        // 🚫 BLACKLIST Y UTILIDADES
+        // 📊 MOTOR GRÁFICO (CHART.JS)
         // ==========================================
+        const updateCharts = () => {
+            nextTick(() => {
+                const ctx = document.getElementById('ispChart');
+                if (!ctx) return;
+
+                // Extraer conteo de ISPs
+                const ispCounts = {};
+                accounts.value.forEach(acc => {
+                    if (acc.isp && acc.isp !== 'Desconocido') {
+                        let shortIsp = acc.isp.split(',')[0].substring(0, 20); // Acortar nombres largos
+                        ispCounts[shortIsp] = (ispCounts[shortIsp] || 0) + 1;
+                    }
+                });
+
+                const labels = Object.keys(ispCounts);
+                const data = Object.values(ispCounts);
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                'rgba(79, 70, 229, 0.8)', 'rgba(16, 185, 129, 0.8)', 
+                                'rgba(244, 63, 94, 0.8)', 'rgba(245, 158, 11, 0.8)', 
+                                'rgba(14, 165, 233, 0.8)', 'rgba(168, 85, 247, 0.8)'
+                            ],
+                            borderColor: '#1e293b',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { color: '#cbd5e1', font: { family: 'monospace', size: 11 } } }
+                        }
+                    }
+                });
+            });
+        };
+
         const processBulkBlacklist = () => {
             if(!bulkBlacklistText.value.trim()) return;
             const rawItems = bulkBlacklistText.value.split(/[\n,\s]+/);
@@ -293,36 +352,36 @@ createApp({
                 }
             });
             bulkBlacklistText.value = ''; 
+            showStatus('Nodos enviados a Cuarentena.');
         };
-        const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
 
         const copyToClipboard = async (text, type = 'Dato') => {
-            try { 
-                await navigator.clipboard.writeText(text); 
-                showStatus(`¡${type} Copiado!`); 
-            } catch (err) {}
+            try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {}
         };
 
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
-        
-        // Recargar los iconos cuando Vue actualiza la tabla
         const reinitIcons = () => { nextTick(() => { if(window.lucide) lucide.createIcons(); }); };
         
         onMounted(() => { 
             loadData(); 
             reinitIcons(); 
+            updateCharts();
         });
 
-        // Asegurar que si cambiamos de pestaña se carguen los íconos
-        watch(currentTab, reinitIcons);
+        watch(currentTab, () => {
+            reinitIcons();
+            if (currentTab.value === 'dashboard') {
+                updateCharts();
+            }
+        });
 
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
             collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, 
-            removeBlacklistNode, fetchAPI, copyToClipboard, 
-            filteredPool, poolFilters, poolSort, togglePoolSort, clearPoolFilters,
+            fetchMysteriumAPI, copyToClipboard, 
+            filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
-            showBulkLoadModal, bulkLoadText, processBulkLoad
+            showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep
         };
     }
 }).mount('#app');

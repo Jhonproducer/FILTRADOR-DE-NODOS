@@ -13,7 +13,8 @@ createApp({
         const accountSort = ref({ field: null, desc: false });
         
         const pool = ref([]);
-        const poolFilters = ref({ nodeId: '', minQuality: '2.5' });
+        // Multiples variables de filtros separadas
+        const poolFilters = ref({ nodeId: '', ip: '', isp: '', minQuality: '2.5' });
         const poolSort = ref({ field: null, desc: false });
 
         const blacklist = ref([]);
@@ -23,9 +24,6 @@ createApp({
 
         let chartInstance = null;
 
-        // ==========================================
-        // 🔄 PERSISTENCIA LOCALSTORAGE
-        // ==========================================
         const saveData = () => {
             localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
             localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
@@ -41,14 +39,10 @@ createApp({
 
         watch([accounts, blacklist], saveData, { deep: true });
 
-        // ==========================================
-        // 📥 CARGA MASIVA Y ENRIQUECIMIENTO (IPINFO)
-        // ==========================================
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
             const lineas = bulkLoadText.value.trim().split('\n');
             let nuevasCuentas = [];
-
             lineas.forEach(linea => {
                 const partes = linea.trim().split(/\s+/);
                 if (partes.length >= 2) {
@@ -62,7 +56,6 @@ createApp({
                     });
                 }
             });
-
             accounts.value = nuevasCuentas;
             showBulkLoadModal.value = false;
             bulkLoadText.value = '';
@@ -103,9 +96,6 @@ createApp({
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
 
-        // ==========================================
-        // 🔴 MOTOR DE COLISIÓN (REGLA /24 ESTRICTA)
-        // ==========================================
         const hasCollision = (currentAccount) => {
             if (!currentAccount.ip && !currentAccount.nodeId) return false;
             return accounts.value.some(acc => {
@@ -120,7 +110,6 @@ createApp({
                     const octCur = curIp.split('.');
                     const octAcc = accIp.split('.');
                     if (octCur.length === 4 && octAcc.length === 4) {
-                        // REGLA DE 3 BLOQUES IDÉNTICOS = CHOQUE
                         if (octCur[0] === octAcc[0] && octCur[1] === octAcc[1] && octCur[2] === octAcc[2]) return true; 
                     }
                 }
@@ -153,9 +142,6 @@ createApp({
             return result;
         });
 
-        // ==========================================
-        // 🚀 CASCADA MYSTERIUM (VERSIÓN 1 ORIGINAL RESTAURADA - SIN CORS HEADERS)
-        // ==========================================
         const processNodeData = (data) => {
             const rawPool = [];
             const seenIds = new Set(); 
@@ -170,7 +156,6 @@ createApp({
                 const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: ip };
                 const isBlacklisted = blacklist.value.includes(idCorto) || blacklist.value.includes(ip);
                 
-                // Si la IP NO choca con el bloque 3 de las cuentas actuales, se muestra
                 if (!isBlacklisted && !hasCollision(dummyAccount)) {
                     seenIds.add(idCorto);
                     rawPool.push({
@@ -183,53 +168,58 @@ createApp({
                 }
             });
             pool.value = rawPool;
-            showStatus(`¡Radar finalizado! ${pool.value.length} nodos seguros obtenidos.`);
+            showStatus(`Radar completado: ${pool.value.length} nodos obtenidos.`);
         };
 
+        // ==========================================
+        // 🚀 CASCADA MYSTERIUM (EXTRACCIÓN AGRESIVA V2)
+        // ==========================================
         const fetchMysteriumAPI = async () => {
-            syncStatus.value = 'Extrayendo Nodos (Método Seguro V1)...';
+            syncStatus.value = 'Extracción Agresiva Múltiple en progreso...';
             const rawUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             const encodedUrl = encodeURIComponent(rawUrl);
-            let data = null;
 
-            // MÉTODO ORIGINAL EXACTO DEL PRIMER CÓDIGO (0 Custom Headers)
-            const attempts = [
-                { name: 'AllOrigins (Método V1)', url: `https://api.allorigins.win/get?url=${encodedUrl}`, type: 'allorigins' },
-                { name: 'CORS Proxy', url: `https://corsproxy.io/?${encodedUrl}`, type: 'json' },
-                { name: 'CodeTabs Proxy', url: `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`, type: 'json' }
+            // Disparamos múltiples peticiones al mismo tiempo para ganar velocidad
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodedUrl}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`,
+                `https://corsproxy.io/?${encodedUrl}`
             ];
 
-            for (let attempt of attempts) {
-                syncStatus.value = `Intentando: ${attempt.name}...`;
-                try {
-                    // Petición puramente simple, sin Headers que bloqueen el CORS Preflight.
-                    const res = await fetch(attempt.url, { cache: 'no-store' });
-                    if (res.ok) {
-                        let parsed = null;
-                        if (attempt.type === 'allorigins') {
-                            const proxyData = await res.json();
-                            parsed = JSON.parse(proxyData.contents);
-                        } else {
-                            parsed = await res.json();
-                        }
-                        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
-                            data = parsed;
-                            console.log(`Logrado con: ${attempt.name}`);
-                            break; 
-                        }
-                    }
-                } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}`);
-                }
-            }
+            try {
+                // Promise.any toma la primera respuesta EXITOSA de los 3 proxies. 
+                // Esto es la máxima optimización posible en Frontend puro.
+                const requests = proxies.map(url => 
+                    fetch(url, { cache: 'no-store' }).then(res => {
+                        if (!res.ok) throw new Error('Fallo proxy');
+                        return res.json();
+                    })
+                );
 
-            if (data && Array.isArray(data)) {
-                processNodeData(data);
-            } else {
-                alert("🚫 Error: Ningún servidor proxy respondió. Verifica tu red.");
-                syncStatus.value = 'Fracaso en la extracción.';
+                const data = await Promise.any(requests);
+
+                if (Array.isArray(data) && data.length > 0 && data[0].provider_id) {
+                    processNodeData(data);
+                } else {
+                    throw new Error("Datos vacíos");
+                }
+            } catch (e) {
+                alert("🚫 ERROR: Todos los servidores fallaron. Es posible que los Escudos de Brave estén bloqueando la conexión. Apágalos para esta página.");
+                syncStatus.value = 'Red bloqueada.';
             }
             setTimeout(() => { syncStatus.value = ''; }, 4000);
+        };
+
+        // ==========================================
+        // 🗑️ BOTÓN DE BLOQUEO DIRECTO (POOL)
+        // ==========================================
+        const burnDirectlyFromPool = (nodeId) => {
+            if (!blacklist.value.includes(nodeId)) {
+                blacklist.value.unshift(nodeId);
+                // Remover visualmente de la tabla del pool de inmediato
+                pool.value = pool.value.filter(n => n.id !== nodeId);
+                showStatus(`Nodo ${nodeId} bloqueado.`);
+            }
         };
 
         const togglePoolSort = (field) => {
@@ -240,14 +230,24 @@ createApp({
 
         const filteredPool = computed(() => {
             let result = pool.value;
+            // 4 Cajas de búsqueda independientes
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
+            }
+            if (poolFilters.value.ip) {
+                const s = poolFilters.value.ip.toLowerCase().trim();
+                result = result.filter(n => (n.ip || '').toLowerCase().includes(s));
+            }
+            if (poolFilters.value.isp) {
+                const s = poolFilters.value.isp.toLowerCase().trim();
+                result = result.filter(n => (n.city || '').toLowerCase().includes(s) || (n.asn_isp || '').toLowerCase().includes(s));
             }
             if (poolFilters.value.minQuality) {
                 const minQ = parseFloat(poolFilters.value.minQuality);
                 if (!isNaN(minQ)) result = result.filter(n => parseFloat(n.q_score) >= minQ);
             }
+
             if (poolSort.value.field) {
                 result = [...result].sort((a, b) => {
                     let valA = a[poolSort.value.field] || '';
@@ -264,39 +264,27 @@ createApp({
             return result;
         });
 
-        // ==========================================
-        // 📊 MOTOR GRÁFICO (CÁLCULO EXACTO PARA EQUILIBRIO)
-        // ==========================================
         const ispStats = computed(() => {
             const counts = {};
-            const accountsWithIp = accounts.value.filter(a => a.ip).length || 1; // Prevenir división por cero
-
+            const accountsWithIp = accounts.value.filter(a => a.ip).length || 1; 
             accounts.value.forEach(acc => {
                 if (acc.isp && acc.isp !== 'Desconocido') {
                     let shortIsp = acc.isp.split(',')[0].substring(0, 18);
                     counts[shortIsp] = (counts[shortIsp] || 0) + 1;
                 }
             });
-
             return Object.entries(counts)
-                .map(([name, count]) => ({
-                    name,
-                    count,
-                    percentage: Math.round((count / accountsWithIp) * 100)
-                }))
-                .sort((a, b) => b.count - a.count); // Ordenar mayor a menor cantidad
+                .map(([name, count]) => ({ name, count, percentage: Math.round((count / accountsWithIp) * 100) }))
+                .sort((a, b) => b.count - a.count); 
         });
 
         const updateCharts = () => {
             nextTick(() => {
                 const ctx = document.getElementById('ispChart');
                 if (!ctx) return;
-
                 const labels = ispStats.value.map(s => s.name);
                 const data = ispStats.value.map(s => s.count);
-
                 if (chartInstance) chartInstance.destroy();
-
                 chartInstance = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -308,12 +296,7 @@ createApp({
                             borderWidth: 3
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } }, // Ocultamos la leyenda para usar tu lista personalizada de cantidades
-                        cutout: '65%'
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' }
                 });
             });
         };
@@ -331,7 +314,7 @@ createApp({
             bulkBlacklistText.value = ''; 
             showStatus('Nodos enviados a Cuarentena.');
         };
-
+        const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
         const copyToClipboard = async (text, type = 'Dato') => { try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {} };
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
         const reinitIcons = () => { nextTick(() => { if(window.lucide) lucide.createIcons(); }); };
@@ -349,8 +332,8 @@ createApp({
 
         return {
             currentTab, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
-            collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, 
-            fetchMysteriumAPI, copyToClipboard, 
+            collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, removeBlacklistNode,
+            fetchMysteriumAPI, copyToClipboard, burnDirectlyFromPool,
             filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,

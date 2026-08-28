@@ -13,7 +13,6 @@ createApp({
         const accountSort = ref({ field: null, desc: false });
         
         const pool = ref([]);
-        // Ya no buscamos IP en la Pool
         const poolFilters = ref({ nodeId: '', isp: '', minQuality: '2.5' });
         const poolSort = ref({ field: null, desc: false });
 
@@ -21,6 +20,10 @@ createApp({
         const bulkBlacklistText = ref('');
         const showBulkLoadModal = ref(false);
         const bulkLoadText = ref('');
+
+        // Variables Asignación Rápida
+        const showAccountSelectModal = ref(false);
+        const nodeToAssign = ref('');
 
         let chartInstance = null;
 
@@ -33,7 +36,14 @@ createApp({
         const loadData = () => {
             let savedAcc = JSON.parse(localStorage.getItem('vpn_nexus_acc'));
             let savedBlk = JSON.parse(localStorage.getItem('vpn_nexus_blk'));
-            if (savedAcc && savedAcc.length > 0) accounts.value = savedAcc;
+            if (savedAcc && savedAcc.length > 0) {
+                // Ensure all accounts have the new fields so legacy data doesn't break
+                accounts.value = savedAcc.map(a => ({
+                    ...a,
+                    county: a.county || 'Desconocido',
+                    previousIp: a.previousIp || null
+                }));
+            }
             blacklist.value = savedBlk || [];
         };
 
@@ -52,7 +62,9 @@ createApp({
                         fecha: partes[1],
                         nodeId: partes.length >= 3 ? partes[2] : "",
                         ip: partes.length >= 4 ? partes[3] : "",
-                        isp: 'Desconocido'
+                        isp: 'Desconocido',
+                        county: 'Desconocido',
+                        previousIp: null
                     });
                 }
             });
@@ -64,6 +76,7 @@ createApp({
             forceEnrichmentSweep();
         };
 
+        // --- ENRIQUECIMIENTO (COUNTY + ISP) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
             try {
@@ -72,14 +85,15 @@ createApp({
                     const data = await res.json();
                     let org = data.org || 'Desconocido';
                     acc.isp = org.replace(/^AS\d+\s/, '').trim();
+                    acc.county = data.region || 'Desconocido'; // AQUI GUARDAMOS EL COUNTY
                 }
             } catch (error) {}
         };
 
         const forceEnrichmentSweep = async () => {
-            syncStatus.value = 'Escaneando proveedores ISP...';
+            syncStatus.value = 'Escaneando proveedores ISP y Regiones...';
             for (let acc of accounts.value) {
-                if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido')) {
+                if (acc.ip && acc.ip !== 'Pendiente') {
                     await fetchSingleISP(acc);
                     await new Promise(r => setTimeout(r, 200));
                 }
@@ -89,17 +103,27 @@ createApp({
             updateCharts();
         };
 
-        // AUTO DETECTAR IP DESDE EL BOTÓN DEL RAYO
+        // --- SISTEMA ANTI-ERROR (RAYITO Y DESHACER) ---
         const autoDetectIP = async (acc) => {
+            // Confirmación de seguridad
+            if (acc.ip && acc.ip !== '0.0.0.0' && acc.ip !== 'Pendiente') {
+                const confirmed = confirm(`¿Estás seguro de que quieres detectar tu red actual?\n\nEsto reemplazará la IP actual de ${acc.name}: ${acc.ip}`);
+                if (!confirmed) return;
+            }
+
             syncStatus.value = `Detectando red para ${acc.name}...`;
             try {
                 const res = await fetch("https://api.ipify.org?format=json");
                 const data = await res.json();
+                
+                // Guardar la IP anterior por si fue un error (Ej: IP de Venezuela)
+                acc.previousIp = acc.ip; 
                 acc.ip = data.ip;
+                
                 await fetchSingleISP(acc);
                 
                 if (hasCollision(acc)) {
-                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (los primeros 3 bloques son idénticos). Quema este nodo inmediatamente.`);
+                    alert(`🚨 ¡ALERTA DE COLISIÓN! \nLa IP ${acc.ip} choca con otra cuenta (los primeros 3 bloques son idénticos). Quema este nodo inmediatamente o usa el botón Deshacer.`);
                 } else {
                     showStatus('IP Limpia. Conexión segura.');
                 }
@@ -108,6 +132,16 @@ createApp({
             }
             syncStatus.value = "";
             updateCharts();
+        };
+
+        const undoIp = async (acc) => {
+            if (acc.previousIp) {
+                acc.ip = acc.previousIp;
+                acc.previousIp = null;
+                showStatus('¡Se restauró la IP anterior!');
+                await fetchSingleISP(acc);
+                updateCharts();
+            }
         };
 
         const manualIPCheck = async (acc) => {
@@ -122,7 +156,7 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', ip: '', isp: 'Desconocido' });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
             reinitIcons();
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
@@ -160,7 +194,7 @@ createApp({
             let result = accounts.value;
             if (accountSearch.value) {
                 const s = accountSearch.value.toLowerCase().trim();
-                result = result.filter(a => (a.name || '').toLowerCase().includes(s) || (a.nodeId || '').toLowerCase().includes(s) || (a.ip || '').toLowerCase().includes(s) || (a.isp || '').toLowerCase().includes(s));
+                result = result.filter(a => (a.name || '').toLowerCase().includes(s) || (a.nodeId || '').toLowerCase().includes(s) || (a.ip || '').toLowerCase().includes(s) || (a.isp || '').toLowerCase().includes(s) || (a.county || '').toLowerCase().includes(s));
             }
             if (accountSort.value.field) {
                 result = [...result].sort((a, b) => {
@@ -174,6 +208,7 @@ createApp({
             return result;
         });
 
+        // --- SISTEMA POOL Y ASIGNACIÓN DIRECTA ---
         const processNodeData = (data) => {
             const rawPool = [];
             const seenIds = new Set(); 
@@ -182,7 +217,6 @@ createApp({
                 const idCorto = nodo.provider_id.substring(0, 14);
                 if(seenIds.has(idCorto)) return; 
                 
-                // La IP ya no importa en el Pool, solo filtramos por ID
                 const dummyAccount = { uid: 'dummy', nodeId: idCorto, ip: '' }; 
                 const isBlacklisted = blacklist.value.includes(idCorto);
                 
@@ -260,7 +294,30 @@ createApp({
             if (!blacklist.value.includes(nodeId)) {
                 blacklist.value.unshift(nodeId);
                 pool.value = pool.value.filter(n => n.id !== nodeId);
-                showStatus(`Nodo ${nodeId} bloqueado directamente.`);
+                showStatus(`Nodo ${nodeId} enviado a cuarentena.`);
+            }
+        };
+
+        // Modal para asignar Nodo a Cuenta
+        const openAccountSelectModal = (nodeId) => {
+            nodeToAssign.value = nodeId;
+            showAccountSelectModal.value = true;
+            reinitIcons();
+        };
+
+        const confirmAssign = (uid) => {
+            const acc = accounts.value.find(a => a.uid === uid);
+            if(acc) {
+                acc.nodeId = nodeToAssign.value;
+                acc.ip = ''; // Se resetea la IP para forzar al usuario a detectarla con el VPN prendido
+                acc.isp = 'Desconocido';
+                acc.county = 'Desconocido';
+                acc.previousIp = null;
+                showAccountSelectModal.value = false;
+                showStatus(`Nodo asignado con éxito a ${acc.name}`);
+                
+                // Remueve el nodo del pool visible automáticamente
+                pool.value = pool.value.filter(n => n.id !== nodeToAssign.value);
             }
         };
 
@@ -276,7 +333,6 @@ createApp({
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
             }
-            // Eliminado el buscador de IP en el frontend del pool
             if (poolFilters.value.isp) {
                 const s = poolFilters.value.isp.toLowerCase().trim();
                 result = result.filter(n => (n.city || '').toLowerCase().includes(s) || (n.asn_isp || '').toLowerCase().includes(s));
@@ -375,7 +431,8 @@ createApp({
             filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,
-            ispStats, autoDetectIP, manualIPCheck
+            ispStats, autoDetectIP, manualIPCheck, undoIp,
+            showAccountSelectModal, nodeToAssign, openAccountSelectModal, confirmAssign
         };
     }
 }).mount('#app');

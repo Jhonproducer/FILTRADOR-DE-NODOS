@@ -28,7 +28,7 @@
                     <i data-lucide="network" class="text-white w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-black tracking-widest text-white">VPN<span class="text-indigo-500">NEXUS</span></h1>
-                <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-2 font-bold">Motor Analítico V5 Max</p>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 mt-2 font-bold">Motor Analítico Definitivo</p>
             </div>
             
             <nav class="flex-1 px-4 py-6 space-y-3">
@@ -181,9 +181,19 @@
                 <div v-show="currentTab === 'pool'" class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
                     <div class="p-6 bg-slate-900/50 border-b border-slate-700 flex flex-col gap-4">
                         <div class="flex justify-between items-center">
-                            <button @click="fetchMysteriumAPI" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-[0_0_15px_rgba(79,70,229,0.4)] flex items-center gap-3">
-                                <i data-lucide="satellite" class="w-5 h-5"></i> Extraer Nodos (Carga Agresiva)
-                            </button>
+                            
+                            <!-- BOTONES DE EXTRACCIÓN Y SUBIDA -->
+                            <div class="flex gap-4">
+                                <button @click="fetchMysteriumAPI" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-[0_0_15px_rgba(79,70,229,0.4)] flex items-center gap-3">
+                                    <i data-lucide="satellite" class="w-5 h-5"></i> Extraer Automático
+                                </button>
+                                
+                                <label class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center gap-3 cursor-pointer">
+                                    <i data-lucide="upload-cloud" class="w-5 h-5"></i> Subir JSON Manual
+                                    <input type="file" @change="importPoolJSON" accept=".json" class="hidden">
+                                </label>
+                            </div>
+
                             <span class="text-xs font-bold text-slate-500 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 uppercase tracking-wider">Nodos Seguros Obtenidos: {{ filteredPool.length }}</span>
                         </div>
                         
@@ -228,13 +238,12 @@
                                     <td class="p-4 align-middle text-center">
                                         <div class="flex items-center justify-center gap-2">
                                             <button @click="copyToClipboard(node.id, 'Nodo')" class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-slate-700 text-white hover:bg-indigo-600 transition-colors shadow-md" title="Copiar ID"><i data-lucide="copy" class="w-4 h-4"></i></button>
-                                            <!-- NUEVO: BOTÓN DE PAPELERA DIRECTA -->
                                             <button @click="burnDirectlyFromPool(node.id)" class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-slate-700 text-rose-400 hover:bg-rose-600 hover:text-white transition-colors shadow-md" title="Enviar a Cuarentena"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr v-if="filteredPool.length === 0">
-                                    <td colspan="5" class="p-16 text-center text-slate-500 font-bold text-lg border-dashed border-2 border-slate-700 m-4 rounded-xl">Presiona "Extraer Nodos" o ajusta tus filtros.</td>
+                                    <td colspan="5" class="p-16 text-center text-slate-500 font-bold text-lg border-dashed border-2 border-slate-700 m-4 rounded-xl">Inicia la extracción o sube tu JSON para comenzar.</td>
                                 </tr>
                             </tbody>
                         </table>

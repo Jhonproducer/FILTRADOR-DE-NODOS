@@ -5,7 +5,7 @@ const generateUid = () => Date.now().toString(36) + Math.random().toString(36).s
 createApp({
     setup() {
         const currentTab = ref('dashboard');
-        const isSidebarOpen = ref(true); // Control de Menú Retráctil
+        const isSidebarOpen = ref(true); 
         const syncStatus = ref('');
         const ipinfoToken = '8c97cc52a98a48'; 
         
@@ -29,7 +29,6 @@ createApp({
 
         const toggleSidebar = () => {
             isSidebarOpen.value = !isSidebarOpen.value;
-            // Se fuerza el redibujado de las gráficas al colapsar el menú para que se ajusten
             setTimeout(() => { updateCharts(); }, 350); 
         };
 
@@ -87,7 +86,6 @@ createApp({
             forceEnrichmentSweep();
         };
 
-        // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
             try {
@@ -97,14 +95,12 @@ createApp({
                     let org = data.org || 'Desconocido';
                     acc.isp = org.replace(/^AS\d+\s/, '').trim();
                     
-                    // EXTRAER REGIÓN LOCAL CON NOMINATIM
                     if (data.loc) {
                         const [lat, lon] = data.loc.split(',');
                         try {
                             const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                             const nomData = await nomRes.json();
                             if (nomData && nomData.address) {
-                                // Buscar el mejor nivel territorial (Ignorando nombres de país)
                                 let div = nomData.address.state_district || nomData.address.county || nomData.address.city || data.city;
                                 const ignorar = ['england', 'scotland', 'wales', 'northern ireland', 'united kingdom', 'uk', 'great britain'];
                                 
@@ -112,9 +108,8 @@ createApp({
                                     div = nomData.address.city || nomData.address.town || nomData.address.municipality || data.city || 'Desconocida';
                                 }
                                 
-                                // Ajuste específico para Londres
                                 if (div.toLowerCase() === 'london' && nomData.address.state_district) {
-                                    div = nomData.address.state_district; // Suele traer "Greater London"
+                                    div = nomData.address.state_district; 
                                 }
 
                                 acc.county = div;
@@ -136,7 +131,6 @@ createApp({
             for (let acc of accounts.value) {
                 if (acc.ip && acc.ip !== 'Pendiente' && (!acc.isp || acc.isp === 'Desconocido' || acc.county === 'England' || acc.county === 'Desconocido')) {
                     await fetchSingleISP(acc);
-                    // Nominatim exige 1 segundo de pausa entre consultas para no bloquear tu IP (Hard Limit)
                     await new Promise(r => setTimeout(r, 1100)); 
                 }
             }
@@ -145,7 +139,6 @@ createApp({
             updateCharts();
         };
 
-        // --- SISTEMA ANTI-ERROR (RAYITO Y DESHACER) ---
         const autoDetectIP = async (acc) => {
             if (acc.ip && acc.ip !== '0.0.0.0' && acc.ip !== 'Pendiente') {
                 const confirmed = confirm(`¿Aseguraste que el VPN de [${acc.name}] está encendido?\n\nEsto reemplazará la IP: ${acc.ip}`);
@@ -201,7 +194,6 @@ createApp({
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar fila completa?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
 
-        // ¡NUEVA FUNCIÓN! Vacía la cuenta y manda el nodo a la cuarentena
         const burnNodeFromAccount = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(acc) {
@@ -215,7 +207,6 @@ createApp({
                 
                 if (added) showStatus(`Nodo ${nodeStr} enviado a cuarentena.`);
                 
-                // Vaciar los datos de la cuenta dejándola limpia
                 acc.nodeId = '';
                 acc.ip = '';
                 acc.isp = 'Desconocido';
@@ -273,7 +264,6 @@ createApp({
             return result;
         });
 
-        // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
@@ -303,50 +293,69 @@ createApp({
             showStatus(`Radar completado: ${pool.value.length} nodos limpios disponibles.`);
         };
 
-        const fetchMysteriumAPI = async () => {
-            syncStatus.value = 'Conectando a Mysterium...';
-            const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            let data = null;
+        // ==========================================
+        // 🚀 EXTRACCIÓN MYSTERIUM (CASCADA DEFINITIVA + TIMEOUTS)
+        // ==========================================
+        
+        // Helper para abortar peticiones que se quedan colgadas (Efecto Zombie)
+        const fetchWithTimeout = async (url, options = {}, timeout = 9000) => {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (error) {
+                clearTimeout(id);
+                throw error;
+            }
+        };
 
-            const attempts = [
-                { name: 'Directo', url: targetUrl },
-                { name: 'Proxy 1 (CORS Proxy)', url: `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 2 (AllOrigins)', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
-                { name: 'Proxy 3 (ThingProxy)', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` },
-                { name: 'Proxy 4 (CodeTabs)', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` }
+        const fetchMysteriumAPI = async () => {
+            syncStatus.value = 'Iniciando escaneo masivo con Timeouts (9s)...';
+            const rawUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
+            const encodedUrl = encodeURIComponent(rawUrl);
+
+            // Nuevos Proxies incorporados y reordenados (Corsproxy al final)
+            const proxies = [
+                { name: 'AllOrigins', url: `https://api.allorigins.win/raw?url=${encodedUrl}` },
+                { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}` },
+                { name: 'CorsFix', url: `https://corsfix.com/?${encodedUrl}` },
+                { name: 'Cors.x2u', url: `https://cors.x2u.in/?${encodedUrl}` },
+                { name: 'ThingProxy', url: `https://thingproxy.freeboard.io/fetch/${rawUrl}` },
+                { name: 'Corsproxy.io', url: `https://corsproxy.io/?${encodedUrl}` },
+                { name: 'Directo', url: rawUrl }
             ];
 
-            for (let attempt of attempts) {
-                syncStatus.value = `Intentando: ${attempt.name}...`;
-                try {
-                    const res = await fetch(attempt.url, { 
-                        headers: { 'Accept': 'application/json' },
-                        cache: 'no-store'
-                    });
-                    
-                    if (res.ok) {
-                        const text = await res.text();
-                        try {
-                            const parsed = JSON.parse(text);
-                            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].provider_id) {
-                                data = parsed;
-                                console.log(`¡Éxito usando: ${attempt.name}!`);
-                                break; 
-                            }
-                        } catch (err) {
-                            console.warn(`Respuesta falsa del proxy en ${attempt.name}`);
-                        }
-                    }
-                } catch (e) {
-                    console.warn(`Fallo en ${attempt.name}:`, e.message);
-                }
-            }
+            const errors = [];
 
-            if (data && Array.isArray(data)) {
+            try {
+                // Ejecuta todas las promesas AL MISMO TIEMPO, el primero que responda gana.
+                // Si alguno tarda más de 9 segundos, es abortado y no congela la app.
+                const requests = proxies.map(proxy => 
+                    fetchWithTimeout(proxy.url, { cache: 'no-store' }, 9000).then(async res => {
+                        if (!res.ok) throw new Error(`${proxy.name} devolvió Error ${res.status}`);
+                        const json = await res.json();
+                        // Validar que realmente sea la lista de nodos
+                        if (Array.isArray(json) && json.length > 0 && json[0].provider_id) {
+                            return { data: json, proxyName: proxy.name };
+                        }
+                        throw new Error(`${proxy.name} devolvió formato incorrecto`);
+                    }).catch(e => {
+                        errors.push(`[${proxy.name}: ${e.name === 'AbortError' ? 'Timeout 9s' : e.message}]`);
+                        throw e; // Necesario para que Promise.any siga intentando con los demás
+                    })
+                );
+
+                const { data, proxyName } = await Promise.any(requests);
+                console.log(`📡 ¡Conexión exitosa a través de: ${proxyName}!`);
                 processNodeData(data);
-            } else {
-                alert("🚫 ERROR: Ningún proxy logró la conexión. Usa el botón verde 'Subir JSON Manual'.");
-                syncStatus.value = 'Error de conexión.';
+
+            } catch (e) {
+                // Si entra aquí es porque ABSOLUTAMENTE TODOS fallaron o dieron Timeout
+                console.error("Detalle de fallos de red:", errors);
+                alert(`🚫 ERROR DE RED:\n\nNinguno de los 7 métodos de extracción funcionó. Revisa la consola (F12) para ver el reporte detallado.\n\nPor ahora, usa el botón "Subir JSON Manual".`);
+                syncStatus.value = 'Fallo de Red Total.';
             }
             setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
@@ -383,7 +392,6 @@ createApp({
             }
         };
 
-        // --- ASIGNACIÓN DE NODO A CUENTA DESDE POOL ---
         const openAccountSelectModal = (nodeId) => {
             nodeToAssign.value = nodeId;
             showAccountSelectModal.value = true;
@@ -414,7 +422,6 @@ createApp({
         const filteredPool = computed(() => {
             let result = pool.value;
 
-            // EL FILTRO EN TIEMPO REAL: LA LISTA NEGRA BORRA DE INMEDIATO DEL POOL
             result = result.filter(n => !blacklist.value.includes(n.id));
 
             if (poolFilters.value.nodeId) {
@@ -446,7 +453,6 @@ createApp({
             return result;
         });
 
-        // --- DASHBOARD CHARTS ---
         const ispStats = computed(() => {
             const counts = {};
             const accountsWithIp = accounts.value.filter(a => a.ip && a.ip !== 'Pendiente').length || 1; 

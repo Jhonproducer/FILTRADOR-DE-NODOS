@@ -145,7 +145,7 @@ createApp({
             updateCharts();
         };
 
-        // --- SISTEMA ANTI-ERROR ---
+        // --- SISTEMA ANTI-ERROR (RAYITO Y DESHACER) ---
         const autoDetectIP = async (acc) => {
             if (acc.ip && acc.ip !== '0.0.0.0' && acc.ip !== 'Pendiente') {
                 const confirmed = confirm(`¿Aseguraste que el VPN de [${acc.name}] está encendido?\n\nEsto reemplazará la IP: ${acc.ip}`);
@@ -199,7 +199,32 @@ createApp({
             accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
             reinitIcons();
         };
-        const removeAccount = (uid) => { if(confirm("¿Eliminar cuenta?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
+        const removeAccount = (uid) => { if(confirm("¿Eliminar fila completa?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
+
+        // ¡NUEVA FUNCIÓN! Vacía la cuenta y manda el nodo a la cuarentena
+        const burnNodeFromAccount = (uid) => {
+            const acc = accounts.value.find(a => a.uid === uid);
+            if(acc) {
+                const nodeStr = (acc.nodeId || '').trim();
+                let added = false;
+                
+                if(nodeStr && !blacklist.value.includes(nodeStr)) {
+                    blacklist.value.unshift(nodeStr);
+                    added = true;
+                }
+                
+                if (added) showStatus(`Nodo ${nodeStr} enviado a cuarentena.`);
+                
+                // Vaciar los datos de la cuenta dejándola limpia
+                acc.nodeId = '';
+                acc.ip = '';
+                acc.isp = 'Desconocido';
+                acc.county = 'Desconocido';
+                acc.previousIp = null;
+                
+                updateCharts();
+            }
+        };
 
         const hasCollision = (currentAccount) => {
             if ((!currentAccount.ip || currentAccount.ip === 'Pendiente') && !currentAccount.nodeId) return false;
@@ -335,7 +360,7 @@ createApp({
                     const data = JSON.parse(e.target.result);
                     if (Array.isArray(data)) {
                         processNodeData(data);
-                        showStatus('JSON Manual añadido al pool exitosamente.');
+                        showStatus('JSON Manual añadido al pool exitosamente sin borrar los anteriores.');
                     } else if (data.contents) {
                         processNodeData(JSON.parse(data.contents));
                         showStatus('JSON Manual añadido al pool exitosamente.');
@@ -491,7 +516,7 @@ createApp({
         return {
             currentTab, isSidebarOpen, toggleSidebar, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
             collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, removeBlacklistNode,
-            fetchMysteriumAPI, importPoolJSON, copyToClipboard, burnDirectlyFromPool,
+            fetchMysteriumAPI, importPoolJSON, copyToClipboard, burnDirectlyFromPool, burnNodeFromAccount,
             filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,

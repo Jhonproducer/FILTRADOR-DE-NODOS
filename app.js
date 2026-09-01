@@ -275,9 +275,18 @@ createApp({
         });
 
         // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
-        // Solo se aceptan estas ISP (BT Broadband, sin EE/Plusnet; Sky; Virgin Media; TalkTalk)
+        // Solo se aceptan estas ISP (BT Broadband, sin EE/Plusnet; Sky Broadband; Virgin Media; TalkTalk)
         const ISP_PERMITIDAS = [/british telecommunications/i, /sky uk/i, /virgin media/i, /talktalk/i];
         const isIspPermitida = (isp) => ISP_PERMITIDAS.some(rx => rx.test(isp || ''));
+
+        // Quita del pool cualquier nodo que ya estuviera guardado con una ISP fuera de la lista
+        // (nodos que entraron antes de tener este filtro, por fetch viejo, JSON manual o respaldo)
+        const purgeNonAllowedIsps = () => {
+            const antes = pool.value.length;
+            pool.value = pool.value.filter(n => isIspPermitida(n.asn_isp));
+            const quitados = antes - pool.value.length;
+            return quitados;
+        };
 
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
@@ -300,6 +309,7 @@ createApp({
 
             const rawPool = [];
             currentPoolMap.forEach(n => {
+                if (!isIspPermitida(n.asn_isp)) return; // limpia también lo que ya estaba guardado de antes
                 const isBlacklisted = blacklist.value.includes(n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 if (!isBlacklisted && !inUse) {
@@ -471,6 +481,10 @@ createApp({
             // EL FILTRO EN TIEMPO REAL: LA LISTA NEGRA BORRA DE INMEDIATO DEL POOL
             result = result.filter(n => !blacklist.value.includes(n.id));
 
+            // Refuerzo: oculta cualquier nodo viejo guardado en tu navegador de antes de
+            // limitar las ISP (no hace falta borrar nada, esto ya lo filtra en la vista).
+            result = result.filter(n => isIspPermitida(n.asn_isp));
+
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
                 result = result.filter(n => n.id.toLowerCase().includes(s));
@@ -483,10 +497,14 @@ createApp({
                 const s = poolFilters.value.city.toLowerCase().trim();
                 result = result.filter(n => (n.city || '').toLowerCase().includes(s));
             }
+            let minQAplicado = null;
             if (poolFilters.value.minQuality !== '' && poolFilters.value.minQuality !== null && poolFilters.value.minQuality !== undefined) {
                 // Acepta "2.5" o "2,5" (el input es de texto, no number, para que no se coma el valor por el separador decimal del navegador)
                 const minQ = parseFloat(String(poolFilters.value.minQuality).replace(',', '.'));
-                if (!isNaN(minQ)) result = result.filter(n => parseFloat(n.q_score) >= minQ);
+                if (!isNaN(minQ)) {
+                    minQAplicado = minQ;
+                    result = result.filter(n => parseFloat(n.q_score) >= minQ);
+                }
             }
 
             if (poolSort.value.field) {
@@ -499,6 +517,10 @@ createApp({
                     if (valA > valB) return poolSort.value.desc ? -1 : 1;
                     return 0;
                 });
+            } else if (minQAplicado !== null) {
+                // Con un mínimo de calidad puesto, se muestra empezando desde ese mínimo
+                // hacia arriba (2.1, 2.2, 2.3...), en vez del más alto primero.
+                result = [...result].sort((a, b) => parseFloat(a.q_score) - parseFloat(b.q_score));
             } else {
                 result = [...result].sort((a, b) => parseFloat(b.q_score) - parseFloat(a.q_score));
             }
@@ -609,6 +631,7 @@ createApp({
         
         onMounted(() => { 
             loadData(); 
+            purgeNonAllowedIsps();
             reinitIcons(); 
             updateCharts();
         });

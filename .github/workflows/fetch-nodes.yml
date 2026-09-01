@@ -2,7 +2,7 @@ name: Actualizar nodos Mysterium GB
 
 on:
   schedule:
-    - cron: '*/20 * * * *'   # cada 20 minutos
+    - cron: '*/5 * * * *'   # cada 5 minutos (mínimo permitido por GitHub, no acepta menos)
   workflow_dispatch: {}       # botón "Run workflow" manual en la pestaña Actions
 
 permissions:
@@ -19,7 +19,9 @@ jobs:
           mkdir -p data
           curl -sSL "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential" \
             -H "accept: application/json" \
-            -o data/nodes-gb.json
+            -o /tmp/raw.json
+          jq -n --slurpfile nodes /tmp/raw.json --arg fetched_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{fetched_at: $fetched_at, nodes: $nodes[0]}' > data/nodes-gb.json
 
       - name: Commit si cambió
         run: |

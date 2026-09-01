@@ -14,8 +14,9 @@ createApp({
         const accountSort = ref({ field: null, desc: false });
         
         const pool = ref([]);
-        const poolFilters = ref({ nodeId: '', isp: '', minQuality: '2.5' });
+        const poolFilters = ref({ nodeId: '', isp: '', city: '', minQuality: '2.5' });
         const poolSort = ref({ field: null, desc: false });
+        const isFetchingPool = ref(false); // evita que clics repetidos disparen varias extracciones al mismo tiempo
 
         const blacklist = ref([]);
         const bulkBlacklistText = ref('');
@@ -274,12 +275,19 @@ createApp({
         });
 
         // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
+        // Solo se aceptan estas ISP (BT Broadband, sin EE/Plusnet; Sky; Virgin Media; TalkTalk)
+        const ISP_PERMITIDAS = [/british telecommunications/i, /sky uk/i, /virgin media/i, /talktalk/i];
+        const isIspPermitida = (isp) => ISP_PERMITIDAS.some(rx => rx.test(isp || ''));
+
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
 
             data.forEach(nodo => {
                 if (!nodo.provider_id) return;
+                const ispNombre = nodo.location?.isp || '';
+                if (!isIspPermitida(ispNombre)) return; // descarta cualquier ISP fuera de la lista permitida
+
                 const idCorto = nodo.provider_id.substring(0, 14);
                 
                 currentPoolMap.set(idCorto, {
@@ -304,33 +312,47 @@ createApp({
         };
 
         const fetchMysteriumAPI = async () => {
+            if (isFetchingPool.value) return; // ignora clics repetidos mientras ya hay una extracción en curso
+            isFetchingPool.value = true;
             syncStatus.value = 'Conectando a Mysterium...';
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
-            let data = null;
             const failLog = [];
 
-            // PASO 0: snapshot local generado por el GitHub Action (.github/workflows/fetch-nodes.yml)
-            // Mismo origen que la página -> el navegador NUNCA aplica CORS aquí. Es la vía garantizada.
+            // PASO 1 (vía garantizada): snapshot que guarda el GitHub Action cada 5 min
+            // en data/nodes-gb.json. Mismo origen que la página -> nunca hay CORS aquí.
+            // Sin límite de antigüedad: siempre que el archivo tenga nodos, se usa directo
+            // (con el Action corriendo cada 5 min, nunca se aleja mucho de "en vivo").
             try {
                 const localRes = await fetch(`data/nodes-gb.json?t=${Date.now()}`, { cache: 'no-store' });
                 if (localRes.ok) {
                     const localParsed = JSON.parse(await localRes.text());
-                    if (Array.isArray(localParsed) && localParsed.length > 0 && localParsed[0].provider_id) {
-                        console.log('¡Éxito usando: snapshot local (data/nodes-gb.json)!');
-                        processNodeData(localParsed);
+                    const nodos = Array.isArray(localParsed) ? localParsed : localParsed.nodes; // compat. formato viejo
+                    const fetchedAt = localParsed.fetched_at ? new Date(localParsed.fetched_at) : null;
+                    const minutosAtras = fetchedAt ? Math.round((Date.now() - fetchedAt.getTime()) / 60000) : null;
+
+                    if (Array.isArray(nodos) && nodos.length > 0 && nodos[0].provider_id) {
+                        console.log(`¡Éxito usando: snapshot local (hace ${minutosAtras ?? '?'} min)!`);
+                        processNodeData(nodos);
+                        showStatus(`Nodos actualizados (hace ${minutosAtras ?? 0} min).`);
+                        isFetchingPool.value = false;
                         setTimeout(() => { syncStatus.value = ''; }, 4000);
                         return;
+                    } else {
+                        failLog.push('Snapshot local: vacío todavía');
                     }
+                } else {
+                    failLog.push('Snapshot local: aún no existe (corre el Action una vez desde la pestaña Actions de GitHub)');
                 }
-                failLog.push('Snapshot local: aún no existe o vacío (corre el Action una vez desde la pestaña Actions de GitHub)');
             } catch (e) {
                 failLog.push(`Snapshot local: ${e.message}`);
             }
 
+
+            // PASO 2 (respaldo en vivo): si el snapshot no sirvió, prueba proxies en paralelo.
             // NOTA: corsproxy.io restringió su plan gratuito solo a "localhost" en 2026,
-            // por eso fallaba siempre al estar la app publicada. Se reemplaza por proxies
-            // que sí siguen operativos sin cuenta, y se lanzan EN PARALELO (no en fila)
-            // con un timeout individual, para que uno lento/caído no frene a los demás.
+            // por eso se dejó de último. Cada intento tiene timeout propio para que uno
+            // caído no frene a los demás.
+            syncStatus.value = 'Snapshot no disponible, probando proxies en vivo...';
             const attempts = [
                 { name: 'AllOrigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
                 { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
@@ -365,7 +387,7 @@ createApp({
                 }
             };
 
-            syncStatus.value = 'Probando proxies en paralelo...';
+            let data = null;
             try {
                 data = await Promise.any(attempts.map(tryAttempt));
             } catch (aggregateError) {
@@ -376,9 +398,10 @@ createApp({
                 processNodeData(data);
             } else {
                 console.warn('Fallos detallados:', failLog);
-                alert(`🚫 ERROR: Ningún proxy logró la conexión.\n\nDetalle:\n${failLog.join('\n')}\n\nUsa el botón verde 'Subir JSON Manual' mientras tanto.`);
+                alert(`🚫 ERROR: Ni el snapshot ni los proxies lograron la conexión.\n\nDetalle:\n${failLog.join('\n')}\n\nUsa el botón verde 'Subir JSON Manual' mientras tanto.`);
                 syncStatus.value = 'Error de conexión.';
             }
+            isFetchingPool.value = false;
             setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
 
@@ -454,10 +477,15 @@ createApp({
             }
             if (poolFilters.value.isp) {
                 const s = poolFilters.value.isp.toLowerCase().trim();
-                result = result.filter(n => (n.city || '').toLowerCase().includes(s) || (n.asn_isp || '').toLowerCase().includes(s));
+                result = result.filter(n => (n.asn_isp || '').toLowerCase().includes(s));
             }
-            if (poolFilters.value.minQuality) {
-                const minQ = parseFloat(poolFilters.value.minQuality);
+            if (poolFilters.value.city) {
+                const s = poolFilters.value.city.toLowerCase().trim();
+                result = result.filter(n => (n.city || '').toLowerCase().includes(s));
+            }
+            if (poolFilters.value.minQuality !== '' && poolFilters.value.minQuality !== null && poolFilters.value.minQuality !== undefined) {
+                // Acepta "2.5" o "2,5" (el input es de texto, no number, para que no se coma el valor por el separador decimal del navegador)
+                const minQ = parseFloat(String(poolFilters.value.minQuality).replace(',', '.'));
                 if (!isNaN(minQ)) result = result.filter(n => parseFloat(n.q_score) >= minQ);
             }
 
@@ -530,6 +558,52 @@ createApp({
         };
         const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
         const copyToClipboard = async (text, type = 'Dato') => { try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {} };
+
+        // --- RESPALDO MANUAL: TÚ TIENES EL CONTROL, NO DEPENDE DEL NAVEGADOR ---
+        const downloadBackup = () => {
+            const backup = {
+                fecha: new Date().toISOString(),
+                accounts: accounts.value,
+                blacklist: blacklist.value,
+                pool: pool.value
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const fechaCorta = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+            a.href = url;
+            a.download = `respaldo-aliens-${fechaCorta}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showStatus('¡Respaldo descargado!');
+        };
+
+        const restoreBackup = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            const confirmed = confirm('Esto va a REEMPLAZAR tus cuentas, lista negra y pool actuales por los del archivo de respaldo. ¿Continuar?');
+            if (!confirmed) { event.target.value = null; return; }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data || typeof data !== 'object') throw new Error('Formato inválido');
+                    accounts.value = Array.isArray(data.accounts) ? data.accounts : accounts.value;
+                    blacklist.value = Array.isArray(data.blacklist) ? data.blacklist : blacklist.value;
+                    pool.value = Array.isArray(data.pool) ? data.pool : pool.value;
+                    reinitIcons();
+                    updateCharts();
+                    showStatus('¡Respaldo restaurado con éxito!');
+                } catch (err) {
+                    alert('🚫 Error al leer el archivo de respaldo. Verifica que sea el JSON correcto.');
+                }
+                event.target.value = null;
+            };
+            reader.readAsText(file);
+        };
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
         const reinitIcons = () => { nextTick(() => { if(window.lucide) lucide.createIcons(); }); };
         
@@ -552,7 +626,8 @@ createApp({
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,
             ispStats, autoDetectIP, manualIPCheck, undoIp,
-            showAccountSelectModal, nodeToAssign, openAccountSelectModal, confirmAssign
+            showAccountSelectModal, nodeToAssign, openAccountSelectModal, confirmAssign,
+            downloadBackup, restoreBackup, isFetchingPool
         };
     }
 }).mount('#app');

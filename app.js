@@ -14,7 +14,7 @@ createApp({
         const accountSort = ref({ field: null, desc: false });
         
         const pool = ref([]);
-        const poolFilters = ref({ nodeId: '', isp: '', city: '', minQuality: '2.5' });
+        const poolFilters = ref({ nodeId: '', isp: '', city: '', minQuality: '' });
         const poolSort = ref({ field: null, desc: false });
         const isFetchingPool = ref(false); // evita que clics repetidos disparen varias extracciones al mismo tiempo
 
@@ -290,7 +290,7 @@ createApp({
         // (nodos que entraron antes de tener este filtro, por fetch viejo, JSON manual o respaldo)
         const purgeNonAllowedIsps = () => {
             const antes = pool.value.length;
-            pool.value = pool.value.filter(n => isIspPermitida(n.asn_isp) && (n.region || '').toLowerCase() === 'england');
+            pool.value = pool.value.filter(n => isIspPermitida(n.asn_isp));
             const quitados = antes - pool.value.length;
             return quitados;
         };
@@ -303,7 +303,6 @@ createApp({
                 if (!nodo.provider_id) return;
                 const ispNombre = nodo.location?.isp || '';
                 if (!isIspPermitida(ispNombre)) return; // descarta cualquier ISP fuera de la lista permitida
-                if ((nodo.location?.region || '').toLowerCase() !== 'england') return; // solo Inglaterra (no Escocia/Gales/Irlanda del Norte)
 
                 const idCorto = nodo.provider_id.substring(0, 14);
                 
@@ -319,7 +318,6 @@ createApp({
             const rawPool = [];
             currentPoolMap.forEach(n => {
                 if (!isIspPermitida(n.asn_isp)) return; // limpia también lo que ya estaba guardado de antes
-                if ((n.region || '').toLowerCase() !== 'england') return; // idem para región (entradas viejas sin region quedan fuera hasta la próxima extracción)
                 const isBlacklisted = blacklist.value.includes(n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 if (!isBlacklisted && !inUse) {
@@ -494,7 +492,6 @@ createApp({
             // Refuerzo: oculta cualquier nodo viejo guardado en tu navegador de antes de
             // limitar las ISP (no hace falta borrar nada, esto ya lo filtra en la vista).
             result = result.filter(n => isIspPermitida(n.asn_isp));
-            result = result.filter(n => (n.region || '').toLowerCase() === 'england');
 
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();

@@ -283,7 +283,7 @@ createApp({
 
         // --- SISTEMA POOL CON MEMORIA TRIANGULADA ---
         // Solo se aceptan estas ISP (BT Broadband, sin EE/Plusnet; Sky Broadband; Virgin Media; TalkTalk)
-        const ISP_PERMITIDAS = [/british telecommunications/i, /sky uk/i, /virgin media/i, /talktalk/i];
+        const ISP_PERMITIDAS = [/british telecommunications/i, /sky uk/i, /virgin media/i, /talktalk/i, /vodafone/i];
         const isIspPermitida = (isp) => ISP_PERMITIDAS.some(rx => rx.test(isp || ''));
 
         // Quita del pool cualquier nodo que ya estuviera guardado con una ISP fuera de la lista

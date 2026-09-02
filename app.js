@@ -201,6 +201,13 @@ createApp({
             reinitIcons();
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar fila completa?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
+        const deleteAllAccounts = () => {
+            if (accounts.value.length === 0) return;
+            if (!confirm(`⚠️ Esto va a BORRAR LAS ${accounts.value.length} CUENTAS de la granja de una sola vez. No se puede deshacer.\n\n¿Seguro que quieres continuar?`)) return;
+            if (!confirm('Última confirmación: ¿de verdad quieres eliminar TODAS las cuentas ahora mismo?')) return;
+            accounts.value = [];
+            showStatus('Todas las cuentas fueron eliminadas.');
+        };
 
         // ¡NUEVA FUNCIÓN! Vacía la cuenta y manda el nodo a la cuarentena
         const burnNodeFromAccount = (uid) => {
@@ -283,7 +290,7 @@ createApp({
         // (nodos que entraron antes de tener este filtro, por fetch viejo, JSON manual o respaldo)
         const purgeNonAllowedIsps = () => {
             const antes = pool.value.length;
-            pool.value = pool.value.filter(n => isIspPermitida(n.asn_isp));
+            pool.value = pool.value.filter(n => isIspPermitida(n.asn_isp) && (n.region || '').toLowerCase() === 'england');
             const quitados = antes - pool.value.length;
             return quitados;
         };
@@ -296,12 +303,14 @@ createApp({
                 if (!nodo.provider_id) return;
                 const ispNombre = nodo.location?.isp || '';
                 if (!isIspPermitida(ispNombre)) return; // descarta cualquier ISP fuera de la lista permitida
+                if ((nodo.location?.region || '').toLowerCase() !== 'england') return; // solo Inglaterra (no Escocia/Gales/Irlanda del Norte)
 
                 const idCorto = nodo.provider_id.substring(0, 14);
                 
                 currentPoolMap.set(idCorto, {
                     id: idCorto,
                     city: nodo.location?.city || 'Desconocida',
+                    region: nodo.location?.region || '',
                     asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
                     q_score: (nodo.quality?.quality || 0).toFixed(2)
                 });
@@ -310,6 +319,7 @@ createApp({
             const rawPool = [];
             currentPoolMap.forEach(n => {
                 if (!isIspPermitida(n.asn_isp)) return; // limpia también lo que ya estaba guardado de antes
+                if ((n.region || '').toLowerCase() !== 'england') return; // idem para región (entradas viejas sin region quedan fuera hasta la próxima extracción)
                 const isBlacklisted = blacklist.value.includes(n.id);
                 const inUse = accounts.value.some(a => (a.nodeId || '').trim() === n.id);
                 if (!isBlacklisted && !inUse) {
@@ -484,6 +494,7 @@ createApp({
             // Refuerzo: oculta cualquier nodo viejo guardado en tu navegador de antes de
             // limitar las ISP (no hace falta borrar nada, esto ya lo filtra en la vista).
             result = result.filter(n => isIspPermitida(n.asn_isp));
+            result = result.filter(n => (n.region || '').toLowerCase() === 'england');
 
             if (poolFilters.value.nodeId) {
                 const s = poolFilters.value.nodeId.toLowerCase().trim();
@@ -643,7 +654,7 @@ createApp({
 
         return {
             currentTab, isSidebarOpen, toggleSidebar, accounts, pool, blacklist, syncStatus, bulkBlacklistText, 
-            collisionCount, hasCollision, addAccount, removeAccount, processBulkBlacklist, removeBlacklistNode,
+            collisionCount, hasCollision, addAccount, removeAccount, deleteAllAccounts, processBulkBlacklist, removeBlacklistNode,
             fetchMysteriumAPI, importPoolJSON, copyToClipboard, burnDirectlyFromPool, burnNodeFromAccount,
             filteredPool, poolFilters, poolSort, togglePoolSort,
             processedAccounts, accountSearch, accountSort, toggleAccountSort,

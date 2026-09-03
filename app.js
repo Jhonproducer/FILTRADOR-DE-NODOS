@@ -80,11 +80,15 @@ createApp({
             lineas.forEach(linea => {
                 const partes = linea.trim().split(/\s+/);
                 if (partes.length >= 2) {
+                    const nodeIdAsignado = partes.length >= 3 ? partes[2] : "";
+                    // Busca la ciudad de ese nodo en el pool actual (si sigue disponible ahí)
+                    const nodoEnPool = nodeIdAsignado ? pool.value.find(n => n.id === nodeIdAsignado) : null;
                     nuevasCuentas.push({
                         uid: generateUid(),
                         name: partes[0],
                         fecha: partes[1],
-                        nodeId: partes.length >= 3 ? partes[2] : "",
+                        nodeId: nodeIdAsignado,
+                        city: nodoEnPool ? nodoEnPool.city : '',
                         ip: partes.length >= 4 ? partes[3] : "",
                         isp: 'Desconocido',
                         county: 'Desconocido',
@@ -92,6 +96,17 @@ createApp({
                     });
                 }
             });
+
+            // Chequeo de tope por ciudad ANTES de cargar, contando solo entre las cuentas nuevas
+            const conteo = {};
+            nuevasCuentas.forEach(c => { if (c.city) conteo[c.city] = (conteo[c.city] || 0) + 1; });
+            const excedidas = Object.entries(conteo).filter(([ciudad, n]) => n > maxPorCiudad.value);
+            if (excedidas.length > 0) {
+                const detalle = excedidas.map(([ciudad, n]) => `• ${ciudad}: ${n} cuentas (tope: ${maxPorCiudad.value})`).join('\n');
+                const seguro = confirm(`⚠️ Esta carga masiva repite localización más de lo recomendado:\n\n${detalle}\n\nPara mayor seguridad entre cuentas, se recomienda no concentrar tantas en la misma ciudad.\n\n¿Cargar de todas formas?`);
+                if (!seguro) return; // no toca accounts.value, el usuario puede corregir el pegado y reintentar
+            }
+
             accounts.value = nuevasCuentas;
             showBulkLoadModal.value = false;
             bulkLoadText.value = '';

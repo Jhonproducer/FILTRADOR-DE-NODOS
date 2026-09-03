@@ -265,7 +265,7 @@
                             <span class="text-xs font-bold text-slate-500 bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 uppercase tracking-wider">Nodos Seguros Disponibles: {{ filteredPool.length }}</span>
                         </div>
                         
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-800 p-3 rounded-xl border border-slate-700">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 bg-slate-800 p-3 rounded-xl border border-slate-700">
                             <div class="flex items-center bg-slate-900 rounded-lg px-3 border border-slate-700 focus-within:border-indigo-500 transition-colors">
                                 <i data-lucide="hash" class="w-4 h-4 text-slate-500 mr-2"></i>
                                 <input type="text" v-model="poolFilters.nodeId" placeholder="Buscar por ID de Nodo..." class="w-full bg-transparent py-2 text-sm outline-none font-bold text-white">
@@ -281,6 +281,11 @@
                             <div class="flex items-center bg-slate-900 rounded-lg px-3 border border-slate-700 focus-within:border-indigo-500 transition-colors">
                                 <i data-lucide="star" class="w-4 h-4 text-slate-500 mr-2"></i>
                                 <input type="text" inputmode="decimal" v-model="poolFilters.minQuality" placeholder="Min Calidad (ej. 2.5)" class="w-full bg-transparent py-2 text-sm outline-none font-black text-indigo-400">
+                            </div>
+                            <div class="flex items-center bg-slate-900 rounded-lg px-3 border border-amber-700/50 focus-within:border-amber-500 transition-colors" title="Máximo de cuentas activas permitidas en una misma ciudad">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-amber-500 mr-2"></i>
+                                <span class="text-xs text-slate-400 font-bold whitespace-nowrap">Tope/ciudad:</span>
+                                <input type="number" min="1" v-model.number="maxPorCiudad" class="w-full bg-transparent py-2 pl-2 text-sm outline-none font-black text-amber-400">
                             </div>
                         </div>
                     </div>
@@ -298,7 +303,13 @@
                             <tbody class="text-sm divide-y divide-slate-700/50">
                                 <tr v-for="node in filteredPool" :key="node.id" class="hover:bg-slate-700/30 transition-colors">
                                     <td class="p-4 align-middle text-center"><span class="font-mono font-black text-slate-300 uppercase bg-slate-900 border border-slate-600 px-4 py-2 rounded-lg shadow-sm">{{ node.id }}</span></td>
-                                    <td class="p-4 align-middle text-center text-slate-300 font-bold">{{ node.city }} <span class="text-[10px] text-slate-500 block uppercase font-black mt-1">{{ node.asn_isp }}</span></td>
+                                    <td class="p-4 align-middle text-center text-slate-300 font-bold">
+                                        {{ node.city }}
+                                        <span v-if="cuentasEnCiudad(node.city) > 0" :class="cuentasEnCiudad(node.city) >= maxPorCiudad ? 'bg-rose-900/40 text-rose-400 border-rose-700/50' : 'bg-amber-900/30 text-amber-400 border-amber-700/50'" class="ml-2 inline-block px-2 py-0.5 rounded-full text-[10px] font-black border align-middle" :title="'Ya hay ' + cuentasEnCiudad(node.city) + ' cuenta(s) en ' + node.city">
+                                            {{ cuentasEnCiudad(node.city) }}/{{ maxPorCiudad }}
+                                        </span>
+                                        <span class="text-[10px] text-slate-500 block uppercase font-black mt-1">{{ node.asn_isp }}</span>
+                                    </td>
                                     <td class="p-4 align-middle text-center"><span class="inline-flex items-center justify-center px-5 py-2 rounded-full text-xs font-black border bg-emerald-900/30 text-emerald-400 border-emerald-700/50">{{ node.q_score }}</span></td>
                                     <td class="p-4 align-middle text-center">
                                         <div class="flex items-center justify-center gap-3">
@@ -340,11 +351,34 @@
                         </div>
                     </div>
                     <div class="flex-1 overflow-auto">
+                        <div class="px-6 pt-6">
+                            <h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">Activos ({{ blacklistActivos.length }}) <span class="font-normal normal-case text-slate-500">— siguen apareciendo en la API</span></h4>
+                        </div>
                         <table class="w-full text-left border-collapse">
                             <tbody class="text-sm divide-y divide-slate-700/50">
-                                <tr v-for="(node, index) in blacklist" :key="index" class="hover:bg-slate-700/30 transition-colors">
+                                <tr v-for="node in blacklistActivos" :key="node" class="hover:bg-slate-700/30 transition-colors">
                                     <td class="p-4 align-middle text-center font-mono font-bold text-rose-400">{{ node }}</td>
-                                    <td class="p-4 align-middle text-center"><button @click="removeBlacklistNode(index)" class="px-4 py-1.5 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition-all">Perdonar</button></td>
+                                    <td class="p-4 align-middle text-center"><button @click="removeBlacklistNode(node)" class="px-4 py-1.5 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition-all">Perdonar</button></td>
+                                </tr>
+                                <tr v-if="blacklistActivos.length === 0">
+                                    <td colspan="2" class="p-10 text-center text-slate-500 font-bold">Ninguno activo por ahora.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div v-if="blacklistArchivados.length > 0" class="px-6 pt-8 pb-2 border-t border-slate-700 mt-4">
+                            <button @click="toggleArchivedQuarantine" class="flex items-center gap-2 text-sm font-black text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-wider">
+                                <i data-lucide="archive" class="w-4 h-4"></i>
+                                Archivados ({{ blacklistArchivados.length }}) — ya no existen en la API
+                                <i :data-lucide="showArchivedQuarantine ? 'chevron-up' : 'chevron-down'" class="w-4 h-4"></i>
+                            </button>
+                            <p class="text-xs text-slate-600 mt-1">Siguen bloqueados igual, solo se ocultan de la vista para no estorbar. Si alguno vuelve a aparecer en la API, sube de nuevo a "Activos" solo.</p>
+                        </div>
+                        <table v-if="showArchivedQuarantine" class="w-full text-left border-collapse opacity-60">
+                            <tbody class="text-sm divide-y divide-slate-700/50">
+                                <tr v-for="node in blacklistArchivados" :key="node" class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="p-4 align-middle text-center font-mono font-bold text-slate-500">{{ node }}</td>
+                                    <td class="p-4 align-middle text-center"><button @click="removeBlacklistNode(node)" class="px-4 py-1.5 bg-slate-700 text-slate-300 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition-all">Perdonar</button></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -377,6 +411,10 @@
                         <div>
                             <h3 class="text-xl font-black text-white">Asignar Nodo Rápido</h3>
                             <p class="text-sm font-bold text-indigo-400 mt-1 uppercase tracking-wider font-mono">Nodo: {{ nodeToAssign }}</p>
+                            <p v-if="nodeToAssignCity" class="text-xs font-bold mt-1" :class="cuentasEnCiudad(nodeToAssignCity) >= maxPorCiudad ? 'text-rose-400' : 'text-slate-400'">
+                                Ciudad: {{ nodeToAssignCity }} — {{ cuentasEnCiudad(nodeToAssignCity) }}/{{ maxPorCiudad }} cuentas ya ahí
+                                <span v-if="cuentasEnCiudad(nodeToAssignCity) >= maxPorCiudad">⚠️ Tope alcanzado</span>
+                            </p>
                         </div>
                         <button @click="showAccountSelectModal = false" class="w-10 h-10 bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-400 rounded-xl transition-colors flex items-center justify-center">
                             <i data-lucide="x" class="w-5 h-5"></i>

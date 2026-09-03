@@ -25,6 +25,11 @@ createApp({
 
         const showAccountSelectModal = ref(false);
         const nodeToAssign = ref('');
+        const nodeToAssignCity = ref('');
+        const maxPorCiudad = ref(2); // tope de cuentas activas por misma ciudad, para no repetir localización
+
+        const nodosVistosApi = ref([]); // IDs de TODOS los nodos que trajo la última extracción completa (sin filtrar por ISP/región), para poder archivar cuarentena vieja que ya no existe en la API
+        const showArchivedQuarantine = ref(false);
 
         let chartInstance = null;
 
@@ -38,6 +43,8 @@ createApp({
             localStorage.setItem('vpn_nexus_acc', JSON.stringify(accounts.value));
             localStorage.setItem('vpn_nexus_blk', JSON.stringify(blacklist.value));
             localStorage.setItem('vpn_nexus_pool', JSON.stringify(pool.value)); 
+            localStorage.setItem('vpn_nexus_max_ciudad', JSON.stringify(maxPorCiudad.value));
+            localStorage.setItem('vpn_nexus_vistos', JSON.stringify(nodosVistosApi.value));
             updateCharts();
         };
 
@@ -45,10 +52,13 @@ createApp({
             let savedAcc = JSON.parse(localStorage.getItem('vpn_nexus_acc'));
             let savedBlk = JSON.parse(localStorage.getItem('vpn_nexus_blk'));
             let savedPool = JSON.parse(localStorage.getItem('vpn_nexus_pool')); 
+            let savedMax = JSON.parse(localStorage.getItem('vpn_nexus_max_ciudad'));
+            let savedVistos = JSON.parse(localStorage.getItem('vpn_nexus_vistos'));
 
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({
                     ...a,
+                    city: a.city || '',
                     county: a.county || 'Desconocido',
                     previousIp: a.previousIp || null
                 }));
@@ -57,9 +67,11 @@ createApp({
             if (savedPool && savedPool.length > 0) {
                 pool.value = savedPool; 
             }
+            if (typeof savedMax === 'number' && savedMax > 0) maxPorCiudad.value = savedMax;
+            nodosVistosApi.value = Array.isArray(savedVistos) ? savedVistos : [];
         };
 
-        watch([accounts, blacklist, pool], saveData, { deep: true });
+        watch([accounts, blacklist, pool, maxPorCiudad, nodosVistosApi], saveData, { deep: true });
 
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
@@ -197,7 +209,7 @@ createApp({
 
         const addAccount = () => {
             const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
+            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', city: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
             reinitIcons();
         };
         const removeAccount = (uid) => { if(confirm("¿Eliminar fila completa?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
@@ -225,6 +237,7 @@ createApp({
                 
                 // Vaciar los datos de la cuenta dejándola limpia
                 acc.nodeId = '';
+                acc.city = '';
                 acc.ip = '';
                 acc.isp = 'Desconocido';
                 acc.county = 'Desconocido';
@@ -298,6 +311,12 @@ createApp({
         const processNodeData = (data) => {
             const currentPoolMap = new Map();
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
+
+            // Guarda el "quién está vivo" de TODA la API (todos los países/ISP), sin filtrar,
+            // para poder distinguir en Cuarentena lo que sigue existiendo de lo que ya murió.
+            nodosVistosApi.value = data
+                .filter(nodo => nodo.provider_id)
+                .map(nodo => nodo.provider_id.substring(0, 14));
 
             data.forEach(nodo => {
                 if (!nodo.provider_id) return;
@@ -460,14 +479,34 @@ createApp({
         // --- ASIGNACIÓN DE NODO A CUENTA DESDE POOL ---
         const openAccountSelectModal = (nodeId) => {
             nodeToAssign.value = nodeId;
+            const nodo = pool.value.find(n => n.id === nodeId);
+            nodeToAssignCity.value = nodo ? nodo.city : '';
             showAccountSelectModal.value = true;
             reinitIcons();
         };
 
+        // Cuántas cuentas activas (con nodo asignado) hay ahora mismo en cada ciudad
+        const cityCounts = computed(() => {
+            const counts = {};
+            accounts.value.forEach(a => {
+                if (a.nodeId && a.city) {
+                    counts[a.city] = (counts[a.city] || 0) + 1;
+                }
+            });
+            return counts;
+        });
+        const cuentasEnCiudad = (city) => cityCounts.value[city] || 0;
+
         const confirmAssign = (uid) => {
             const acc = accounts.value.find(a => a.uid === uid);
             if(acc) {
+                const yaHayEnEsaCiudad = cuentasEnCiudad(nodeToAssignCity.value);
+                if (nodeToAssignCity.value && yaHayEnEsaCiudad >= maxPorCiudad.value) {
+                    const seguro = confirm(`⚠️ Ya hay ${yaHayEnEsaCiudad} cuenta(s) en "${nodeToAssignCity.value}" (tope: ${maxPorCiudad.value}).\n\nPara mayor seguridad entre cuentas, se recomienda no repetir localización.\n\n¿Asignar de todas formas?`);
+                    if (!seguro) return;
+                }
                 acc.nodeId = nodeToAssign.value;
+                acc.city = nodeToAssignCity.value;
                 acc.ip = ''; 
                 acc.isp = 'Desconocido';
                 acc.county = 'Desconocido';
@@ -589,7 +628,25 @@ createApp({
             bulkBlacklistText.value = ''; 
             showStatus('Nodos enviados a Cuarentena.');
         };
-        const removeBlacklistNode = (index) => { blacklist.value.splice(index, 1); };
+        const removeBlacklistNode = (nodeIdOValor) => {
+            blacklist.value = blacklist.value.filter(n => n !== nodeIdOValor);
+        };
+
+        // Un nodo en cuarentena está "activo" si sigue apareciendo en la última extracción completa
+        // de la API (en cualquier país/ISP). Si nodosVistosApi está vacío (nunca se ha extraído en
+        // esta sesión/navegador), se muestra todo como activo para no ocultar nada sin evidencia.
+        const blacklistActivos = computed(() => {
+            if (nodosVistosApi.value.length === 0) return blacklist.value;
+            return blacklist.value.filter(id => nodosVistosApi.value.includes(id));
+        });
+        const blacklistArchivados = computed(() => {
+            if (nodosVistosApi.value.length === 0) return [];
+            return blacklist.value.filter(id => !nodosVistosApi.value.includes(id));
+        });
+        const toggleArchivedQuarantine = () => {
+            showArchivedQuarantine.value = !showArchivedQuarantine.value;
+            reinitIcons();
+        };
         const copyToClipboard = async (text, type = 'Dato') => { try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {} };
 
         // --- RESPALDO MANUAL: TÚ TIENES EL CONTROL, NO DEPENDE DEL NAVEGADOR ---
@@ -660,8 +717,10 @@ createApp({
             processedAccounts, accountSearch, accountSort, toggleAccountSort,
             showBulkLoadModal, bulkLoadText, processBulkLoad, fetchSingleISP, forceEnrichmentSweep,
             ispStats, autoDetectIP, manualIPCheck, undoIp,
-            showAccountSelectModal, nodeToAssign, openAccountSelectModal, confirmAssign,
-            downloadBackup, restoreBackup, isFetchingPool
+            showAccountSelectModal, nodeToAssign, nodeToAssignCity, openAccountSelectModal, confirmAssign,
+            downloadBackup, restoreBackup, isFetchingPool,
+            maxPorCiudad, cityCounts, cuentasEnCiudad,
+            blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine
         };
     }
 }).mount('#app');

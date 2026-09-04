@@ -663,45 +663,28 @@ createApp({
             reinitIcons();
         };
 
-        const exportQuarantineWord = () => {
+        const exportQuarantineExcel = () => {
             const fecha = new Date().toLocaleString('es-VE', { dateStyle: 'long', timeStyle: 'short' });
-            const filaActivos = blacklistActivos.value.map((id, i) => `<tr><td>${i + 1}</td><td>${id}</td><td>Activo — sigue en la API</td></tr>`).join('');
-            const filaArchivados = blacklistArchivados.value.map((id, i) => `<tr><td>${i + 1}</td><td>${id}</td><td>Archivado — ya no aparece en la API</td></tr>`).join('');
+            const filas = [['#', 'ID de Nodo', 'Estado', 'Reporte generado']];
+            blacklistActivos.value.forEach((id, i) => filas.push([i + 1, id, 'Activo - sigue en la API', fecha]));
+            blacklistArchivados.value.forEach((id, i) => filas.push([blacklistActivos.value.length + i + 1, id, 'Archivado - ya no aparece en la API', fecha]));
 
-            const html = `
-                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                <head><meta charset='utf-8'><title>Reporte de Cuarentena</title></head>
-                <body style="font-family: Calibri, Arial, sans-serif;">
-                    <h1>Reporte de Cuarentena — ALIENS.sys</h1>
-                    <p><b>Generado:</b> ${fecha}</p>
-                    <p><b>Total en cuarentena:</b> ${blacklist.value.length} &nbsp;|&nbsp; <b>Activos:</b> ${blacklistActivos.value.length} &nbsp;|&nbsp; <b>Archivados:</b> ${blacklistArchivados.value.length}</p>
+            const csv = filas.map(fila =>
+                fila.map(celda => `"${String(celda).replace(/"/g, '""')}"`).join(',')
+            ).join('\r\n');
 
-                    <h2>Activos (${blacklistActivos.value.length}) — siguen apareciendo en la API</h2>
-                    <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse; width:100%;">
-                        <tr style="background:#4f46e5; color:white;"><th>#</th><th>ID de Nodo</th><th>Estado</th></tr>
-                        ${filaActivos || '<tr><td colspan="3">Ninguno activo por ahora.</td></tr>'}
-                    </table>
-
-                    <br/>
-                    <h2>Archivados (${blacklistArchivados.value.length}) — ya no existen en la API</h2>
-                    <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse; width:100%;">
-                        <tr style="background:#64748b; color:white;"><th>#</th><th>ID de Nodo</th><th>Estado</th></tr>
-                        ${filaArchivados || '<tr><td colspan="3">Ninguno archivado por ahora.</td></tr>'}
-                    </table>
-                </body>
-                </html>`;
-
-            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            // BOM al inicio para que Excel detecte bien los acentos/UTF-8
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             const fechaArchivo = new Date().toISOString().slice(0, 10);
             a.href = url;
-            a.download = `Reporte_Cuarentena_${fechaArchivo}.doc`;
+            a.download = `Reporte_Cuarentena_${fechaArchivo}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showStatus('Reporte de cuarentena exportado.');
+            showStatus('Reporte de cuarentena exportado (Excel/CSV).');
         };
         const copyToClipboard = async (text, type = 'Dato') => { try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {} };
 
@@ -776,7 +759,7 @@ createApp({
             showAccountSelectModal, nodeToAssign, nodeToAssignCity, openAccountSelectModal, confirmAssign,
             downloadBackup, restoreBackup, isFetchingPool,
             maxPorCiudad, cityCounts, cuentasEnCiudad,
-            blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineWord
+            blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel
         };
     }
 }).mount('#app');

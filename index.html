@@ -353,8 +353,8 @@
                     <div class="flex-1 overflow-auto">
                         <div class="px-6 pt-6 flex items-center justify-between flex-wrap gap-3">
                             <h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">Activos ({{ blacklistActivos.length }}) <span class="font-normal normal-case text-slate-500">— siguen apareciendo en la API</span></h4>
-                            <button @click="exportQuarantineExcel" class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2" title="Descarga un reporte .csv (se abre en Excel) con Activos y Archivados, para auditorías externas">
-                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar Reporte (Excel)
+                            <button @click="exportQuarantineExcel" class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2" title="Descarga solo la lista de IDs bloqueados, uno por línea, para pegar directo en tu Excel">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Exportar Lista de Nodos
                             </button>
                         </div>
                         <table class="w-full text-left border-collapse">

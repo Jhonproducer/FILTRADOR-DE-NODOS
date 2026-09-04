@@ -664,11 +664,20 @@ createApp({
         };
 
         const exportQuarantineExcel = () => {
-            // Solo los IDs, uno por línea, sin comillas ni columnas ni texto de más —
-            // así se puede seleccionar y pegar directo en la columna del Excel que ya usas.
-            const soloIds = blacklist.value.join('\r\n');
+            // Dos columnas lado a lado: los que SÍ aparecen en la API, y los que NO.
+            // Sin comillas, solo los IDs — se rellena con celdas vacías la columna
+            // más corta para que ambas queden parejas en Excel.
+            const activos = blacklistActivos.value;
+            const archivados = blacklistArchivados.value;
+            const totalFilas = Math.max(activos.length, archivados.length);
 
-            const blob = new Blob(['\ufeff' + soloIds], { type: 'text/csv;charset=utf-8;' });
+            let filas = ['OK (Activos),No Aparecen (Archivados)'];
+            for (let i = 0; i < totalFilas; i++) {
+                filas.push(`${activos[i] || ''},${archivados[i] || ''}`);
+            }
+            const csv = filas.join('\r\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             const fechaArchivo = new Date().toISOString().slice(0, 10);

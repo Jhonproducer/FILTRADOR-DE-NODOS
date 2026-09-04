@@ -351,8 +351,11 @@
                         </div>
                     </div>
                     <div class="flex-1 overflow-auto">
-                        <div class="px-6 pt-6">
+                        <div class="px-6 pt-6 flex items-center justify-between flex-wrap gap-3">
                             <h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">Activos ({{ blacklistActivos.length }}) <span class="font-normal normal-case text-slate-500">— siguen apareciendo en la API</span></h4>
+                            <button @click="exportQuarantineWord" class="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2" title="Descarga un reporte .doc con Activos y Archivados, para auditorías externas">
+                                <i data-lucide="file-text" class="w-4 h-4"></i> Exportar Reporte (Word)
+                            </button>
                         </div>
                         <table class="w-full text-left border-collapse">
                             <tbody class="text-sm divide-y divide-slate-700/50">

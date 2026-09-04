@@ -438,6 +438,10 @@
 
     </div>
 
-    <script src="app.js?v=3"></script>
+    <script>
+        // Carga app.js siempre "fresco": usa la hora exacta como parámetro, así
+        // nunca se sirve una copia vieja en caché, sin tener que subir un número a mano.
+        document.write('<script src="app.js?t=' + Date.now() + '"><\/script>');
+    </script>
 </body>
 </html>

@@ -664,27 +664,21 @@ createApp({
         };
 
         const exportQuarantineExcel = () => {
-            const fecha = new Date().toLocaleString('es-VE', { dateStyle: 'long', timeStyle: 'short' });
-            const filas = [['#', 'ID de Nodo', 'Estado', 'Reporte generado']];
-            blacklistActivos.value.forEach((id, i) => filas.push([i + 1, id, 'Activo - sigue en la API', fecha]));
-            blacklistArchivados.value.forEach((id, i) => filas.push([blacklistActivos.value.length + i + 1, id, 'Archivado - ya no aparece en la API', fecha]));
+            // Solo los IDs, uno por línea, sin comillas ni columnas ni texto de más —
+            // así se puede seleccionar y pegar directo en la columna del Excel que ya usas.
+            const soloIds = blacklist.value.join('\r\n');
 
-            const csv = filas.map(fila =>
-                fila.map(celda => `"${String(celda).replace(/"/g, '""')}"`).join(',')
-            ).join('\r\n');
-
-            // BOM al inicio para que Excel detecte bien los acentos/UTF-8
-            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(['\ufeff' + soloIds], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             const fechaArchivo = new Date().toISOString().slice(0, 10);
             a.href = url;
-            a.download = `Reporte_Cuarentena_${fechaArchivo}.csv`;
+            a.download = `Nodos_Bloqueados_${fechaArchivo}.csv`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showStatus('Reporte de cuarentena exportado (Excel/CSV).');
+            showStatus('Lista de nodos bloqueados exportada.');
         };
         const copyToClipboard = async (text, type = 'Dato') => { try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {} };
 

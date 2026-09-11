@@ -664,30 +664,25 @@ createApp({
         };
 
         const exportQuarantineExcel = () => {
-            // Dos columnas lado a lado: los que SÍ aparecen en la API, y los que NO.
-            // Sin comillas, solo los IDs — se rellena con celdas vacías la columna
-            // más corta para que ambas queden parejas en Excel.
+            // .xlsx real (no CSV): las columnas quedan en celdas de verdad desde el
+            // primer momento, sin depender de si el Excel usa coma o punto y coma.
             const activos = blacklistActivos.value;
             const archivados = blacklistArchivados.value;
             const totalFilas = Math.max(activos.length, archivados.length);
 
-            let filas = ['OK (Activos),No Aparecen (Archivados)'];
+            const datos = [['OK (Activos)', 'No Aparecen (Archivados)']];
             for (let i = 0; i < totalFilas; i++) {
-                filas.push(`${activos[i] || ''},${archivados[i] || ''}`);
+                datos.push([activos[i] || '', archivados[i] || '']);
             }
-            const csv = filas.join('\r\n');
 
-            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const hoja = XLSX.utils.aoa_to_sheet(datos);
+            hoja['!cols'] = [{ wch: 20 }, { wch: 24 }];
+            const libro = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(libro, hoja, 'Cuarentena');
+
             const fechaArchivo = new Date().toISOString().slice(0, 10);
-            a.href = url;
-            a.download = `Nodos_Bloqueados_${fechaArchivo}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showStatus('Lista de nodos bloqueados exportada.');
+            XLSX.writeFile(libro, `Nodos_Bloqueados_${fechaArchivo}.xlsx`);
+            showStatus('Lista de nodos bloqueados exportada (.xlsx).');
         };
         const copyToClipboard = async (text, type = 'Dato') => { try { await navigator.clipboard.writeText(text); showStatus(`¡${type} Copiado!`); } catch (err) {} };
 

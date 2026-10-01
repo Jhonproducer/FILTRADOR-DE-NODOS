@@ -19,6 +19,7 @@ createApp({
         const isFetchingPool = ref(false); // evita que clics repetidos disparen varias extracciones al mismo tiempo
 
         const blacklist = ref([]);
+        const verificados = ref([]); // nodos ya probados manualmente y confirmados buenos, listos para asignar
         const bulkBlacklistText = ref('');
         const showBulkLoadModal = ref(false);
         const bulkLoadText = ref('');
@@ -45,6 +46,7 @@ createApp({
             localStorage.setItem('vpn_nexus_pool', JSON.stringify(pool.value)); 
             localStorage.setItem('vpn_nexus_max_ciudad', JSON.stringify(maxPorCiudad.value));
             localStorage.setItem('vpn_nexus_vistos', JSON.stringify(nodosVistosApi.value));
+            localStorage.setItem('vpn_nexus_verificados', JSON.stringify(verificados.value));
             updateCharts();
         };
 
@@ -54,6 +56,7 @@ createApp({
             let savedPool = JSON.parse(localStorage.getItem('vpn_nexus_pool')); 
             let savedMax = JSON.parse(localStorage.getItem('vpn_nexus_max_ciudad'));
             let savedVistos = JSON.parse(localStorage.getItem('vpn_nexus_vistos'));
+            let savedVerificados = JSON.parse(localStorage.getItem('vpn_nexus_verificados'));
 
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({
@@ -69,9 +72,10 @@ createApp({
             }
             if (typeof savedMax === 'number' && savedMax > 0) maxPorCiudad.value = savedMax;
             nodosVistosApi.value = Array.isArray(savedVistos) ? savedVistos : [];
+            verificados.value = Array.isArray(savedVerificados) ? savedVerificados : [];
         };
 
-        watch([accounts, blacklist, pool, maxPorCiudad, nodosVistosApi], saveData, { deep: true });
+        watch([accounts, blacklist, pool, maxPorCiudad, nodosVistosApi, verificados], saveData, { deep: true });
 
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
@@ -491,10 +495,54 @@ createApp({
             }
         };
 
+        // --- NODOS VERIFICADOS: ya probados a mano y confirmados buenos, reservados para asignar ---
+        const showVerifyModal = ref(false);
+        const nodeToVerify = ref(null); // objeto completo del nodo (ciudad/isp/calidad), no solo el id
+        const notaVerificacion = ref('');
+
+        const openVerifyModal = (nodeId) => {
+            const nodo = pool.value.find(n => n.id === nodeId);
+            if (!nodo) return;
+            nodeToVerify.value = nodo;
+            notaVerificacion.value = '';
+            showVerifyModal.value = true;
+            reinitIcons();
+        };
+
+        const confirmSaveVerified = () => {
+            if (!nodeToVerify.value) return;
+            const nodo = nodeToVerify.value;
+            verificados.value.unshift({
+                ...nodo,
+                nota: notaVerificacion.value.trim(),
+                fechaGuardado: new Date().toISOString()
+            });
+            pool.value = pool.value.filter(n => n.id !== nodo.id);
+            showVerifyModal.value = false;
+            showStatus(`Nodo ${nodo.id} guardado en Verificados.`);
+        };
+
+        const devolverAlPool = (nodeId) => {
+            const nodo = verificados.value.find(n => n.id === nodeId);
+            if (!nodo) return;
+            const { nota, fechaGuardado, ...nodoLimpio } = nodo; // se quitan los datos propios de "verificado" al volver al pool
+            pool.value.unshift(nodoLimpio);
+            verificados.value = verificados.value.filter(n => n.id !== nodeId);
+            showStatus(`Nodo ${nodeId} devuelto al Pool.`);
+        };
+
+        const burnFromVerified = (nodeId) => {
+            if (!blacklist.value.includes(nodeId)) {
+                blacklist.value.unshift(nodeId);
+                verificados.value = verificados.value.filter(n => n.id !== nodeId);
+                showStatus(`Nodo ${nodeId} enviado a cuarentena desde Verificados.`);
+            }
+        };
+
         // --- ASIGNACIÓN DE NODO A CUENTA DESDE POOL ---
         const openAccountSelectModal = (nodeId) => {
             nodeToAssign.value = nodeId;
-            const nodo = pool.value.find(n => n.id === nodeId);
+            const nodo = pool.value.find(n => n.id === nodeId) || verificados.value.find(n => n.id === nodeId);
             nodeToAssignCity.value = nodo ? nodo.city : '';
             showAccountSelectModal.value = true;
             reinitIcons();
@@ -530,6 +578,7 @@ createApp({
                 showStatus(`Nodo asignado con éxito a ${acc.name}`);
                 
                 pool.value = pool.value.filter(n => n.id !== nodeToAssign.value);
+                verificados.value = verificados.value.filter(n => n.id !== nodeToAssign.value);
             }
         };
 
@@ -757,7 +806,8 @@ createApp({
             showAccountSelectModal, nodeToAssign, nodeToAssignCity, openAccountSelectModal, confirmAssign,
             downloadBackup, restoreBackup, isFetchingPool,
             maxPorCiudad, cityCounts, cuentasEnCiudad,
-            blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel
+            blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
+            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified
         };
     }
 }).mount('#app');

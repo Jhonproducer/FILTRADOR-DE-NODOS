@@ -248,7 +248,7 @@
                 </div>
 
                 <!-- ==================== VISTA: POOL (RADAR LIMPIO) ==================== -->
-                <div v-show="currentTab === 'pool'" class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
+                <div v-show="currentTab === 'pool'" class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 flex flex-col">
                     <div class="p-6 bg-slate-900/50 border-b border-slate-700 flex flex-col gap-4">
                         <div class="flex justify-between items-center">
                             
@@ -291,7 +291,7 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 overflow-auto">
+                    <div class="max-h-[45vh] overflow-auto">
                         <table class="w-full text-left border-collapse">
                             <thead class="sticky top-0 z-10 bg-slate-900 shadow-md border-b border-slate-700">
                                 <tr class="text-slate-400 text-[11px] uppercase tracking-widest">
@@ -325,6 +325,11 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                             </button>
 
+                                            <!-- SVG NATIVO GUARDAR VERIFICADO -->
+                                            <button @click="openVerifyModal(node.id)" class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-slate-700 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors shadow-md" title="Guardar como Verificado (ya probado, bueno)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                            </button>
+
                                             <!-- SVG NATIVO PAPELERA -->
                                             <button @click="burnDirectlyFromPool(node.id)" class="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-slate-700 text-rose-400 hover:bg-rose-600 hover:text-white transition-colors shadow-md" title="Enviar a Cuarentena (Papelera)">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
@@ -337,6 +342,56 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- ==================== NODOS VERIFICADOS (ya probados a mano, listos para asignar) ==================== -->
+                    <div class="p-6 bg-emerald-900/10 border-t-2 border-emerald-700/40 flex flex-col gap-4">
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <h4 class="text-sm font-black text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                                Nodos Verificados ({{ verificados.length }}) <span class="font-normal normal-case text-slate-500">— ya probados a mano, listos para asignar</span>
+                            </h4>
+                        </div>
+                        <div class="max-h-[35vh] overflow-auto rounded-xl border border-emerald-700/30">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="sticky top-0 z-10 bg-slate-900 shadow-md border-b border-slate-700">
+                                    <tr class="text-slate-400 text-[11px] uppercase tracking-widest">
+                                        <th class="p-4 font-bold text-center w-[20%]">ID de Nodo</th>
+                                        <th class="p-4 font-bold text-center w-[25%]">Ciudad / ISP</th>
+                                        <th class="p-4 font-bold text-center w-[10%]">Score</th>
+                                        <th class="p-4 font-bold text-center w-[25%]">Nota</th>
+                                        <th class="p-4 font-bold text-center w-[20%]">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-slate-700/50">
+                                    <tr v-for="node in verificados" :key="node.id" class="hover:bg-slate-700/30 transition-colors">
+                                        <td class="p-3 align-middle text-center"><span class="font-mono font-black text-slate-300 uppercase bg-slate-900 border border-slate-600 px-3 py-1.5 rounded-lg text-xs">{{ node.id }}</span></td>
+                                        <td class="p-3 align-middle text-center text-slate-300 font-bold text-sm">
+                                            {{ node.city }}
+                                            <span class="text-[10px] text-slate-500 block uppercase font-black mt-1">{{ node.asn_isp }}</span>
+                                        </td>
+                                        <td class="p-3 align-middle text-center"><span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black border bg-emerald-900/30 text-emerald-400 border-emerald-700/50">{{ node.q_score }}</span></td>
+                                        <td class="p-3 align-middle text-center text-slate-400 text-xs italic">{{ node.nota || '—' }}</td>
+                                        <td class="p-3 align-middle text-center">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button @click="openAccountSelectModal(node.id)" class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-colors shadow-md" title="Asignar a Cuenta">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
+                                                </button>
+                                                <button @click="devolverAlPool(node.id)" class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-slate-700 text-amber-400 hover:bg-amber-600 hover:text-white transition-colors shadow-md" title="Devolver al Pool">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                                </button>
+                                                <button @click="burnFromVerified(node.id)" class="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-slate-700 text-rose-400 hover:bg-rose-600 hover:text-white transition-colors shadow-md" title="Enviar a Cuarentena">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="verificados.length === 0">
+                                        <td colspan="5" class="p-10 text-center text-slate-500 font-bold">Ningún nodo verificado todavía. Pruébalos y guárdalos con el ícono de bandera en la tabla de arriba.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -432,6 +487,28 @@
                                 <div v-else class="text-[10px] font-black uppercase tracking-wider px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg border border-emerald-500/30">Libre</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
+            <div v-if="showVerifyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                <div class="bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg flex flex-col overflow-hidden border border-emerald-700/40">
+                    <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-900">
+                        <div>
+                            <h3 class="text-xl font-black text-white">Guardar como Verificado</h3>
+                            <p v-if="nodeToVerify" class="text-sm font-bold text-emerald-400 mt-1 uppercase tracking-wider font-mono">{{ nodeToVerify.id }}</p>
+                            <p v-if="nodeToVerify" class="text-xs text-slate-400 mt-1">{{ nodeToVerify.city }} — {{ nodeToVerify.asn_isp }} — Score {{ nodeToVerify.q_score }}</p>
+                        </div>
+                        <button @click="showVerifyModal = false" class="w-10 h-10 bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-400 rounded-xl transition-colors flex items-center justify-center">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 bg-slate-900/50 flex flex-col gap-4">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nota (opcional)</label>
+                        <textarea v-model="notaVerificacion" rows="3" placeholder="Ej. probado el 20/09, funcionó perfecto..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-emerald-500 transition-colors resize-none"></textarea>
+                        <button @click="confirmSaveVerified" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-md">Guardar en Verificados</button>
                     </div>
                 </div>
             </div>

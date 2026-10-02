@@ -143,6 +143,48 @@ createApp({
             return [...new Set(encontradas)]; // sin duplicados
         };
 
+        // Igual que con Mysterium: findip.net bloquea CORS desde el navegador, así que
+        // se prueba directo primero y, si falla, se corre la misma carrera de proxies.
+        const fetchFindIpConRespaldo = async (ip) => {
+            const targetUrl = `https://api.findip.net/${ip}/?token=${FINDIP_TOKEN}`;
+
+            try {
+                const res = await fetch(targetUrl);
+                if (res.ok) return await res.json();
+            } catch (e) { /* sigue con los proxies */ }
+
+            const attempts = [
+                { name: 'AllOrigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+                { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
+                { name: 'Corsfix', url: `https://proxy.corsfix.com/?${targetUrl}` },
+                { name: 'CorsX2U', url: `https://cors.x2u.in/${targetUrl}` },
+                { name: 'CorsProxy.io', url: `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}` }
+            ];
+            const tryAttempt = async (attempt) => {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 9000);
+                try {
+                    const res = await fetch(attempt.url, { cache: 'no-store', signal: controller.signal });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return await res.json();
+                } finally {
+                    clearTimeout(timeout);
+                }
+            };
+            return await Promise.any(attempts.map(tryAttempt));
+        };
+
+        // Rellena el textarea con las IPs ya guardadas en tus cuentas (panel de la granja),
+        // sin pegar nada a mano. La opción de pegar manual sigue intacta, se puede usar cualquiera.
+        const usarIpsDeCuentas = () => {
+            const ipsDeCuentas = accounts.value.filter(a => a.ip && a.ip.includes('.')).map(a => a.ip);
+            if (ipsDeCuentas.length === 0) {
+                alert('Ninguna cuenta tiene IP registrada todavía (hazle el chequeo de IP primero).');
+                return;
+            }
+            ipCheckText.value = [...new Set(ipsDeCuentas)].join('\n');
+        };
+
         const runIpCheck = async () => {
             const ips = extraerIpsPegadas(ipCheckText.value);
             if (ips.length === 0) {
@@ -156,9 +198,7 @@ createApp({
                 const ip = ips[i];
                 ipCheckProgress.value = `Verificando ${i + 1}/${ips.length}...`;
                 try {
-                    const res = await fetch(`https://api.findip.net/${ip}/?token=${FINDIP_TOKEN}`);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
+                    const data = await fetchFindIpConRespaldo(ip);
                     const flags = data.intelligence?.flags || {};
                     ipCheckResults.value.push({
                         ip,
@@ -175,7 +215,8 @@ createApp({
                         error: null
                     });
                 } catch (e) {
-                    ipCheckResults.value.push({ ip, error: e.message || 'Error de red' });
+                    const msg = e.name === 'AggregateError' ? 'Ni directo ni por proxy (probá de nuevo)' : (e.message || 'Error de red');
+                    ipCheckResults.value.push({ ip, error: msg });
                 }
             }
 
@@ -882,7 +923,7 @@ createApp({
             maxPorCiudad, cityCounts, cuentasEnCiudad,
             blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
             verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified,
-            showIpCheckModal, ipCheckText, ipCheckResults, isCheckingIps, ipCheckProgress, openIpCheckModal, runIpCheck, copiarIpsLimpias
+            showIpCheckModal, ipCheckText, ipCheckResults, isCheckingIps, ipCheckProgress, openIpCheckModal, runIpCheck, copiarIpsLimpias, usarIpsDeCuentas
         };
     }
 }).mount('#app');

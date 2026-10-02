@@ -22,6 +22,14 @@ createApp({
         const verificados = ref([]); // nodos ya probados manualmente y confirmados buenos, listos para asignar
         const bulkBlacklistText = ref('');
         const showBulkLoadModal = ref(false);
+
+        // --- VERIFICADOR DE IP (VPN/Proxy) — herramienta aparte, no toca la carga masiva de cuentas ---
+        const FINDIP_TOKEN = '18bf235c53a0fd08ba77c870e650b4b4';
+        const showIpCheckModal = ref(false);
+        const ipCheckText = ref('');
+        const ipCheckResults = ref([]);
+        const isCheckingIps = ref(false);
+        const ipCheckProgress = ref('');
         const bulkLoadText = ref('');
 
         const showAccountSelectModal = ref(false);
@@ -117,6 +125,72 @@ createApp({
             showStatus(`¡Cargadas ${nuevasCuentas.length} cuentas! Iniciando escáner...`);
             reinitIcons();
             forceEnrichmentSweep();
+        };
+
+        // --- VERIFICADOR DE IP (VPN/Proxy vía findip.net) — 100% independiente de la carga masiva ---
+        const openIpCheckModal = () => {
+            ipCheckText.value = '';
+            ipCheckResults.value = [];
+            ipCheckProgress.value = '';
+            showIpCheckModal.value = true;
+            reinitIcons();
+        };
+
+        const extraerIpsPegadas = (texto) => {
+            // Agarra cualquier IPv4 suelta en el texto pegado, sin importar qué más haya en la línea
+            const regexIp = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+            const encontradas = texto.match(regexIp) || [];
+            return [...new Set(encontradas)]; // sin duplicados
+        };
+
+        const runIpCheck = async () => {
+            const ips = extraerIpsPegadas(ipCheckText.value);
+            if (ips.length === 0) {
+                alert('No encontré ninguna IP válida en el texto pegado.');
+                return;
+            }
+            isCheckingIps.value = true;
+            ipCheckResults.value = [];
+
+            for (let i = 0; i < ips.length; i++) {
+                const ip = ips[i];
+                ipCheckProgress.value = `Verificando ${i + 1}/${ips.length}...`;
+                try {
+                    const res = await fetch(`https://api.findip.net/${ip}/?token=${FINDIP_TOKEN}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const flags = data.intelligence?.flags || {};
+                    ipCheckResults.value.push({
+                        ip,
+                        ciudad: data.city?.names?.en || '—',
+                        pais: data.country?.names?.en || '—',
+                        isp: data.traits?.isp || '—',
+                        veredicto: data.intelligence?.summary?.verdict || 'desconocido',
+                        riesgo: data.intelligence?.risk?.level || '—',
+                        esVpn: !!flags.is_vpn,
+                        esProxy: !!flags.is_proxy,
+                        esTor: !!flags.is_tor,
+                        esHosting: !!flags.is_hosting,
+                        limpia: !flags.is_vpn && !flags.is_proxy && !flags.is_tor && !flags.is_hosting && !flags.is_anonymous,
+                        error: null
+                    });
+                } catch (e) {
+                    ipCheckResults.value.push({ ip, error: e.message || 'Error de red' });
+                }
+            }
+
+            ipCheckProgress.value = '';
+            isCheckingIps.value = false;
+            showStatus('Verificación de IPs completada.');
+        };
+
+        const copiarIpsLimpias = () => {
+            const limpias = ipCheckResults.value.filter(r => r.limpia).map(r => r.ip);
+            if (limpias.length === 0) {
+                alert('No hay IPs limpias en los resultados para copiar.');
+                return;
+            }
+            copyToClipboard(limpias.join('\n'), 'IPs limpias');
         };
 
         // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
@@ -807,7 +881,8 @@ createApp({
             downloadBackup, restoreBackup, isFetchingPool,
             maxPorCiudad, cityCounts, cuentasEnCiudad,
             blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
-            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified
+            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified,
+            showIpCheckModal, ipCheckText, ipCheckResults, isCheckingIps, ipCheckProgress, openIpCheckModal, runIpCheck, copiarIpsLimpias
         };
     }
 }).mount('#app');

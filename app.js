@@ -23,13 +23,6 @@ createApp({
         const bulkBlacklistText = ref('');
         const showBulkLoadModal = ref(false);
 
-        // --- VERIFICADOR DE IP (VPN/Proxy) — herramienta aparte, no toca la carga masiva de cuentas ---
-        const FINDIP_TOKEN = '18bf235c53a0fd08ba77c870e650b4b4';
-        const showIpCheckModal = ref(false);
-        const ipCheckText = ref('');
-        const ipCheckResults = ref([]);
-        const isCheckingIps = ref(false);
-        const ipCheckProgress = ref('');
         const bulkLoadText = ref('');
 
         const showAccountSelectModal = ref(false);
@@ -125,125 +118,6 @@ createApp({
             showStatus(`¡Cargadas ${nuevasCuentas.length} cuentas! Iniciando escáner...`);
             reinitIcons();
             forceEnrichmentSweep();
-        };
-
-        // --- VERIFICADOR DE IP (VPN/Proxy vía findip.net) — 100% independiente de la carga masiva ---
-        const openIpCheckModal = () => {
-            ipCheckText.value = '';
-            ipCheckResults.value = [];
-            ipCheckProgress.value = '';
-            showIpCheckModal.value = true;
-            reinitIcons();
-        };
-
-        const extraerIpsPegadas = (texto) => {
-            // Agarra cualquier IPv4 suelta en el texto pegado, sin importar qué más haya en la línea
-            const regexIp = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
-            const encontradas = texto.match(regexIp) || [];
-            return [...new Set(encontradas)]; // sin duplicados
-        };
-
-        // findip.net SÍ funciona (confirmado: token válido, responde 200 con datos reales),
-        // el problema es 100% que no manda cabeceras CORS para navegador. Y ya confirmamos que
-        // AllOrigins y CorsProxy.io BLOQUEAN a propósito este dominio ("known proxy/relay service"),
-        // por eso fallaba siempre antes aunque hubiera "respaldo". La solución sí-o-sí es el
-        // mini-proxy propio (worker.js, Cloudflare Workers gratis) que puesto en WORKER_URL abajo
-        // nunca depende de que un proxy público decida bloquearte. Si no lo has desplegado todavía,
-        // se usan automáticamente los proxies públicos que SÍ siguen vivos para este dominio.
-        const WORKER_URL = ''; // <-- pega aquí tu URL de Cloudflare Worker, ej: https://findip-proxy.tu-usuario.workers.dev
-
-        const fetchFindIpConRespaldo = async (ip) => {
-            const targetUrl = `https://api.findip.net/${ip}/?token=${FINDIP_TOKEN}`;
-
-            try {
-                const res = await fetch(targetUrl);
-                if (res.ok) return await res.json();
-            } catch (e) { /* sigue con el worker/proxies */ }
-
-            const attempts = [];
-            if (WORKER_URL) {
-                attempts.push({ name: 'Worker propio', url: `${WORKER_URL}?url=${encodeURIComponent(targetUrl)}` });
-            }
-            // AllOrigins y CorsProxy.io quedaron afuera: bloquean este dominio a propósito, nunca sirven aquí.
-            attempts.push(
-                { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
-                { name: 'Corsfix', url: `https://proxy.corsfix.com/?${targetUrl}` },
-                { name: 'CorsX2U', url: `https://cors.x2u.in/${targetUrl}` },
-                { name: 'ThingProxy', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` }
-            );
-
-            const tryAttempt = async (attempt) => {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 9000);
-                try {
-                    const res = await fetch(attempt.url, { cache: 'no-store', signal: controller.signal });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    return await res.json();
-                } finally {
-                    clearTimeout(timeout);
-                }
-            };
-            return await Promise.any(attempts.map(tryAttempt));
-        };
-
-        // Rellena el textarea con las IPs ya guardadas en tus cuentas (panel de la granja),
-        // sin pegar nada a mano. La opción de pegar manual sigue intacta, se puede usar cualquiera.
-        const usarIpsDeCuentas = () => {
-            const ipsDeCuentas = accounts.value.filter(a => a.ip && a.ip.includes('.')).map(a => a.ip);
-            if (ipsDeCuentas.length === 0) {
-                alert('Ninguna cuenta tiene IP registrada todavía (hazle el chequeo de IP primero).');
-                return;
-            }
-            ipCheckText.value = [...new Set(ipsDeCuentas)].join('\n');
-        };
-
-        const runIpCheck = async () => {
-            const ips = extraerIpsPegadas(ipCheckText.value);
-            if (ips.length === 0) {
-                alert('No encontré ninguna IP válida en el texto pegado.');
-                return;
-            }
-            isCheckingIps.value = true;
-            ipCheckResults.value = [];
-
-            for (let i = 0; i < ips.length; i++) {
-                const ip = ips[i];
-                ipCheckProgress.value = `Verificando ${i + 1}/${ips.length}...`;
-                try {
-                    const data = await fetchFindIpConRespaldo(ip);
-                    const flags = data.intelligence?.flags || {};
-                    ipCheckResults.value.push({
-                        ip,
-                        ciudad: data.city?.names?.en || '—',
-                        pais: data.country?.names?.en || '—',
-                        isp: data.traits?.isp || '—',
-                        veredicto: data.intelligence?.summary?.verdict || 'desconocido',
-                        riesgo: data.intelligence?.risk?.level || '—',
-                        esVpn: !!flags.is_vpn,
-                        esProxy: !!flags.is_proxy,
-                        esTor: !!flags.is_tor,
-                        esHosting: !!flags.is_hosting,
-                        limpia: !flags.is_vpn && !flags.is_proxy && !flags.is_tor && !flags.is_hosting && !flags.is_anonymous,
-                        error: null
-                    });
-                } catch (e) {
-                    const msg = e.name === 'AggregateError' ? 'Ni directo ni por proxy (probá de nuevo)' : (e.message || 'Error de red');
-                    ipCheckResults.value.push({ ip, error: msg });
-                }
-            }
-
-            ipCheckProgress.value = '';
-            isCheckingIps.value = false;
-            showStatus('Verificación de IPs completada.');
-        };
-
-        const copiarIpsLimpias = () => {
-            const limpias = ipCheckResults.value.filter(r => r.limpia).map(r => r.ip);
-            if (limpias.length === 0) {
-                alert('No hay IPs limpias en los resultados para copiar.');
-                return;
-            }
-            copyToClipboard(limpias.join('\n'), 'IPs limpias');
         };
 
         // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
@@ -934,8 +808,7 @@ createApp({
             downloadBackup, restoreBackup, isFetchingPool,
             maxPorCiudad, cityCounts, cuentasEnCiudad,
             blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
-            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified,
-            showIpCheckModal, ipCheckText, ipCheckResults, isCheckingIps, ipCheckProgress, openIpCheckModal, runIpCheck, copiarIpsLimpias, usarIpsDeCuentas
+            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified
         };
     }
 }).mount('#app');

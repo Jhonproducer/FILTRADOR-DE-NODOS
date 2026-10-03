@@ -143,23 +143,35 @@ createApp({
             return [...new Set(encontradas)]; // sin duplicados
         };
 
-        // Igual que con Mysterium: findip.net bloquea CORS desde el navegador, así que
-        // se prueba directo primero y, si falla, se corre la misma carrera de proxies.
+        // findip.net SÍ funciona (confirmado: token válido, responde 200 con datos reales),
+        // el problema es 100% que no manda cabeceras CORS para navegador. Y ya confirmamos que
+        // AllOrigins y CorsProxy.io BLOQUEAN a propósito este dominio ("known proxy/relay service"),
+        // por eso fallaba siempre antes aunque hubiera "respaldo". La solución sí-o-sí es el
+        // mini-proxy propio (worker.js, Cloudflare Workers gratis) que puesto en WORKER_URL abajo
+        // nunca depende de que un proxy público decida bloquearte. Si no lo has desplegado todavía,
+        // se usan automáticamente los proxies públicos que SÍ siguen vivos para este dominio.
+        const WORKER_URL = ''; // <-- pega aquí tu URL de Cloudflare Worker, ej: https://findip-proxy.tu-usuario.workers.dev
+
         const fetchFindIpConRespaldo = async (ip) => {
             const targetUrl = `https://api.findip.net/${ip}/?token=${FINDIP_TOKEN}`;
 
             try {
                 const res = await fetch(targetUrl);
                 if (res.ok) return await res.json();
-            } catch (e) { /* sigue con los proxies */ }
+            } catch (e) { /* sigue con el worker/proxies */ }
 
-            const attempts = [
-                { name: 'AllOrigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
+            const attempts = [];
+            if (WORKER_URL) {
+                attempts.push({ name: 'Worker propio', url: `${WORKER_URL}?url=${encodeURIComponent(targetUrl)}` });
+            }
+            // AllOrigins y CorsProxy.io quedaron afuera: bloquean este dominio a propósito, nunca sirven aquí.
+            attempts.push(
                 { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
                 { name: 'Corsfix', url: `https://proxy.corsfix.com/?${targetUrl}` },
                 { name: 'CorsX2U', url: `https://cors.x2u.in/${targetUrl}` },
-                { name: 'CorsProxy.io', url: `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}` }
-            ];
+                { name: 'ThingProxy', url: `https://thingproxy.freeboard.io/fetch/${targetUrl}` }
+            );
+
             const tryAttempt = async (attempt) => {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 9000);

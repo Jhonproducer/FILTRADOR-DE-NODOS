@@ -168,9 +168,6 @@
                             <button @click="deleteAllAccounts" class="bg-red-700 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2" title="Borra todas las cuentas de una sola vez">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Todas
                             </button>
-                            <button @click="openIpCheckModal" class="bg-cyan-700 hover:bg-cyan-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2" title="Herramienta aparte: pega IPs y revisa si son VPN/Proxy">
-                                <i data-lucide="scan-search" class="w-4 h-4"></i> Verificar IPs (VPN/Proxy)
-                            </button>
                         </div>
                         <div class="relative w-96 flex-shrink-0">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i data-lucide="search" class="w-4 h-4 text-slate-500"></i></div>
@@ -512,85 +509,6 @@
                         <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nota (opcional)</label>
                         <textarea v-model="notaVerificacion" rows="3" placeholder="Ej. probado el 20/09, funcionó perfecto..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-emerald-500 transition-colors resize-none"></textarea>
                         <button @click="confirmSaveVerified" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-md">Guardar en Verificados</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <transition name="fade">
-            <div v-if="showIpCheckModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-                <div class="bg-slate-800 rounded-3xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden border border-cyan-700/40">
-                    <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-900">
-                        <div>
-                            <h3 class="text-xl font-black text-white">Verificador de IPs (VPN/Proxy)</h3>
-                            <p class="text-xs text-slate-400 mt-1">Herramienta aparte — no toca tus cuentas ni el pool. Pega IPs, una por línea (o mezcladas con texto, igual las agarra).</p>
-                        </div>
-                        <button @click="showIpCheckModal = false" class="w-10 h-10 bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-400 rounded-xl transition-colors flex items-center justify-center">
-                            <i data-lucide="x" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                    <div class="flex-1 overflow-auto p-6 bg-slate-900/50 flex flex-col gap-4">
-                        <div class="flex items-center justify-between gap-3">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pega IPs manualmente, o usa el botón para traerlas solas:</label>
-                            <button @click="usarIpsDeCuentas" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 flex-shrink-0">
-                                <i data-lucide="users" class="w-4 h-4"></i> Usar IPs de mis Cuentas
-                            </button>
-                        </div>
-                        <textarea v-model="ipCheckText" rows="4" placeholder="200.82.230.65&#10;190.45.12.3&#10;..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-cyan-500 transition-colors resize-none"></textarea>
-
-                        <div class="flex items-center gap-4">
-                            <button @click="runIpCheck" :disabled="isCheckingIps" :class="isCheckingIps ? 'opacity-50 cursor-not-allowed' : 'hover:bg-cyan-500'" class="bg-cyan-600 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-md flex items-center gap-2">
-                                <i data-lucide="scan-search" class="w-4 h-4"></i> {{ isCheckingIps ? 'Verificando...' : 'Verificar IPs' }}
-                            </button>
-                            <span v-if="ipCheckProgress" class="text-xs font-bold text-cyan-400">{{ ipCheckProgress }}</span>
-                            <button v-if="ipCheckResults.length > 0" @click="copiarIpsLimpias" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 ml-auto">
-                                <i data-lucide="copy" class="w-4 h-4"></i> Copiar solo las limpias
-                            </button>
-                        </div>
-
-                        <div v-if="ipCheckResults.length > 0" class="rounded-xl border border-slate-700 overflow-auto max-h-[45vh]">
-                            <table class="w-full text-left border-collapse">
-                                <thead class="sticky top-0 z-10 bg-slate-900 shadow-md border-b border-slate-700">
-                                    <tr class="text-slate-400 text-[11px] uppercase tracking-widest">
-                                        <th class="p-3 font-bold text-center">IP</th>
-                                        <th class="p-3 font-bold text-center">Ciudad / País</th>
-                                        <th class="p-3 font-bold text-center">ISP</th>
-                                        <th class="p-3 font-bold text-center">VPN</th>
-                                        <th class="p-3 font-bold text-center">Proxy</th>
-                                        <th class="p-3 font-bold text-center">Tor</th>
-                                        <th class="p-3 font-bold text-center">Hosting</th>
-                                        <th class="p-3 font-bold text-center">Riesgo</th>
-                                        <th class="p-3 font-bold text-center">Veredicto</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-slate-700/50">
-                                    <tr v-for="r in ipCheckResults" :key="r.ip" :class="r.error ? 'bg-slate-700/20' : (r.limpia ? 'bg-emerald-900/10' : 'bg-rose-900/20')">
-                                        <td class="p-3 align-middle text-center font-mono font-bold text-white">{{ r.ip }}</td>
-                                        <template v-if="!r.error">
-                                            <td class="p-3 align-middle text-center text-slate-300">{{ r.ciudad }}, {{ r.pais }}</td>
-                                            <td class="p-3 align-middle text-center text-slate-400 text-xs">{{ r.isp }}</td>
-                                            <td class="p-3 align-middle text-center">
-                                                <span :class="r.esVpn ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' : 'bg-slate-700 text-slate-400 border-slate-600'" class="px-2 py-1 rounded-full text-[10px] font-black border">{{ r.esVpn ? 'SÍ' : 'no' }}</span>
-                                            </td>
-                                            <td class="p-3 align-middle text-center">
-                                                <span :class="r.esProxy ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' : 'bg-slate-700 text-slate-400 border-slate-600'" class="px-2 py-1 rounded-full text-[10px] font-black border">{{ r.esProxy ? 'SÍ' : 'no' }}</span>
-                                            </td>
-                                            <td class="p-3 align-middle text-center">
-                                                <span :class="r.esTor ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' : 'bg-slate-700 text-slate-400 border-slate-600'" class="px-2 py-1 rounded-full text-[10px] font-black border">{{ r.esTor ? 'SÍ' : 'no' }}</span>
-                                            </td>
-                                            <td class="p-3 align-middle text-center">
-                                                <span :class="r.esHosting ? 'bg-rose-500/20 text-rose-400 border-rose-500/40' : 'bg-slate-700 text-slate-400 border-slate-600'" class="px-2 py-1 rounded-full text-[10px] font-black border">{{ r.esHosting ? 'SÍ' : 'no' }}</span>
-                                            </td>
-                                            <td class="p-3 align-middle text-center text-xs font-bold uppercase" :class="r.riesgo === 'low' ? 'text-emerald-400' : 'text-amber-400'">{{ r.riesgo }}</td>
-                                            <td class="p-3 align-middle text-center">
-                                                <span :class="r.limpia ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border-rose-500/40'" class="px-3 py-1 rounded-full text-[10px] font-black border uppercase">{{ r.limpia ? 'Limpia' : 'Riesgosa' }}</span>
-                                            </td>
-                                        </template>
-                                        <td v-else colspan="8" class="p-3 align-middle text-center text-slate-500 italic text-xs">Error al consultar: {{ r.error }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -82,7 +82,9 @@ createApp({
             if (typeof savedMax === 'number' && savedMax > 0) maxPorCiudad.value = savedMax;
             nodosVistosApi.value = Array.isArray(savedVistos) ? savedVistos : [];
             verificados.value = Array.isArray(savedVerificados) ? savedVerificados : [];
-            encuestasBloqueadas.value = Array.isArray(savedEncuestas) ? savedEncuestas : [];
+            // dedupeEncuestas abajo es la red de seguridad: si un respaldo viejo o una edición manual
+            // del localStorage dejó un código repetido, aquí se limpia solo, nunca se queda duplicado.
+            encuestasBloqueadas.value = dedupeEncuestas(Array.isArray(savedEncuestas) ? savedEncuestas : []);
         };
 
         watch([accounts, blacklist, pool, maxPorCiudad, nodosVistosApi, verificados, encuestasBloqueadas], saveData, { deep: true });
@@ -130,7 +132,24 @@ createApp({
         };
 
         // --- CONTROL DE ENCUESTAS (códigos que no se pueden abrir) — 100% independiente de todo lo demás ---
-        const normalizarCodigo = (c) => (c || '').toString().trim().toUpperCase();
+        // Blindado contra duplicados en 3 frentes a la vez: nunca puede quedar el mismo código 2 veces,
+        // ni aunque lo pegues con mayúsculas distintas, espacios de más, dos veces en el mismo pegado,
+        // o venga repetido de un respaldo viejo restaurado.
+        const normalizarCodigo = (c) => (c || '').toString().trim().toUpperCase().replace(/\s+/g, '');
+
+        // Red de seguridad: deja solo la primera aparición de cada código (por si un respaldo viejo
+        // o una edición manual del localStorage trajera alguno repetido).
+        const dedupeEncuestas = (lista) => {
+            const vistos = new Set();
+            const limpias = [];
+            lista.forEach(e => {
+                const codigo = normalizarCodigo(e && e.codigo);
+                if (!codigo || vistos.has(codigo)) return;
+                vistos.add(codigo);
+                limpias.push({ codigo, nota: (e.nota || '').trim(), fecha: e.fecha || new Date().toISOString().slice(0, 10) });
+            });
+            return limpias;
+        };
 
         const openEncuestasModal = () => {
             encuestaBusqueda.value = '';
@@ -149,6 +168,8 @@ createApp({
 
         // Un solo botón de carga: pega uno o varios códigos (uno por línea). Nota opcional
         // después de una coma en la misma línea, ej: "ABC123, ya la tomó otro encuestador".
+        // Nunca duplica: ni contra lo que ya tenías guardado, ni si el mismo código viene
+        // repetido dos veces dentro del propio texto que pegaste.
         const cargarCodigosEncuesta = () => {
             const lineas = bulkEncuestasText.value.split('\n').map(l => l.trim()).filter(l => l);
             if (lineas.length === 0) {
@@ -156,22 +177,28 @@ createApp({
                 return;
             }
             const existentes = new Set(encuestasBloqueadas.value.map(e => e.codigo));
-            let agregados = 0;
+            const nuevos = [];
+            const repetidos = [];
             lineas.forEach(linea => {
                 const [codigoRaw, ...resto] = linea.split(',');
                 const codigo = normalizarCodigo(codigoRaw);
-                if (!codigo || existentes.has(codigo)) return;
-                encuestasBloqueadas.value.unshift({
-                    codigo,
-                    nota: resto.join(',').trim(),
-                    fecha: new Date().toISOString().slice(0, 10)
-                });
-                existentes.add(codigo);
-                agregados++;
+                if (!codigo) return;
+                if (existentes.has(codigo)) {
+                    if (!repetidos.includes(codigo)) repetidos.push(codigo);
+                    return;
+                }
+                existentes.add(codigo); // así la 2ª vez que aparezca el mismo código EN ESTE pegado también se detecta
+                nuevos.push({ codigo, nota: resto.join(',').trim(), fecha: new Date().toISOString().slice(0, 10) });
             });
+
+            if (nuevos.length > 0) encuestasBloqueadas.value.unshift(...nuevos);
             bulkEncuestasText.value = '';
-            const repetidos = lineas.length - agregados;
-            showStatus(`${agregados} código(s) marcado(s) como "no abrir"${repetidos > 0 ? ` (${repetidos} ya estaban)` : ''}.`);
+
+            let msg = `${nuevos.length} código(s) nuevo(s) marcado(s) como "no abrir".`;
+            if (repetidos.length > 0) {
+                msg += ` Ya estaban, no se duplicaron: ${repetidos.slice(0, 6).join(', ')}${repetidos.length > 6 ? ` y ${repetidos.length - 6} más` : ''}.`;
+            }
+            showStatus(msg);
         };
 
         const eliminarCodigoEncuesta = (codigo) => {

@@ -33,6 +33,14 @@ createApp({
         const nodosVistosApi = ref([]); // IDs de TODOS los nodos que trajo la última extracción completa (sin filtrar por ISP/región), para poder archivar cuarentena vieja que ya no existe en la API
         const showArchivedQuarantine = ref(false);
 
+        // --- CONTROL DE ENCUESTAS (bloqueadas / "no abrir") — modal aparte, no toca nada más ---
+        const showEncuestasModal = ref(false);
+        const encuestasBloqueadas = ref([]); // [{ codigo, nota, fecha }]
+        const encuestaBusqueda = ref('');    // caja de arriba: pego/tecleo un código y me dice si ya está bloqueado
+        const nuevoCodigoEncuesta = ref('');
+        const nuevaNotaEncuesta = ref('');
+        const bulkEncuestasText = ref('');
+
         let chartInstance = null;
 
         const toggleSidebar = () => {
@@ -48,6 +56,7 @@ createApp({
             localStorage.setItem('vpn_nexus_max_ciudad', JSON.stringify(maxPorCiudad.value));
             localStorage.setItem('vpn_nexus_vistos', JSON.stringify(nodosVistosApi.value));
             localStorage.setItem('vpn_nexus_verificados', JSON.stringify(verificados.value));
+            localStorage.setItem('vpn_nexus_encuestas', JSON.stringify(encuestasBloqueadas.value));
             updateCharts();
         };
 
@@ -58,6 +67,7 @@ createApp({
             let savedMax = JSON.parse(localStorage.getItem('vpn_nexus_max_ciudad'));
             let savedVistos = JSON.parse(localStorage.getItem('vpn_nexus_vistos'));
             let savedVerificados = JSON.parse(localStorage.getItem('vpn_nexus_verificados'));
+            let savedEncuestas = JSON.parse(localStorage.getItem('vpn_nexus_encuestas'));
 
             if (savedAcc && savedAcc.length > 0) {
                 accounts.value = savedAcc.map(a => ({
@@ -74,9 +84,10 @@ createApp({
             if (typeof savedMax === 'number' && savedMax > 0) maxPorCiudad.value = savedMax;
             nodosVistosApi.value = Array.isArray(savedVistos) ? savedVistos : [];
             verificados.value = Array.isArray(savedVerificados) ? savedVerificados : [];
+            encuestasBloqueadas.value = Array.isArray(savedEncuestas) ? savedEncuestas : [];
         };
 
-        watch([accounts, blacklist, pool, maxPorCiudad, nodosVistosApi, verificados], saveData, { deep: true });
+        watch([accounts, blacklist, pool, maxPorCiudad, nodosVistosApi, verificados, encuestasBloqueadas], saveData, { deep: true });
 
         const processBulkLoad = () => {
             if (!bulkLoadText.value.trim()) return;
@@ -118,6 +129,71 @@ createApp({
             showStatus(`¡Cargadas ${nuevasCuentas.length} cuentas! Iniciando escáner...`);
             reinitIcons();
             forceEnrichmentSweep();
+        };
+
+        // --- CONTROL DE ENCUESTAS (códigos que no se pueden abrir) — 100% independiente de todo lo demás ---
+        const normalizarCodigo = (c) => (c || '').toString().trim().toUpperCase();
+
+        const openEncuestasModal = () => {
+            encuestaBusqueda.value = '';
+            nuevoCodigoEncuesta.value = '';
+            nuevaNotaEncuesta.value = '';
+            bulkEncuestasText.value = '';
+            showEncuestasModal.value = true;
+            reinitIcons();
+        };
+
+        // Resultado en vivo de la caja de arriba: apenas tecleas o pegas un código, te dice al toque
+        // si ya está marcado como "no abrir" (y con qué nota/fecha), o si no está registrado todavía.
+        const resultadoBusquedaEncuesta = computed(() => {
+            const codigo = normalizarCodigo(encuestaBusqueda.value);
+            if (!codigo) return null;
+            const encontrada = encuestasBloqueadas.value.find(e => e.codigo === codigo);
+            return encontrada ? { bloqueada: true, ...encontrada } : { bloqueada: false, codigo };
+        });
+
+        const agregarCodigoEncuesta = () => {
+            const codigo = normalizarCodigo(nuevoCodigoEncuesta.value);
+            if (!codigo) {
+                alert('Escribe el código de la encuesta.');
+                return;
+            }
+            if (encuestasBloqueadas.value.some(e => e.codigo === codigo)) {
+                alert('Ese código ya está marcado como "no abrir".');
+                return;
+            }
+            encuestasBloqueadas.value.unshift({
+                codigo,
+                nota: nuevaNotaEncuesta.value.trim(),
+                fecha: new Date().toISOString().slice(0, 10)
+            });
+            nuevoCodigoEncuesta.value = '';
+            nuevaNotaEncuesta.value = '';
+            showStatus('Código marcado como "no abrir".');
+        };
+
+        // Igual que la carga masiva de cuentas: pegas varios códigos (uno por línea) y los agrega todos de una vez.
+        const procesarBulkEncuestas = () => {
+            const lineas = bulkEncuestasText.value.split('\n').map(l => normalizarCodigo(l)).filter(l => l);
+            if (lineas.length === 0) {
+                alert('Pega al menos un código, uno por línea.');
+                return;
+            }
+            const existentes = new Set(encuestasBloqueadas.value.map(e => e.codigo));
+            let agregados = 0;
+            lineas.forEach(codigo => {
+                if (!existentes.has(codigo)) {
+                    encuestasBloqueadas.value.unshift({ codigo, nota: '', fecha: new Date().toISOString().slice(0, 10) });
+                    existentes.add(codigo);
+                    agregados++;
+                }
+            });
+            bulkEncuestasText.value = '';
+            showStatus(`${agregados} código(s) nuevo(s) marcado(s) como "no abrir" (${lineas.length - agregados} ya estaban).`);
+        };
+
+        const eliminarCodigoEncuesta = (codigo) => {
+            encuestasBloqueadas.value = encuestasBloqueadas.value.filter(e => e.codigo !== codigo);
         };
 
         // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
@@ -808,7 +884,9 @@ createApp({
             downloadBackup, restoreBackup, isFetchingPool,
             maxPorCiudad, cityCounts, cuentasEnCiudad,
             blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
-            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified
+            verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified,
+            showEncuestasModal, encuestasBloqueadas, encuestaBusqueda, nuevoCodigoEncuesta, nuevaNotaEncuesta, bulkEncuestasText,
+            openEncuestasModal, resultadoBusquedaEncuesta, agregarCodigoEncuesta, procesarBulkEncuestas, eliminarCodigoEncuesta
         };
     }
 }).mount('#app');

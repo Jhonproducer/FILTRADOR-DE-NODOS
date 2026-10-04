@@ -205,6 +205,16 @@ createApp({
             encuestasBloqueadas.value = encuestasBloqueadas.value.filter(e => e.codigo !== codigo);
         };
 
+        // Borra TODOS los códigos marcados, con doble confirmación (igual que "Eliminar Todas" en Cuentas),
+        // para limpiar de un tirón si quedaron duplicados de cuando subiste la lista 2 veces.
+        const eliminarTodasEncuestas = () => {
+            if (encuestasBloqueadas.value.length === 0) return;
+            if (!confirm(`⚠️ Esto va a BORRAR LOS ${encuestasBloqueadas.value.length} CÓDIGOS marcados de una sola vez. No se puede deshacer.\n\n¿Seguro que quieres continuar?`)) return;
+            if (!confirm('Última confirmación: ¿de verdad quieres eliminar TODOS los códigos ahora mismo?')) return;
+            encuestasBloqueadas.value = [];
+            showStatus('Todos los códigos de encuestas fueron eliminados.');
+        };
+
         // --- ENRIQUECIMIENTO INTELIGENTE (NOMINATIM + IPINFO) ---
         const fetchSingleISP = async (acc) => {
             if (!acc.ip || acc.ip === '0.0.0.0' || !acc.ip.includes('.')) return;
@@ -895,7 +905,7 @@ createApp({
             blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
             verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified,
             showEncuestasModal, encuestasBloqueadas, encuestaBusqueda, bulkEncuestasText,
-            openEncuestasModal, resultadosBusquedaEncuesta, cargarCodigosEncuesta, eliminarCodigoEncuesta
+            openEncuestasModal, resultadosBusquedaEncuesta, cargarCodigosEncuesta, eliminarCodigoEncuesta, eliminarTodasEncuestas
         };
     }
 }).mount('#app');

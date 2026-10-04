@@ -36,10 +36,8 @@ createApp({
         // --- CONTROL DE ENCUESTAS (bloqueadas / "no abrir") — modal aparte, no toca nada más ---
         const showEncuestasModal = ref(false);
         const encuestasBloqueadas = ref([]); // [{ codigo, nota, fecha }]
-        const encuestaBusqueda = ref('');    // caja de arriba: pego/tecleo un código y me dice si ya está bloqueado
-        const nuevoCodigoEncuesta = ref('');
-        const nuevaNotaEncuesta = ref('');
-        const bulkEncuestasText = ref('');
+        const encuestaBusqueda = ref('');    // busca por pedazo del código, no hace falta el código completo
+        const bulkEncuestasText = ref('');   // botón de carga: una línea por código, nota opcional después de una coma
 
         let chartInstance = null;
 
@@ -136,60 +134,44 @@ createApp({
 
         const openEncuestasModal = () => {
             encuestaBusqueda.value = '';
-            nuevoCodigoEncuesta.value = '';
-            nuevaNotaEncuesta.value = '';
             bulkEncuestasText.value = '';
             showEncuestasModal.value = true;
             reinitIcons();
         };
 
-        // Resultado en vivo de la caja de arriba: apenas tecleas o pegas un código, te dice al toque
-        // si ya está marcado como "no abrir" (y con qué nota/fecha), o si no está registrado todavía.
-        const resultadoBusquedaEncuesta = computed(() => {
-            const codigo = normalizarCodigo(encuestaBusqueda.value);
-            if (!codigo) return null;
-            const encontrada = encuestasBloqueadas.value.find(e => e.codigo === codigo);
-            return encontrada ? { bloqueada: true, ...encontrada } : { bloqueada: false, codigo };
+        // Búsqueda por PEDAZO del código (no hace falta pegarlo completo): escribes "123"
+        // y te muestra al toque cualquier código marcado que contenga ese pedazo, donde sea.
+        const resultadosBusquedaEncuesta = computed(() => {
+            const pedazo = normalizarCodigo(encuestaBusqueda.value);
+            if (!pedazo) return [];
+            return encuestasBloqueadas.value.filter(e => e.codigo.includes(pedazo));
         });
 
-        const agregarCodigoEncuesta = () => {
-            const codigo = normalizarCodigo(nuevoCodigoEncuesta.value);
-            if (!codigo) {
-                alert('Escribe el código de la encuesta.');
-                return;
-            }
-            if (encuestasBloqueadas.value.some(e => e.codigo === codigo)) {
-                alert('Ese código ya está marcado como "no abrir".');
-                return;
-            }
-            encuestasBloqueadas.value.unshift({
-                codigo,
-                nota: nuevaNotaEncuesta.value.trim(),
-                fecha: new Date().toISOString().slice(0, 10)
-            });
-            nuevoCodigoEncuesta.value = '';
-            nuevaNotaEncuesta.value = '';
-            showStatus('Código marcado como "no abrir".');
-        };
-
-        // Igual que la carga masiva de cuentas: pegas varios códigos (uno por línea) y los agrega todos de una vez.
-        const procesarBulkEncuestas = () => {
-            const lineas = bulkEncuestasText.value.split('\n').map(l => normalizarCodigo(l)).filter(l => l);
+        // Un solo botón de carga: pega uno o varios códigos (uno por línea). Nota opcional
+        // después de una coma en la misma línea, ej: "ABC123, ya la tomó otro encuestador".
+        const cargarCodigosEncuesta = () => {
+            const lineas = bulkEncuestasText.value.split('\n').map(l => l.trim()).filter(l => l);
             if (lineas.length === 0) {
-                alert('Pega al menos un código, uno por línea.');
+                alert('Pega al menos un código.');
                 return;
             }
             const existentes = new Set(encuestasBloqueadas.value.map(e => e.codigo));
             let agregados = 0;
-            lineas.forEach(codigo => {
-                if (!existentes.has(codigo)) {
-                    encuestasBloqueadas.value.unshift({ codigo, nota: '', fecha: new Date().toISOString().slice(0, 10) });
-                    existentes.add(codigo);
-                    agregados++;
-                }
+            lineas.forEach(linea => {
+                const [codigoRaw, ...resto] = linea.split(',');
+                const codigo = normalizarCodigo(codigoRaw);
+                if (!codigo || existentes.has(codigo)) return;
+                encuestasBloqueadas.value.unshift({
+                    codigo,
+                    nota: resto.join(',').trim(),
+                    fecha: new Date().toISOString().slice(0, 10)
+                });
+                existentes.add(codigo);
+                agregados++;
             });
             bulkEncuestasText.value = '';
-            showStatus(`${agregados} código(s) nuevo(s) marcado(s) como "no abrir" (${lineas.length - agregados} ya estaban).`);
+            const repetidos = lineas.length - agregados;
+            showStatus(`${agregados} código(s) marcado(s) como "no abrir"${repetidos > 0 ? ` (${repetidos} ya estaban)` : ''}.`);
         };
 
         const eliminarCodigoEncuesta = (codigo) => {
@@ -885,8 +867,8 @@ createApp({
             maxPorCiudad, cityCounts, cuentasEnCiudad,
             blacklistActivos, blacklistArchivados, showArchivedQuarantine, toggleArchivedQuarantine, exportQuarantineExcel,
             verificados, showVerifyModal, nodeToVerify, notaVerificacion, openVerifyModal, confirmSaveVerified, devolverAlPool, burnFromVerified,
-            showEncuestasModal, encuestasBloqueadas, encuestaBusqueda, nuevoCodigoEncuesta, nuevaNotaEncuesta, bulkEncuestasText,
-            openEncuestasModal, resultadoBusquedaEncuesta, agregarCodigoEncuesta, procesarBulkEncuestas, eliminarCodigoEncuesta
+            showEncuestasModal, encuestasBloqueadas, encuestaBusqueda, bulkEncuestasText,
+            openEncuestasModal, resultadosBusquedaEncuesta, cargarCodigosEncuesta, eliminarCodigoEncuesta
         };
     }
 }).mount('#app');

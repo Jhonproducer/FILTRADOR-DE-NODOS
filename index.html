@@ -522,85 +522,43 @@
 
         <transition name="fade">
             <div v-if="showEncuestasModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-                <div class="bg-slate-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden border border-amber-700/40">
+                <div class="bg-slate-800 rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-amber-700/40">
                     <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-900">
-                        <div>
-                            <h3 class="text-xl font-black text-white">Control de Encuestas</h3>
-                            <p class="text-xs text-slate-400 mt-1">Herramienta aparte — no toca cuentas, pool ni cuarentena. Marca los códigos que no se pueden abrir.</p>
-                        </div>
+                        <h3 class="text-xl font-black text-white">Control de Encuestas</h3>
                         <button @click="showEncuestasModal = false" class="w-10 h-10 bg-slate-800 hover:bg-rose-500 hover:text-white text-slate-400 rounded-xl transition-colors flex items-center justify-center">
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
-                    <div class="flex-1 overflow-auto p-6 bg-slate-900/50 flex flex-col gap-6">
+                    <div class="p-6 bg-slate-900/50 flex flex-col gap-5">
 
-                        <!-- Caja de chequeo rápido -->
+                        <!-- Buscador: con un pedazo del código basta -->
                         <div>
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Teclea o pega un código para saber al toque si ya está en "no abrir"</label>
-                            <input type="text" v-model="encuestaBusqueda" placeholder="Código de la encuesta..." class="w-full mt-2 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors">
-                            <div v-if="resultadoBusquedaEncuesta" class="mt-3 rounded-xl p-4 border" :class="resultadoBusquedaEncuesta.bloqueada ? 'bg-rose-900/20 border-rose-700/50' : 'bg-emerald-900/10 border-emerald-700/40'">
-                                <div class="flex items-center gap-2 font-black text-sm" :class="resultadoBusquedaEncuesta.bloqueada ? 'text-rose-400' : 'text-emerald-400'">
-                                    <i :data-lucide="resultadoBusquedaEncuesta.bloqueada ? 'ban' : 'check-circle'" class="w-4 h-4"></i>
-                                    {{ resultadoBusquedaEncuesta.bloqueada ? 'NO SE PUEDE ABRIR' : 'No está registrada, puedes abrirla' }}
+                            <input type="text" v-model="encuestaBusqueda" placeholder="Busca por un pedazo del código (ej. los últimos 3 dígitos)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors">
+                            <div v-if="encuestaBusqueda" class="mt-2 flex flex-col gap-2">
+                                <div v-for="e in resultadosBusquedaEncuesta" :key="e.codigo" class="flex items-center justify-between gap-3 bg-rose-900/20 border border-rose-700/50 rounded-xl px-4 py-2.5">
+                                    <div>
+                                        <span class="font-black text-rose-400 text-sm font-mono">{{ e.codigo }}</span>
+                                        <span class="text-xs text-slate-400"> — NO SE PUEDE ABRIR<template v-if="e.nota"> · {{ e.nota }}</template></span>
+                                    </div>
+                                    <button @click="eliminarCodigoEncuesta(e.codigo)" class="w-7 h-7 bg-slate-700 hover:bg-rose-500 hover:text-white text-slate-400 rounded-lg transition-colors inline-flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
                                 </div>
-                                <p v-if="resultadoBusquedaEncuesta.bloqueada && resultadoBusquedaEncuesta.nota" class="text-xs text-slate-300 mt-2">Nota: {{ resultadoBusquedaEncuesta.nota }}</p>
-                                <p v-if="resultadoBusquedaEncuesta.bloqueada" class="text-[11px] text-slate-500 mt-1">Agregada el {{ resultadoBusquedaEncuesta.fecha }}</p>
+                                <div v-if="resultadosBusquedaEncuesta.length === 0" class="flex items-center gap-2 bg-emerald-900/10 border border-emerald-700/40 rounded-xl px-4 py-2.5 text-emerald-400 text-sm font-black">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> No está registrada, puedes abrirla
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Agregar código suelto -->
+                        <!-- Un solo botón de carga: pega uno o varios, con nota opcional después de una coma -->
                         <div class="border-t border-slate-700 pt-5">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Marcar un nuevo código como "no abrir"</label>
-                            <div class="flex items-start gap-3 mt-2">
-                                <input type="text" v-model="nuevoCodigoEncuesta" @keyup.enter="agregarCodigoEncuesta" placeholder="Código..." class="w-48 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors">
-                                <input type="text" v-model="nuevaNotaEncuesta" @keyup.enter="agregarCodigoEncuesta" placeholder="Nota (opcional, ej. 'ya la tomó otro encuestador')" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-amber-500 transition-colors">
-                                <button @click="agregarCodigoEncuesta" class="bg-amber-600 hover:bg-amber-500 text-black px-5 py-3 rounded-xl text-sm font-black transition-all shadow-md flex items-center gap-2 flex-shrink-0">
-                                    <i data-lucide="plus" class="w-4 h-4"></i> Agregar
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Carga masiva de códigos -->
-                        <div class="border-t border-slate-700 pt-5">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">O pega varios códigos de una vez (uno por línea)</label>
-                            <textarea v-model="bulkEncuestasText" rows="3" placeholder="ABC123&#10;XYZ789&#10;..." class="w-full mt-2 bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors resize-none"></textarea>
-                            <button @click="procesarBulkEncuestas" class="mt-2 bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2">
-                                <i data-lucide="list-plus" class="w-4 h-4"></i> Agregar todos
+                            <textarea v-model="bulkEncuestasText" rows="2" placeholder="Pega el/los código(s), uno por línea. Nota opcional: ABC123, ya la tomó otro" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors resize-none"></textarea>
+                            <button @click="cargarCodigosEncuesta" class="mt-2 bg-amber-600 hover:bg-amber-500 text-black px-5 py-2.5 rounded-xl text-sm font-black transition-all shadow-md flex items-center gap-2">
+                                <i data-lucide="upload" class="w-4 h-4"></i> Cargar como "no abrir"
                             </button>
                         </div>
 
-                        <!-- Listado de códigos bloqueados -->
-                        <div class="border-t border-slate-700 pt-5">
-                            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Códigos marcados como "no abrir" ({{ encuestasBloqueadas.length }})</label>
-                            <div class="mt-3 rounded-xl border border-slate-700 overflow-auto max-h-[30vh]">
-                                <table class="w-full text-left border-collapse">
-                                    <thead class="sticky top-0 z-10 bg-slate-900 shadow-md border-b border-slate-700">
-                                        <tr class="text-slate-400 text-[11px] uppercase tracking-widest">
-                                            <th class="p-3 font-bold">Código</th>
-                                            <th class="p-3 font-bold">Nota</th>
-                                            <th class="p-3 font-bold">Fecha</th>
-                                            <th class="p-3 font-bold text-center">Quitar</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="text-sm divide-y divide-slate-700/50">
-                                        <tr v-for="e in encuestasBloqueadas" :key="e.codigo">
-                                            <td class="p-3 align-middle font-mono font-bold text-white">{{ e.codigo }}</td>
-                                            <td class="p-3 align-middle text-slate-300">{{ e.nota || '—' }}</td>
-                                            <td class="p-3 align-middle text-slate-500 text-xs">{{ e.fecha }}</td>
-                                            <td class="p-3 align-middle text-center">
-                                                <button @click="eliminarCodigoEncuesta(e.codigo)" class="w-8 h-8 bg-slate-700 hover:bg-rose-500 hover:text-white text-slate-400 rounded-lg transition-colors inline-flex items-center justify-center">
-                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="encuestasBloqueadas.length === 0">
-                                            <td colspan="4" class="p-4 text-center text-slate-500 italic text-xs">Todavía no has marcado ningún código.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
+                        <p class="text-[11px] text-slate-500">{{ encuestasBloqueadas.length }} código(s) marcado(s) en total.</p>
                     </div>
                 </div>
             </div>

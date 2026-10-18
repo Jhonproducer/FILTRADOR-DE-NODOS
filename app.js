@@ -123,7 +123,13 @@ createApp({
                 if (!seguro) return; // no toca accounts.value, el usuario puede corregir el pegado y reintentar
             }
 
+            const idsNuevos = new Set(nuevasCuentas.map(c => (c.nodeId || '').trim()).filter(Boolean));
+            const cuentasAnteriores = [...accounts.value];
             accounts.value = nuevasCuentas;
+            cuentasAnteriores.forEach(acc => {
+                const id = (acc.nodeId || '').trim();
+                if (id && !idsNuevos.has(id)) restoreNodeToPool(id, acc.nodeSnapshot);
+            });
             showBulkLoadModal.value = false;
             bulkLoadText.value = '';
             showStatus(`¡Cargadas ${nuevasCuentas.length} cuentas! Iniciando escáner...`);
@@ -323,17 +329,48 @@ createApp({
         };
 
         const addAccount = () => {
-            const num = accounts.value.length + 1;
-            accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', city: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
+            // El siguiente LON se calcula por el número mayor existente, no por cantidad de filas.
+            // Así, si borras LON-01, la fila nueva no se convierte accidentalmente en LON-27.
+            const usados = accounts.value.map(a => {
+                const m = String(a.name || '').match(/^LON-(\d+)$/i);
+                return m ? Number(m[1]) : 0;
+            });
+            const num = Math.max(0, ...usados) + 1;
+            accounts.value.push({ uid: generateUid(), name: `LON-${String(num).padStart(2, '0')}`, fecha: '', nodeId: '', nodeSnapshot: null, city: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
             reinitIcons();
         };
-        const removeAccount = (uid) => { if(confirm("¿Eliminar fila completa?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
+        const restoreNodeToPool = (nodeId, snapshot = null) => {
+            const id = (nodeId || '').trim();
+            if (!id || blacklist.value.includes(id) || accounts.value.some(a => (a.nodeId || '').trim() === id)) return false;
+            const known = snapshot || verificados.value.find(n => n.id === id) || pool.value.find(n => n.id === id);
+            if (!known) return false;
+            const { nota, fechaGuardado, ...clean } = known;
+            const existingIndex = pool.value.findIndex(n => n.id === id);
+            if (existingIndex >= 0) pool.value.splice(existingIndex, 1, { ...pool.value[existingIndex], ...clean });
+            else pool.value.unshift({ ...clean });
+            verificados.value = verificados.value.filter(n => n.id !== id);
+            return true;
+        };
+        const removeAccount = (uid) => {
+            const acc = accounts.value.find(a => a.uid === uid);
+            if (!acc || !confirm("¿Eliminar fila completa? Si tiene un nodo asignado, se devolverá al Radar salvo que esté en cuarentena. ¿Continuar?")) return;
+            const id = (acc.nodeId || '').trim();
+            accounts.value = accounts.value.filter(a => a.uid !== uid);
+            if (id) restoreNodeToPool(id, acc.nodeSnapshot);
+            showStatus(id ? `Cuenta eliminada; nodo ${id} devuelto al Radar si no está en cuarentena.` : 'Cuenta eliminada.');
+        };
         const deleteAllAccounts = () => {
             if (accounts.value.length === 0) return;
             if (!confirm(`⚠️ Esto va a BORRAR LAS ${accounts.value.length} CUENTAS de la granja de una sola vez. No se puede deshacer.\n\n¿Seguro que quieres continuar?`)) return;
             if (!confirm('Última confirmación: ¿de verdad quieres eliminar TODAS las cuentas ahora mismo?')) return;
+            // Antes de vaciar la granja, devolver los nodos conocidos al Radar.
+            const cuentasAnteriores = [...accounts.value];
             accounts.value = [];
-            showStatus('Todas las cuentas fueron eliminadas.');
+            cuentasAnteriores.forEach(acc => {
+                const id = (acc.nodeId || '').trim();
+                if (id) restoreNodeToPool(id, acc.nodeSnapshot);
+            });
+            showStatus('Todas las cuentas fueron eliminadas; nodos devueltos al Radar cuando sus datos estaban disponibles.');
         };
 
         // ¡NUEVA FUNCIÓN! Vacía la cuenta y manda el nodo a la cuarentena
@@ -352,6 +389,7 @@ createApp({
                 
                 // Vaciar los datos de la cuenta dejándola limpia
                 acc.nodeId = '';
+                acc.nodeSnapshot = null;
                 acc.city = '';
                 acc.ip = '';
                 acc.isp = 'Desconocido';
@@ -441,13 +479,24 @@ createApp({
 
                 const idCorto = nodo.provider_id.substring(0, 14);
                 
-                currentPoolMap.set(idCorto, {
+                const freshNode = {
                     id: idCorto,
                     city: nodo.location?.city || 'Desconocida',
                     region: nodo.location?.region || '',
                     asn_isp: `${nodo.location?.asn || ''} ${nodo.location?.isp || ''}`.trim(),
-                    q_score: (nodo.quality?.quality || 0).toFixed(2)
+                    q_score: Number(nodo.quality?.quality ?? 0).toFixed(2)
+                };
+                currentPoolMap.set(idCorto, freshNode);
+                // Mantener también al día la ficha del nodo aunque esté asignado a una cuenta.
+                accounts.value.forEach(acc => {
+                    if ((acc.nodeId || '').trim() === idCorto) {
+                        acc.nodeSnapshot = { ...(acc.nodeSnapshot || {}), ...freshNode };
+                        acc.city = freshNode.city;
+                    }
                 });
+                verificados.value = verificados.value.map(v => v.id === idCorto
+                    ? { ...v, ...freshNode, nota: v.nota, fechaGuardado: v.fechaGuardado }
+                    : v);
             });
 
             const rawPool = [];
@@ -620,11 +669,16 @@ createApp({
 
         const devolverAlPool = (nodeId) => {
             const nodo = verificados.value.find(n => n.id === nodeId);
-            if (!nodo) return;
-            const { nota, fechaGuardado, ...nodoLimpio } = nodo; // se quitan los datos propios de "verificado" al volver al pool
-            pool.value.unshift(nodoLimpio);
+            if (!nodo || blacklist.value.includes(nodeId) || accounts.value.some(a => (a.nodeId || '').trim() === nodeId)) {
+                showStatus(`No se puede devolver ${nodeId}: está asignado o en cuarentena.`);
+                return;
+            }
+            const { nota, fechaGuardado, ...nodoLimpio } = nodo;
+            const index = pool.value.findIndex(n => n.id === nodeId);
+            if (index >= 0) pool.value.splice(index, 1, { ...pool.value[index], ...nodoLimpio });
+            else pool.value.unshift(nodoLimpio);
             verificados.value = verificados.value.filter(n => n.id !== nodeId);
-            showStatus(`Nodo ${nodeId} devuelto al Pool.`);
+            showStatus(`Nodo ${nodeId} devuelto al Pool sin duplicarlo.`);
         };
 
         const burnFromVerified = (nodeId) => {
@@ -664,7 +718,9 @@ createApp({
                     const seguro = confirm(`⚠️ Ya hay ${yaHayEnEsaCiudad} cuenta(s) en "${nodeToAssignCity.value}" (tope: ${maxPorCiudad.value}).\n\nPara mayor seguridad entre cuentas, se recomienda no repetir localización.\n\n¿Asignar de todas formas?`);
                     if (!seguro) return;
                 }
+                const nodeInfo = pool.value.find(n => n.id === nodeToAssign.value) || verificados.value.find(n => n.id === nodeToAssign.value) || null;
                 acc.nodeId = nodeToAssign.value;
+                acc.nodeSnapshot = nodeInfo ? { ...nodeInfo } : null;
                 acc.city = nodeToAssignCity.value;
                 acc.ip = ''; 
                 acc.isp = 'Desconocido';
@@ -790,6 +846,14 @@ createApp({
         };
         const removeBlacklistNode = (nodeIdOValor) => {
             blacklist.value = blacklist.value.filter(n => n !== nodeIdOValor);
+            const acc = accounts.value.find(a => (a.nodeId || '').trim() === nodeIdOValor);
+            const verified = verificados.value.find(n => n.id === nodeIdOValor);
+            const existing = pool.value.find(n => n.id === nodeIdOValor);
+            if (!acc) {
+                const snapshot = verified || existing;
+                if (snapshot) restoreNodeToPool(nodeIdOValor, snapshot);
+            }
+            showStatus(`Nodo ${nodeIdOValor} salió de cuarentena${acc ? '; sigue asignado a su cuenta' : '; volvió al Radar si tenemos sus datos'}.`);
         };
 
         // Un nodo en cuarentena está "activo" si sigue apareciendo en la última extracción completa
@@ -834,10 +898,16 @@ createApp({
         // --- RESPALDO MANUAL: TÚ TIENES EL CONTROL, NO DEPENDE DEL NAVEGADOR ---
         const downloadBackup = () => {
             const backup = {
+                app: 'ALIENS.sys',
+                version: 2,
                 fecha: new Date().toISOString(),
                 accounts: accounts.value,
                 blacklist: blacklist.value,
-                pool: pool.value
+                pool: pool.value,
+                maxPorCiudad: maxPorCiudad.value,
+                nodosVistosApi: nodosVistosApi.value,
+                verificados: verificados.value,
+                encuestasBloqueadas: encuestasBloqueadas.value
             };
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -855,7 +925,7 @@ createApp({
         const restoreBackup = (event) => {
             const file = event.target.files[0];
             if (!file) return;
-            const confirmed = confirm('Esto va a REEMPLAZAR tus cuentas, lista negra y pool actuales por los del archivo de respaldo. ¿Continuar?');
+            const confirmed = confirm('Esto va a REEMPLAZAR TODOS los datos actuales (cuentas, pool, cuarentena, verificados, encuestas y ajustes) por los del respaldo. ¿Continuar?');
             if (!confirmed) { event.target.value = null; return; }
 
             const reader = new FileReader();
@@ -866,6 +936,16 @@ createApp({
                     accounts.value = Array.isArray(data.accounts) ? data.accounts : accounts.value;
                     blacklist.value = Array.isArray(data.blacklist) ? data.blacklist : blacklist.value;
                     pool.value = Array.isArray(data.pool) ? data.pool : pool.value;
+                    if (typeof data.maxPorCiudad === 'number' && data.maxPorCiudad > 0) maxPorCiudad.value = data.maxPorCiudad;
+                    if (Array.isArray(data.nodosVistosApi)) nodosVistosApi.value = data.nodosVistosApi;
+                    if (Array.isArray(data.verificados)) verificados.value = data.verificados;
+                    if (Array.isArray(data.encuestasBloqueadas)) encuestasBloqueadas.value = dedupeEncuestas(data.encuestasBloqueadas);
+                    // Normaliza cuentas de respaldos antiguos sin perder sus campos existentes.
+                    accounts.value = accounts.value.map(a => ({ ...a, nodeSnapshot: a.nodeSnapshot || null }));
+                    // Evitar que un respaldo antiguo restaure el mismo nodo en varios módulos.
+                    const usados = new Set(accounts.value.map(a => (a.nodeId || '').trim()).filter(Boolean));
+                    pool.value = pool.value.filter(n => !usados.has(n.id) && !blacklist.value.includes(n.id));
+                    verificados.value = verificados.value.filter(n => !usados.has(n.id) && !blacklist.value.includes(n.id));
                     reinitIcons();
                     updateCharts();
                     showStatus('¡Respaldo restaurado con éxito!');

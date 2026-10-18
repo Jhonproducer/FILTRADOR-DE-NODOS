@@ -323,31 +323,11 @@ createApp({
         };
 
         const addAccount = () => {
-            // Reutiliza el primer número libre (si borraste LON-01, la próxima fila vuelve a ser
-            // LON-01) en vez de seguir sumando al total, que es lo que mandaba las filas nuevas
-            // hasta LON-27 por haber 26 cuentas ya existentes.
-            const usados = new Set(
-                accounts.value
-                    .map(a => (a.name || '').match(/^LON-(\d+)$/))
-                    .filter(Boolean)
-                    .map(m => parseInt(m[1], 10))
-            );
-            let num = 1;
-            while (usados.has(num)) num++;
+            const num = accounts.value.length + 1;
             accounts.value.push({ uid: generateUid(), name: `LON-${num < 10 ? '0'+num : num}`, fecha: '', nodeId: '', city: '', ip: '', isp: 'Desconocido', county: 'Desconocido', previousIp: null });
             reinitIcons();
         };
-        const removeAccount = (uid) => {
-            if (!confirm("¿Eliminar fila completa?")) return;
-            const acc = accounts.value.find(a => a.uid === uid);
-            const nodoLiberado = acc ? (acc.nodeId || '').trim() : '';
-            accounts.value = accounts.value.filter(a => a.uid !== uid);
-            // Si la fila tenía un nodo y no se mandó a cuarentena, que vuelva al Pool Radar
-            // ya mismo (no hay que esperar al refresco automático ni a darle "Extraer" a mano).
-            if (nodoLiberado && !blacklist.value.includes(nodoLiberado)) {
-                fetchMysteriumAPI();
-            }
-        };
+        const removeAccount = (uid) => { if(confirm("¿Eliminar fila completa?")) accounts.value = accounts.value.filter(a => a.uid !== uid); };
         const deleteAllAccounts = () => {
             if (accounts.value.length === 0) return;
             if (!confirm(`⚠️ Esto va a BORRAR LAS ${accounts.value.length} CUENTAS de la granja de una sola vez. No se puede deshacer.\n\n¿Seguro que quieres continuar?`)) return;
@@ -443,7 +423,7 @@ createApp({
             return quitados;
         };
 
-        const processNodeData = (data, silencioso = false) => {
+        const processNodeData = (data) => {
             const currentPoolMap = new Map();
             pool.value.forEach(n => currentPoolMap.set(n.id, n));
 
@@ -482,16 +462,13 @@ createApp({
             });
 
             pool.value = rawPool;
-            if (!silencioso) showStatus(`Radar completado: ${pool.value.length} nodos limpios disponibles.`);
+            showStatus(`Radar completado: ${pool.value.length} nodos limpios disponibles.`);
         };
 
-        // silencioso=true es para el refresco automático de fondo: actualiza los datos igual,
-        // pero nunca interrumpe con la alerta de error si algo falla (eso sí sería molesto
-        // apareciendo solo cada 60s sin que el usuario haya tocado nada).
-        const fetchMysteriumAPI = async (silencioso = false) => {
+        const fetchMysteriumAPI = async () => {
             if (isFetchingPool.value) return; // ignora clics repetidos mientras ya hay una extracción en curso
             isFetchingPool.value = true;
-            if (!silencioso) syncStatus.value = 'Conectando a Mysterium...';
+            syncStatus.value = 'Conectando a Mysterium...';
             const targetUrl = "https://discovery.mysterium.network/api/v3/proposals?location_country=GB&ip_type=residential";
             const failLog = [];
 
@@ -509,12 +486,10 @@ createApp({
 
                     if (Array.isArray(nodos) && nodos.length > 0 && nodos[0].provider_id) {
                         console.log(`¡Éxito usando: snapshot local (hace ${minutosAtras ?? '?'} min)!`);
-                        processNodeData(nodos, silencioso);
-                        if (!silencioso) {
-                            showStatus(`Nodos actualizados (hace ${minutosAtras ?? 0} min).`);
-                            setTimeout(() => { syncStatus.value = ''; }, 4000);
-                        }
+                        processNodeData(nodos);
+                        showStatus(`Nodos actualizados (hace ${minutosAtras ?? 0} min).`);
                         isFetchingPool.value = false;
+                        setTimeout(() => { syncStatus.value = ''; }, 4000);
                         return;
                     } else {
                         failLog.push('Snapshot local: vacío todavía');
@@ -531,7 +506,7 @@ createApp({
             // NOTA: corsproxy.io restringió su plan gratuito solo a "localhost" en 2026,
             // por eso se dejó de último. Cada intento tiene timeout propio para que uno
             // caído no frene a los demás.
-            if (!silencioso) syncStatus.value = 'Snapshot no disponible, probando proxies en vivo...';
+            syncStatus.value = 'Snapshot no disponible, probando proxies en vivo...';
             const attempts = [
                 { name: 'AllOrigins', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}` },
                 { name: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}` },
@@ -574,16 +549,14 @@ createApp({
             }
 
             if (data && Array.isArray(data)) {
-                processNodeData(data, silencioso);
-            } else if (!silencioso) {
+                processNodeData(data);
+            } else {
                 console.warn('Fallos detallados:', failLog);
                 alert(`🚫 ERROR: Ni el snapshot ni los proxies lograron la conexión.\n\nDetalle:\n${failLog.join('\n')}\n\nUsa el botón verde 'Subir JSON Manual' mientras tanto.`);
                 syncStatus.value = 'Error de conexión.';
-            } else {
-                console.warn('Refresco automático: fallos detallados:', failLog);
             }
             isFetchingPool.value = false;
-            if (!silencioso) setTimeout(() => { syncStatus.value = ''; }, 4000);
+            setTimeout(() => { syncStatus.value = ''; }, 4000);
         };
 
         const importPoolJSON = (event) => {
@@ -817,9 +790,6 @@ createApp({
         };
         const removeBlacklistNode = (nodeIdOValor) => {
             blacklist.value = blacklist.value.filter(n => n !== nodeIdOValor);
-            // Y viceversa: si lo sacas de cuarentena, que reaparezca en el Pool Radar ya mismo
-            // (si sigue vivo en la API y no está asignado a ninguna cuenta).
-            fetchMysteriumAPI();
         };
 
         // Un nodo en cuarentena está "activo" si sigue apareciendo en la última extracción completa
@@ -909,17 +879,11 @@ createApp({
         const showStatus = (msg) => { syncStatus.value = msg; setTimeout(() => { syncStatus.value = ''; }, 3000); };
         const reinitIcons = () => { nextTick(() => { if(window.lucide) lucide.createIcons(); }); };
         
-        onMounted(() => {
-            loadData();
+        onMounted(() => { 
+            loadData(); 
             purgeNonAllowedIsps();
-            reinitIcons();
+            reinitIcons(); 
             updateCharts();
-            // Refresco automático del Pool cada 60s: lee el mismo snapshot same-origin
-            // (data/nodes-gb.json) que actualiza el GitHub Action, así la calidad/estado de
-            // cada nodo se mantiene en vivo sin que tengas que darle "Extraer" a cada rato.
-            setInterval(() => {
-                if (!isFetchingPool.value) fetchMysteriumAPI(true);
-            }, 60000);
         });
 
         watch(currentTab, () => {

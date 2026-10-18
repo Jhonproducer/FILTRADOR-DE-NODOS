@@ -164,13 +164,6 @@
                             <button @click="showBulkLoadModal = true" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center gap-2 shadow-indigo-500/20">
                                 <i data-lucide="clipboard-paste" class="w-4 h-4"></i> Carga Masiva (Bulk)
                             </button>
-                            <button @click="downloadBackup" class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2" title="Descarga cuentas + cuarentena + pool en un archivo tuyo">
-                                <i data-lucide="download" class="w-4 h-4"></i> Descargar Respaldo
-                            </button>
-                            <label class="bg-slate-700 hover:bg-slate-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer" title="Restaura desde un archivo de respaldo">
-                                <i data-lucide="upload" class="w-4 h-4"></i> Restaurar Respaldo
-                                <input type="file" @change="restoreBackup" accept=".json" class="hidden">
-                            </label>
                             <button @click="deleteAllAccounts" class="bg-red-700 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-2" title="Borra todas las cuentas de una sola vez">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar Todas
                             </button>
@@ -533,7 +526,12 @@
 
                         <!-- Buscador: con un pedazo del código basta -->
                         <div>
-                            <input type="text" v-model="encuestaBusqueda" placeholder="Busca por un pedazo del código (ej. los últimos 3 dígitos)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors">
+                            <div class="relative">
+                                <input type="text" v-model="encuestaBusqueda" @keyup.esc="encuestaBusqueda = ''" placeholder="Busca por un pedazo del código (ej. los últimos 3 dígitos)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 pr-11 text-sm text-white font-mono outline-none focus:border-amber-500 transition-colors">
+                                <button v-if="encuestaBusqueda" @click="encuestaBusqueda = ''" title="Borrar (o Esc)" class="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-slate-500 hover:text-rose-400 transition-colors">
+                                    <i data-lucide="x-circle" class="w-5 h-5"></i>
+                                </button>
+                            </div>
                             <div v-if="encuestaBusqueda" class="mt-2 flex flex-col gap-2">
                                 <div v-for="e in resultadosBusquedaEncuesta" :key="e.codigo" class="flex items-center justify-between gap-3 bg-rose-900/20 border border-rose-700/50 rounded-xl px-4 py-2.5">
                                     <div>

@@ -1,6 +1,486 @@
 {
-  "fetched_at": "2026-10-25T01:35:43Z",
+  "fetched_at": "2026-10-25T06:47:53Z",
   "nodes": [
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x209b9b15640728700b579ada7024e290e445727e",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Bradford",
+        "asn": 5607,
+        "isp": "Sky UK Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.6,
+        "latency": 34.7,
+        "bandwidth": 47.53,
+        "uptime": 24,
+        "packetLoss": 10.52
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x99d4c2c43192f4e94a84df94fadeccbde2e9f66f",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "Northern Ireland",
+        "city": "Knockmanoul",
+        "asn": 5607,
+        "isp": "Sky UK Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.7,
+        "latency": 39.21,
+        "bandwidth": 87.07,
+        "uptime": 24,
+        "packetLoss": 8.46
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xd1c7eb31c75c3169d9235cbeb0236201169f716f",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Leeds",
+        "asn": 5607,
+        "isp": "Sky UK Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.7,
+        "latency": 33.87,
+        "bandwidth": 61.38,
+        "uptime": 24,
+        "packetLoss": 0.69
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x96c44087fe988f4da5b78f8d31d41cbcff47c5f6",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Southampton",
+        "asn": 60377,
+        "isp": "Toob Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 26.9,
+        "bandwidth": 255.96,
+        "uptime": 24,
+        "packetLoss": 0.84
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x7357106763739633ef96c40f71d1dc5ccd9440a0",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 26.55,
+        "bandwidth": 709.89,
+        "uptime": 24,
+        "packetLoss": 0.98
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x8e9c6638873537f069b580bb37b7b3a37c3c1fe8",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Reading",
+        "asn": 60377,
+        "isp": "Toob Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 25.03,
+        "bandwidth": 396.76,
+        "uptime": 24,
+        "packetLoss": 0.98
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xe927f17108ffcd0178066b9fbe9f98410227a4d5",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 23.4,
+        "bandwidth": 427.79,
+        "uptime": 24,
+        "packetLoss": 1.3
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xb0da2cd0b74558d05dd79a4daa55539dbb3b1198",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 25.46,
+        "bandwidth": 712.4,
+        "uptime": 24,
+        "packetLoss": 1.04
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x07b1a5ce86903910683058c5980d369b3239f600",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Birmingham",
+        "asn": 5378,
+        "isp": "Vodafone Ltd",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.7,
+        "latency": 35.26,
+        "bandwidth": 71.15,
+        "uptime": 24,
+        "packetLoss": 0.54
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xbc0330bf375b6fdfc01b9b566d80a2f82c4f7e76",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 56478,
+        "isp": "Hyperoptic Ltd",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 24.85,
+        "bandwidth": 51.6,
+        "uptime": 24,
+        "packetLoss": 0.93
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xeab85757856672bb309c6125337d1438ab242952",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 201838,
+        "isp": "Community Fibre Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.1333333333333333,
+        "latency": 23.13,
+        "bandwidth": 61.31,
+        "uptime": 10.08,
+        "packetLoss": 2.06
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x99e1e60efc53621aec706a31a861ecfd8eb5ff45",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 23.85,
+        "bandwidth": 747.7,
+        "uptime": 24,
+        "packetLoss": 3.83
+      }
+    },
     {
       "id": 0,
       "format": "service-proposal/v3",
@@ -75,9 +555,9 @@
       ],
       "quality": {
         "quality": 2.466666666666667,
-        "latency": 24.98,
+        "latency": 24.67,
         "bandwidth": 79.92,
-        "uptime": 15.75,
+        "uptime": 20.75,
         "packetLoss": 1.31
       }
     },
@@ -115,10 +595,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.54,
+        "latency": 26.53,
         "bandwidth": 146.71,
         "uptime": 24,
-        "packetLoss": 8.42
+        "packetLoss": 8.47
       }
     },
     {
@@ -155,7 +635,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.43,
+        "latency": 33.86,
         "bandwidth": 87.97,
         "uptime": 24,
         "packetLoss": 9.92
@@ -194,10 +674,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9,
-        "latency": 14.77,
+        "quality": 2.2333333333333334,
+        "latency": 19.93,
         "bandwidth": 779.55,
-        "uptime": 2.5,
+        "uptime": 7.5,
         "packetLoss": 1.03
       }
     },
@@ -275,7 +755,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.88,
+        "latency": 34.61,
         "bandwidth": 63.79,
         "uptime": 24,
         "packetLoss": 1.49
@@ -315,9 +795,9 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 37.45,
+        "latency": 39.35,
         "bandwidth": 78.98,
-        "uptime": 24,
+        "uptime": 23.33,
         "packetLoss": 0.85
       }
     },
@@ -355,7 +835,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 32.64,
+        "latency": 33.23,
         "bandwidth": 13.54,
         "uptime": 24,
         "packetLoss": 1.99
@@ -393,7 +873,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 37.86,
+        "latency": 39.17,
         "bandwidth": 135.17,
         "uptime": 24,
         "packetLoss": 1.23
@@ -473,7 +953,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.77,
+        "latency": 22.19,
         "bandwidth": 785.34,
         "uptime": 24,
         "packetLoss": 0.5
@@ -513,7 +993,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 28.05,
+        "latency": 29.32,
         "bandwidth": 31.81,
         "uptime": 24,
         "packetLoss": 1.99
@@ -552,8 +1032,8 @@
         }
       ],
       "quality": {
-        "quality": 2.4,
-        "latency": 104.54,
+        "quality": 2.5,
+        "latency": 87.16,
         "bandwidth": 74.47,
         "uptime": 24,
         "packetLoss": 2.13
@@ -593,7 +1073,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 34.4,
+        "latency": 34.76,
         "bandwidth": 10.29,
         "uptime": 24,
         "packetLoss": 9.87
@@ -633,7 +1113,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.65,
+        "latency": 23.6,
         "bandwidth": 769.82,
         "uptime": 24,
         "packetLoss": 0.98
@@ -673,7 +1153,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.51,
+        "latency": 36.28,
         "bandwidth": 53.96,
         "uptime": 24,
         "packetLoss": 0.78
@@ -752,8 +1232,8 @@
         }
       ],
       "quality": {
-        "quality": 2.6,
-        "latency": 31.31,
+        "quality": 2.7,
+        "latency": 29.8,
         "bandwidth": 38.38,
         "uptime": 24,
         "packetLoss": 2.04
@@ -793,7 +1273,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28.54,
+        "latency": 29.73,
         "bandwidth": 103.51,
         "uptime": 24,
         "packetLoss": 0.98
@@ -833,7 +1313,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.6,
+        "latency": 34.39,
         "bandwidth": 473.46,
         "uptime": 24,
         "packetLoss": 0.73
@@ -873,7 +1353,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 43.69,
+        "latency": 44.35,
         "bandwidth": 7.98,
         "uptime": 24,
         "packetLoss": 1.35
@@ -914,7 +1394,7 @@
       "quality": {
         "quality": 2.5,
         "latency": 77.22,
-        "bandwidth": 252.71,
+        "bandwidth": 190.94,
         "uptime": 24,
         "packetLoss": 0.93
       }
@@ -953,7 +1433,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.65,
+        "latency": 35.31,
         "bandwidth": 76.89,
         "uptime": 24,
         "packetLoss": 1.45
@@ -993,7 +1473,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 34.12,
+        "latency": 33.26,
         "bandwidth": 13.02,
         "uptime": 24,
         "packetLoss": 8.9
@@ -1033,7 +1513,7 @@
       ],
       "quality": {
         "quality": 0.11615,
-        "latency": 38.63,
+        "latency": 37.99,
         "bandwidth": 13.93,
         "uptime": 24,
         "packetLoss": 1.13
@@ -1108,7 +1588,7 @@
       "quality": {
         "quality": 2.7,
         "latency": 31.9,
-        "bandwidth": 192.02,
+        "bandwidth": 163.73,
         "uptime": 24,
         "packetLoss": 0.81
       }
@@ -1147,7 +1627,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.46,
+        "latency": 25.47,
         "bandwidth": 526.26,
         "uptime": 24,
         "packetLoss": 1.03
@@ -1187,7 +1667,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.7,
+        "latency": 33.96,
         "bandwidth": 84.33,
         "uptime": 24,
         "packetLoss": 1.77
@@ -1227,7 +1707,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.4,
+        "latency": 25.49,
         "bandwidth": 66.18,
         "uptime": 24,
         "packetLoss": 2.87
@@ -1267,7 +1747,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.41,
+        "latency": 29.88,
         "bandwidth": 732.66,
         "uptime": 24,
         "packetLoss": 0.51
@@ -1307,7 +1787,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.07,
+        "latency": 27.19,
         "bandwidth": 306.01,
         "uptime": 24,
         "packetLoss": 1.26
@@ -1427,7 +1907,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 34.37,
+        "latency": 34.39,
         "bandwidth": 26.71,
         "uptime": 24,
         "packetLoss": 1.19
@@ -1467,7 +1947,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 30.86,
+        "latency": 31.08,
         "bandwidth": 31.3,
         "uptime": 24,
         "packetLoss": 0.4
@@ -1507,8 +1987,8 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 191.33,
-        "bandwidth": 218.21,
+        "latency": 192.09,
+        "bandwidth": 128.53,
         "uptime": 24,
         "packetLoss": 2.09
       }
@@ -1547,7 +2027,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 41.88,
+        "latency": 41.98,
         "bandwidth": 18.61,
         "uptime": 24,
         "packetLoss": 2.04
@@ -1587,7 +2067,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 26.88,
+        "latency": 24.66,
         "bandwidth": 15.01,
         "uptime": 24,
         "packetLoss": 2.66
@@ -1626,9 +2106,9 @@
         }
       ],
       "quality": {
-        "quality": 2.4,
-        "latency": 38.6,
-        "bandwidth": 15.92,
+        "quality": 2.3,
+        "latency": 40.13,
+        "bandwidth": 14.37,
         "uptime": 24,
         "packetLoss": 0.62
       }
@@ -1667,8 +2147,8 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28.23,
-        "bandwidth": 627.53,
+        "latency": 25.1,
+        "bandwidth": 635.36,
         "uptime": 24,
         "packetLoss": 0.69
       }
@@ -1707,10 +2187,10 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 179.09,
+        "latency": 179.48,
         "bandwidth": 33.36,
         "uptime": 23.42,
-        "packetLoss": 1.19
+        "packetLoss": 0.09
       }
     },
     {
@@ -1786,10 +2266,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9,
-        "latency": 19,
+        "quality": 2.1333333333333333,
+        "latency": 22.98,
         "bandwidth": 721.27,
-        "uptime": 2.17,
+        "uptime": 7.17,
         "packetLoss": 0.51
       }
     },
@@ -1827,7 +2307,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 31.79,
+        "latency": 31.74,
         "bandwidth": 13.9,
         "uptime": 24,
         "packetLoss": 2.35
@@ -1867,10 +2347,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.78,
+        "latency": 25.75,
         "bandwidth": 71.9,
         "uptime": 24,
-        "packetLoss": 4.38
+        "packetLoss": 4.58
       }
     },
     {
@@ -1907,7 +2387,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 37.62,
+        "latency": 39.67,
         "bandwidth": 69.79,
         "uptime": 24,
         "packetLoss": 0.47
@@ -1947,7 +2427,7 @@
       ],
       "quality": {
         "quality": 0.11615,
-        "latency": 31.73,
+        "latency": 33.21,
         "bandwidth": 13.01,
         "uptime": 24,
         "packetLoss": 1.05
@@ -2027,8 +2507,8 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.88,
-        "bandwidth": 51.5,
+        "latency": 32.17,
+        "bandwidth": 57.23,
         "uptime": 23.83,
         "packetLoss": 0.4
       }
@@ -2067,7 +2547,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.41,
+        "latency": 28.34,
         "bandwidth": 136.67,
         "uptime": 24,
         "packetLoss": 1.81
@@ -2106,10 +2586,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9,
-        "latency": 14.48,
+        "quality": 2.2333333333333334,
+        "latency": 18.72,
         "bandwidth": 692.78,
-        "uptime": 2.83,
+        "uptime": 7.83,
         "packetLoss": 0.87
       }
     },
@@ -2147,10 +2627,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.32,
+        "latency": 31.36,
         "bandwidth": 83.36,
         "uptime": 24,
-        "packetLoss": 0.57
+        "packetLoss": 0.56
       }
     },
     {
@@ -2187,7 +2667,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 27.1,
+        "latency": 25.89,
         "bandwidth": 40.61,
         "uptime": 24,
         "packetLoss": 1.08
@@ -2227,7 +2707,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 26.43,
+        "latency": 26.61,
         "bandwidth": 12.43,
         "uptime": 24,
         "packetLoss": 0.81
@@ -2306,8 +2786,8 @@
         }
       ],
       "quality": {
-        "quality": 2.5,
-        "latency": 78.16,
+        "quality": 2.7,
+        "latency": 33.39,
         "bandwidth": 79.01,
         "uptime": 24,
         "packetLoss": 2.9
@@ -2347,10 +2827,50 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 38.87,
+        "latency": 39.07,
         "bandwidth": 15.49,
         "uptime": 24,
         "packetLoss": 1.76
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x93c2a95fb543757ea02f4880bfc957dbc8313336",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.7,
+        "latency": 30.57,
+        "bandwidth": 814.73,
+        "uptime": 24,
+        "packetLoss": 1.02
       }
     },
     {
@@ -2428,49 +2948,9 @@
       "quality": {
         "quality": 2.7,
         "latency": 31.21,
-        "bandwidth": 63.2,
+        "bandwidth": 59.2,
         "uptime": 24,
         "packetLoss": 0.42
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x93c2a95fb543757ea02f4880bfc957dbc8313336",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 30.35,
-        "bandwidth": 814.73,
-        "uptime": 24,
-        "packetLoss": 1.02
       }
     },
     {
@@ -2510,7 +2990,7 @@
         "latency": 26.03,
         "bandwidth": 699.77,
         "uptime": 24,
-        "packetLoss": 0.98
+        "packetLoss": 1.01
       }
     },
     {
@@ -2540,8 +3020,8 @@
         }
       ],
       "quality": {
-        "quality": 2.2,
-        "latency": 28.99,
+        "quality": 2.1,
+        "latency": 31.56,
         "bandwidth": 7.2,
         "uptime": 24,
         "packetLoss": 1.45
@@ -2579,10 +3059,10 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 32.01,
+        "latency": 31.79,
         "bandwidth": 25.92,
         "uptime": 24,
-        "packetLoss": 1.59
+        "packetLoss": 2.15
       }
     },
     {
@@ -2659,50 +3139,10 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 41.61,
+        "latency": 41,
         "bandwidth": 38.17,
         "uptime": 24,
         "packetLoss": 0.4
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x2908efdcb201deb2a08c9b368be2acfbec81cbd8",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Birmingham",
-        "asn": 31655,
-        "isp": "Gamma Telecom Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.3,
-        "latency": 38.41,
-        "bandwidth": 12.83,
-        "uptime": 24,
-        "packetLoss": 0.23
       }
     },
     {
@@ -2739,10 +3179,50 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 36.67,
+        "latency": 36.18,
         "bandwidth": 7.45,
         "uptime": 24,
         "packetLoss": 8.39
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x2908efdcb201deb2a08c9b368be2acfbec81cbd8",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Birmingham",
+        "asn": 31655,
+        "isp": "Gamma Telecom Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.3,
+        "latency": 38.4,
+        "bandwidth": 12.83,
+        "uptime": 24,
+        "packetLoss": 0.23
       }
     },
     {
@@ -2778,8 +3258,8 @@
         }
       ],
       "quality": {
-        "quality": 2.4,
-        "latency": 34.36,
+        "quality": 2.5,
+        "latency": 29.78,
         "bandwidth": 18.44,
         "uptime": 24,
         "packetLoss": 0.9
@@ -2819,90 +3299,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.95,
+        "latency": 34.03,
         "bandwidth": 63.64,
         "uptime": 24,
-        "packetLoss": 0.68
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x6e2a18cf01eab52794fab268fa0aa3c94dc196c0",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 56478,
-        "isp": "Hyperoptic Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 28.18,
-        "bandwidth": 68.26,
-        "uptime": 24,
-        "packetLoss": 1.95
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x6451ba306a71c54c3e8dcc517ba61da5ea7cffd1",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Brentwood",
-        "asn": 2856,
-        "isp": "EE Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2,
-        "latency": 51.62,
-        "bandwidth": 5.86,
-        "uptime": 24,
-        "packetLoss": 8.46
+        "packetLoss": 0.78
       }
     },
     {
@@ -2949,15 +3349,15 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
-      "provider_id": "0xe87fd46786db51c3f680b08d3e533c54eef895cc",
+      "provider_id": "0x6e2a18cf01eab52794fab268fa0aa3c94dc196c0",
       "service_type": "wireguard",
       "location": {
         "continent": "EU",
         "country": "GB",
         "region": "England",
-        "city": "Brighton",
-        "asn": 2856,
-        "isp": "British Telecommunications Limited",
+        "city": "London",
+        "asn": 56478,
+        "isp": "Hyperoptic Ltd",
         "ip_type": "residential"
       },
       "contacts": [
@@ -2978,11 +3378,51 @@
         }
       ],
       "quality": {
-        "quality": 2.5,
-        "latency": 28.29,
-        "bandwidth": 16.16,
+        "quality": 2.8,
+        "latency": 28.18,
+        "bandwidth": 68.26,
         "uptime": 24,
-        "packetLoss": 0.97
+        "packetLoss": 1.03
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x6451ba306a71c54c3e8dcc517ba61da5ea7cffd1",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Brentwood",
+        "asn": 2856,
+        "isp": "EE Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2,
+        "latency": 50.68,
+        "bandwidth": 5.86,
+        "uptime": 24,
+        "packetLoss": 8.46
       }
     },
     {
@@ -3019,10 +3459,10 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 37.6,
+        "latency": 38.74,
         "bandwidth": 48.41,
         "uptime": 24,
-        "packetLoss": 0.43
+        "packetLoss": 0.51
       }
     },
     {
@@ -3059,7 +3499,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 40.47,
+        "latency": 41.71,
         "bandwidth": 41.13,
         "uptime": 24,
         "packetLoss": 0.17
@@ -3099,10 +3539,50 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 30.94,
+        "latency": 31.02,
         "bandwidth": 81.77,
         "uptime": 24,
-        "packetLoss": 0.49
+        "packetLoss": 0.77
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x910cefcc88ff55ba04f98cd57b6e32e545518d54",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Portsmouth",
+        "asn": 5089,
+        "isp": "Virgin Media Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 1.5333333333333332,
+        "latency": 31.92,
+        "bandwidth": 9.19,
+        "uptime": 5.75,
+        "packetLoss": 5.87
       }
     },
     {
@@ -3139,50 +3619,10 @@
       ],
       "quality": {
         "quality": 1.9666666666666663,
-        "latency": 38.36,
+        "latency": 37.77,
         "bandwidth": 14.95,
         "uptime": 16.92,
         "packetLoss": 1.3
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x910cefcc88ff55ba04f98cd57b6e32e545518d54",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Portsmouth",
-        "asn": 5089,
-        "isp": "Virgin Media Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 1.2,
-        "latency": 33.14,
-        "bandwidth": 9.19,
-        "uptime": 0.75,
-        "packetLoss": 5.87
       }
     },
     {
@@ -3219,7 +3659,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.65,
+        "latency": 21.84,
         "bandwidth": 783.41,
         "uptime": 24,
         "packetLoss": 0.86
@@ -3259,7 +3699,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 32.95,
+        "latency": 31.45,
         "bandwidth": 22.62,
         "uptime": 24,
         "packetLoss": 0.34
@@ -3299,7 +3739,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.38,
+        "latency": 27.36,
         "bandwidth": 641.08,
         "uptime": 24,
         "packetLoss": 1.04
@@ -3339,7 +3779,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.18,
+        "latency": 29.05,
         "bandwidth": 803.48,
         "uptime": 24,
         "packetLoss": 0.51
@@ -3379,7 +3819,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.9,
+        "latency": 33.91,
         "bandwidth": 120.77,
         "uptime": 24,
         "packetLoss": 0.92
@@ -3418,10 +3858,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9,
-        "latency": 17.05,
+        "quality": 2.2333333333333334,
+        "latency": 18.6,
         "bandwidth": 278.04,
-        "uptime": 3.5,
+        "uptime": 8.5,
         "packetLoss": 1.31
       }
     },
@@ -3459,7 +3899,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 34.74,
+        "latency": 32.28,
         "bandwidth": 23.74,
         "uptime": 24,
         "packetLoss": 0.51
@@ -3499,7 +3939,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28.29,
+        "latency": 26.89,
         "bandwidth": 722.85,
         "uptime": 24,
         "packetLoss": 0.74
@@ -3579,7 +4019,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 38.69,
+        "latency": 39.99,
         "bandwidth": 61.63,
         "uptime": 24,
         "packetLoss": 2.23
@@ -3619,8 +4059,8 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.16,
-        "bandwidth": 662.07,
+        "latency": 23.23,
+        "bandwidth": 771.16,
         "uptime": 24,
         "packetLoss": 0.51
       }
@@ -3699,7 +4139,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 34.42,
+        "latency": 34.11,
         "bandwidth": 16.49,
         "uptime": 24,
         "packetLoss": 1.46
@@ -3739,7 +4179,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.35,
+        "latency": 37.19,
         "bandwidth": 488.66,
         "uptime": 24,
         "packetLoss": 0.5
@@ -3779,7 +4219,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 25.78,
+        "latency": 27.83,
         "bandwidth": 14.28,
         "uptime": 24,
         "packetLoss": 1.47
@@ -3819,7 +4259,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.45,
+        "latency": 25.6,
         "bandwidth": 771.4,
         "uptime": 24,
         "packetLoss": 0.51
@@ -3859,7 +4299,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.69,
+        "latency": 27.88,
         "bandwidth": 362.74,
         "uptime": 24,
         "packetLoss": 0.99
@@ -3973,9 +4413,9 @@
       ],
       "quality": {
         "quality": 2.466666666666667,
-        "latency": 24.05,
+        "latency": 26.08,
         "bandwidth": 80.24,
-        "uptime": 12.08,
+        "uptime": 17.08,
         "packetLoss": 0.38
       }
     },
@@ -4013,50 +4453,10 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 24.74,
+        "latency": 22.24,
         "bandwidth": 16.11,
         "uptime": 24,
         "packetLoss": 0.73
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xe3305e94038dc5d4b28ce84cb2c232f715f14d10",
-      "service_type": "quic_scraping",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "Scotland",
-        "city": "Hamilton",
-        "asn": 35228,
-        "isp": "Telefonica UK Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 1.6666666666666665,
-        "latency": 39.34,
-        "bandwidth": 4.56,
-        "uptime": 17.5,
-        "packetLoss": 5.43
       }
     },
     {
@@ -4093,7 +4493,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.42,
+        "latency": 34.14,
         "bandwidth": 81.07,
         "uptime": 24,
         "packetLoss": 0.79
@@ -4133,7 +4533,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.82,
+        "latency": 26.83,
         "bandwidth": 701.73,
         "uptime": 24,
         "packetLoss": 0.96
@@ -4213,7 +4613,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 37.15,
+        "latency": 36.64,
         "bandwidth": 25.94,
         "uptime": 24,
         "packetLoss": 0.23
@@ -4252,9 +4652,9 @@
         }
       ],
       "quality": {
-        "quality": 2,
-        "latency": 182.59,
-        "bandwidth": 11.07,
+        "quality": 2.3,
+        "latency": 32.4,
+        "bandwidth": 11.02,
         "uptime": 24,
         "packetLoss": 11.83
       }
@@ -4293,10 +4693,50 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 52.98,
+        "latency": 55.03,
         "bandwidth": 468.17,
         "uptime": 24,
         "packetLoss": 1.04
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xa944a67f4152dd835428dcce2b59f8ebfb33fd6e",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "Scotland",
+        "city": "Glasgow",
+        "asn": 5607,
+        "isp": "Sky UK Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.3,
+        "latency": 35.68,
+        "bandwidth": 14.2,
+        "uptime": 24,
+        "packetLoss": 2.43
       }
     },
     {
@@ -4341,46 +4781,6 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
-      "provider_id": "0xa944a67f4152dd835428dcce2b59f8ebfb33fd6e",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "Scotland",
-        "city": "Glasgow",
-        "asn": 5607,
-        "isp": "Sky UK Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.3,
-        "latency": 36.16,
-        "bandwidth": 14.2,
-        "uptime": 24,
-        "packetLoss": 2.43
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
       "provider_id": "0x73c0eab04bd27d7ef7d694d644c117f6b72a1461",
       "service_type": "wireguard",
       "location": {
@@ -4411,7 +4811,7 @@
       ],
       "quality": {
         "quality": 1.6,
-        "latency": 52.95,
+        "latency": 55.79,
         "bandwidth": 0.63,
         "uptime": 24,
         "packetLoss": 44.35
@@ -4451,7 +4851,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 30.89,
+        "latency": 33.6,
         "bandwidth": 28.69,
         "uptime": 24,
         "packetLoss": 0.68
@@ -4571,7 +4971,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.31,
+        "latency": 30.57,
         "bandwidth": 85.03,
         "uptime": 24,
         "packetLoss": 1.66
@@ -4605,7 +5005,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.58,
+        "latency": 36.46,
         "bandwidth": 62.2,
         "uptime": 24,
         "packetLoss": 0.34
@@ -4645,7 +5045,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.68,
+        "latency": 31.57,
         "bandwidth": 69.66,
         "uptime": 24,
         "packetLoss": 0.63
@@ -4725,7 +5125,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 26.93,
+        "latency": 27.91,
         "bandwidth": 42.33,
         "uptime": 24,
         "packetLoss": 3.55
@@ -4765,7 +5165,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.09,
+        "latency": 24.04,
         "bandwidth": 725.31,
         "uptime": 24,
         "packetLoss": 0.85
@@ -4804,10 +5204,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9333333333333333,
-        "latency": 26.16,
+        "quality": 2.2666666666666666,
+        "latency": 26.6,
         "bandwidth": 26.42,
-        "uptime": 9.83,
+        "uptime": 14.83,
         "packetLoss": 3.87
       }
     },
@@ -4844,8 +5244,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 37.24,
+        "quality": 0.13635000000000003,
+        "latency": 37.12,
         "bandwidth": 59.01,
         "uptime": 24,
         "packetLoss": 10.95
@@ -4888,7 +5288,7 @@
         "latency": 37.55,
         "bandwidth": 77.44,
         "uptime": 24,
-        "packetLoss": 0.71
+        "packetLoss": 0.82
       }
     },
     {
@@ -4925,7 +5325,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 33.01,
+        "latency": 32.35,
         "bandwidth": 39.79,
         "uptime": 24,
         "packetLoss": 1.06
@@ -4965,7 +5365,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.61,
+        "latency": 23.77,
         "bandwidth": 404.91,
         "uptime": 24,
         "packetLoss": 1.6
@@ -5045,7 +5445,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.23,
+        "latency": 34.22,
         "bandwidth": 531.38,
         "uptime": 24,
         "packetLoss": 0.94
@@ -5085,9 +5485,9 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 32.76,
+        "latency": 32.83,
         "bandwidth": 44.59,
-        "uptime": 23,
+        "uptime": 23.08,
         "packetLoss": 0.52
       }
     },
@@ -5125,7 +5525,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.19,
+        "latency": 25.47,
         "bandwidth": 591.18,
         "uptime": 24,
         "packetLoss": 1.03
@@ -5159,7 +5559,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.22,
+        "latency": 27.78,
         "bandwidth": 383.77,
         "uptime": 24,
         "packetLoss": 0.93
@@ -5175,7 +5575,7 @@
         "continent": "EU",
         "country": "GB",
         "region": "England",
-        "city": "Elephant & Castle",
+        "city": "Maidenhead",
         "asn": 5378,
         "isp": "Vodafone Ltd",
         "ip_type": "residential"
@@ -5199,8 +5599,8 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 57.31,
-        "bandwidth": 26.24,
+        "latency": 56.31,
+        "bandwidth": 25.6,
         "uptime": 24,
         "packetLoss": 4.08
       }
@@ -5239,7 +5639,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 35.21,
+        "latency": 30.04,
         "bandwidth": 15.19,
         "uptime": 24,
         "packetLoss": 0.79
@@ -5289,13 +5689,53 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
+      "provider_id": "0xcfab711e3c888ace6619f2faff585de80f66cb15",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Kenn",
+        "asn": 5089,
+        "isp": "Virgin Media Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.0666666666666664,
+        "latency": 36.1,
+        "bandwidth": 15.88,
+        "uptime": 20.5,
+        "packetLoss": 1.09
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
       "provider_id": "0xa0010ec4bedd231322b58099b550ad57a10c5c32",
       "service_type": "quic_scraping",
       "location": {
         "continent": "EU",
         "country": "GB",
         "region": "England",
-        "city": "Sheffield",
+        "city": "London",
         "asn": 6871,
         "isp": "British Telecommunications Limited",
         "ip_type": "residential"
@@ -5318,8 +5758,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 27.45,
+        "quality": 2.3,
+        "latency": 164.65,
         "bandwidth": 33.52,
         "uptime": 24,
         "packetLoss": 0.91
@@ -5359,7 +5799,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.31,
+        "latency": 24.5,
         "bandwidth": 659.01,
         "uptime": 24,
         "packetLoss": 0.5
@@ -5399,7 +5839,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 36.81,
+        "latency": 37.53,
         "bandwidth": 6.67,
         "uptime": 24,
         "packetLoss": 0.23
@@ -5442,7 +5882,7 @@
         "latency": 104.21,
         "bandwidth": 71.91,
         "uptime": 24,
-        "packetLoss": 0.7
+        "packetLoss": 0.44
       }
     },
     {
@@ -5478,8 +5918,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 39.64,
+        "quality": 0.13635000000000003,
+        "latency": 39.52,
         "bandwidth": 72.09,
         "uptime": 24,
         "packetLoss": 12.7
@@ -5518,11 +5958,51 @@
         }
       ],
       "quality": {
-        "quality": 2.3,
-        "latency": 200.03,
+        "quality": 2.8,
+        "latency": 27.07,
         "bandwidth": 180.33,
         "uptime": 24,
         "packetLoss": 0.66
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x9ac45390d7de34dfa9f45af9d00f85381d3f758e",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "High Wycombe",
+        "asn": 207645,
+        "isp": "F & W Networks Ltd",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 28.28,
+        "bandwidth": 234.78,
+        "uptime": 24,
+        "packetLoss": 0.62
       }
     },
     {
@@ -5553,7 +6033,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 39.74,
+        "latency": 39.13,
         "bandwidth": 6.57,
         "uptime": 24,
         "packetLoss": 4.1
@@ -5593,50 +6073,10 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 35.58,
+        "latency": 34.77,
         "bandwidth": 44.72,
-        "uptime": 23.33,
+        "uptime": 23.75,
         "packetLoss": 0.74
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x9ac45390d7de34dfa9f45af9d00f85381d3f758e",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "High Wycombe",
-        "asn": 207645,
-        "isp": "F & W Networks Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 27.59,
-        "bandwidth": 282.46,
-        "uptime": 24,
-        "packetLoss": 1.37
       }
     },
     {
@@ -5672,8 +6112,8 @@
         }
       ],
       "quality": {
-        "quality": 0.12625,
-        "latency": 77.45,
+        "quality": 0.1313,
+        "latency": 69.54,
         "bandwidth": 69.98,
         "uptime": 23.92,
         "packetLoss": 14.96
@@ -5713,10 +6153,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.93,
+        "latency": 24.95,
         "bandwidth": 662.09,
         "uptime": 24,
-        "packetLoss": 2.99
+        "packetLoss": 2.54
       }
     },
     {
@@ -5753,10 +6193,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.2,
+        "latency": 29.48,
         "bandwidth": 399.51,
         "uptime": 24,
-        "packetLoss": 0.92
+        "packetLoss": 1.04
       }
     },
     {
@@ -5793,7 +6233,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 28.53,
+        "latency": 28.6,
         "bandwidth": 15.74,
         "uptime": 24,
         "packetLoss": 0.57
@@ -5873,10 +6313,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.2,
+        "latency": 23.99,
         "bandwidth": 450.3,
         "uptime": 24,
-        "packetLoss": 1.34
+        "packetLoss": 0.76
       }
     },
     {
@@ -5913,10 +6353,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 40.43,
-        "bandwidth": 72.93,
-        "uptime": 23.83,
-        "packetLoss": 0.58
+        "latency": 40.67,
+        "bandwidth": 80.08,
+        "uptime": 24,
+        "packetLoss": 0.59
       }
     },
     {
@@ -5993,7 +6433,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 34.51,
+        "latency": 33.49,
         "bandwidth": 7.94,
         "uptime": 24,
         "packetLoss": 10.33
@@ -6033,7 +6473,7 @@
       ],
       "quality": {
         "quality": 1.6666666666666665,
-        "latency": 98.28,
+        "latency": 94.95,
         "bandwidth": 9.25,
         "uptime": 13.17,
         "packetLoss": 0.85
@@ -6153,7 +6593,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 35.44,
+        "latency": 35.28,
         "bandwidth": 10.02,
         "uptime": 24,
         "packetLoss": 1.19
@@ -6193,7 +6633,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.28,
+        "latency": 31.99,
         "bandwidth": 59.62,
         "uptime": 24,
         "packetLoss": 0.62
@@ -6273,7 +6713,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 35.04,
+        "latency": 36.21,
         "bandwidth": 28.11,
         "uptime": 24,
         "packetLoss": 0.68
@@ -6393,7 +6833,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.45,
+        "latency": 32.46,
         "bandwidth": 65.97,
         "uptime": 24,
         "packetLoss": 7.86
@@ -6433,7 +6873,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.63,
+        "latency": 31.62,
         "bandwidth": 93.28,
         "uptime": 24,
         "packetLoss": 1.56
@@ -6472,8 +6912,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 30.07,
+        "quality": 2.8,
+        "latency": 27.56,
         "bandwidth": 371.17,
         "uptime": 24,
         "packetLoss": 0.51
@@ -6513,7 +6953,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.88,
+        "latency": 25.34,
         "bandwidth": 645.54,
         "uptime": 24,
         "packetLoss": 0.85
@@ -6553,7 +6993,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.53,
+        "latency": 24.58,
         "bandwidth": 704.81,
         "uptime": 24,
         "packetLoss": 0.52
@@ -6593,10 +7033,90 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.62,
+        "latency": 31.28,
         "bandwidth": 265.82,
         "uptime": 24,
         "packetLoss": 4.39
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x7c94b7900a99ae23db087d1a95191d031dd6150d",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "Scotland",
+        "city": "Ardrossan",
+        "asn": 13285,
+        "isp": "TalkTalk Communications Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.2666666666666666,
+        "latency": 40.49,
+        "bandwidth": 32.62,
+        "uptime": 11.5,
+        "packetLoss": 3.85
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x744e386ab5e4bcc4b8ba6e3dc2d0b1a83accd5cc",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "Wales",
+        "city": "Rhyl",
+        "asn": 2856,
+        "isp": "British Telecommunications Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 1.9666666666666663,
+        "latency": 38.23,
+        "bandwidth": 13.95,
+        "uptime": 22.75,
+        "packetLoss": 0.23
       }
     },
     {
@@ -6633,7 +7153,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 46.16,
+        "latency": 46.21,
         "bandwidth": 6.27,
         "uptime": 24,
         "packetLoss": 6.26
@@ -6673,7 +7193,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 39.69,
+        "latency": 39.53,
         "bandwidth": 25.81,
         "uptime": 24,
         "packetLoss": 0.51
@@ -6753,8 +7273,8 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 20.76,
-        "bandwidth": 68.71,
+        "latency": 20.77,
+        "bandwidth": 64.94,
         "uptime": 24,
         "packetLoss": 0.93
       }
@@ -6833,7 +7353,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.96,
+        "latency": 28.06,
         "bandwidth": 792.14,
         "uptime": 24,
         "packetLoss": 0.51
@@ -6873,7 +7393,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.79,
+        "latency": 33.82,
         "bandwidth": 72.78,
         "uptime": 24,
         "packetLoss": 0.69
@@ -6953,7 +7473,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.02,
+        "latency": 23.76,
         "bandwidth": 495.75,
         "uptime": 24,
         "packetLoss": 0.51
@@ -6992,11 +7512,11 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 29.13,
+        "quality": 2.7,
+        "latency": 30.28,
         "bandwidth": 53.67,
         "uptime": 24,
-        "packetLoss": 0.79
+        "packetLoss": 0.8
       }
     },
     {
@@ -7032,8 +7552,8 @@
         }
       ],
       "quality": {
-        "quality": 2.4,
-        "latency": 31.11,
+        "quality": 2.5,
+        "latency": 29.5,
         "bandwidth": 16.07,
         "uptime": 24,
         "packetLoss": 1.02
@@ -7073,7 +7593,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.94,
+        "latency": 32.52,
         "bandwidth": 385.09,
         "uptime": 24,
         "packetLoss": 0.69
@@ -7113,7 +7633,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 29.66,
+        "latency": 29.6,
         "bandwidth": 15.56,
         "uptime": 24,
         "packetLoss": 0.68
@@ -7153,7 +7673,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.27,
+        "latency": 24.34,
         "bandwidth": 735.5,
         "uptime": 24,
         "packetLoss": 1.03
@@ -7193,7 +7713,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25,
+        "latency": 24.8,
         "bandwidth": 100.82,
         "uptime": 24,
         "packetLoss": 0.23
@@ -7230,7 +7750,7 @@
         "latency": 30.71,
         "bandwidth": 365.9,
         "uptime": 24,
-        "packetLoss": 1.43
+        "packetLoss": 1.58
       }
     },
     {
@@ -7267,7 +7787,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 27.26,
+        "latency": 26.9,
         "bandwidth": 29.54,
         "uptime": 24,
         "packetLoss": 1.03
@@ -7307,7 +7827,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.53,
+        "latency": 25.82,
         "bandwidth": 595.23,
         "uptime": 24,
         "packetLoss": 0.87
@@ -7347,7 +7867,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.05,
+        "latency": 26.06,
         "bandwidth": 326.79,
         "uptime": 24,
         "packetLoss": 0.22
@@ -7387,10 +7907,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 22.99,
+        "latency": 25.53,
         "bandwidth": 33.67,
         "uptime": 24,
-        "packetLoss": 0.34
+        "packetLoss": 0.51
       }
     },
     {
@@ -7425,7 +7945,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 37.03,
+        "latency": 37.27,
         "bandwidth": 78.89,
         "uptime": 24,
         "packetLoss": 1.58
@@ -7465,7 +7985,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.27,
+        "latency": 23.47,
         "bandwidth": 327.73,
         "uptime": 24,
         "packetLoss": 0.53
@@ -7505,7 +8025,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 169.07,
+        "latency": 169.98,
         "bandwidth": 71.97,
         "uptime": 24,
         "packetLoss": 2.42
@@ -7584,11 +8104,11 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 26.64,
+        "quality": 2.5,
+        "latency": 76.14,
         "bandwidth": 59.05,
         "uptime": 24,
-        "packetLoss": 0.4
+        "packetLoss": 0.59
       }
     },
     {
@@ -7625,7 +8145,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 41.13,
+        "latency": 33.12,
         "bandwidth": 13.47,
         "uptime": 23.92,
         "packetLoss": 2.59
@@ -7663,7 +8183,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 32.75,
+        "latency": 31.91,
         "bandwidth": 16.63,
         "uptime": 24,
         "packetLoss": 5.68
@@ -7702,11 +8222,51 @@
         }
       ],
       "quality": {
-        "quality": 0.1313,
-        "latency": 32.55,
+        "quality": 0.11110000000000002,
+        "latency": 274.74,
         "bandwidth": 45.49,
         "uptime": 24,
-        "packetLoss": 0.59
+        "packetLoss": 0
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x105f240b31a756bbf9e8d46da0c5160197573faa",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 212655,
+        "isp": "YouFibre Ltd",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.7,
+        "latency": 37.16,
+        "bandwidth": 105.25,
+        "uptime": 24,
+        "packetLoss": 2.03
       }
     },
     {
@@ -7743,7 +8303,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.1,
+        "latency": 32.27,
         "bandwidth": 77.75,
         "uptime": 24,
         "packetLoss": 0.64
@@ -7781,7 +8341,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 32.23,
+        "latency": 32.77,
         "bandwidth": 14.13,
         "uptime": 24,
         "packetLoss": 0.51
@@ -7821,90 +8381,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.51,
+        "latency": 36.93,
         "bandwidth": 62.63,
         "uptime": 24,
         "packetLoss": 7.48
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x105f240b31a756bbf9e8d46da0c5160197573faa",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 212655,
-        "isp": "YouFibre Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 36.2,
-        "bandwidth": 105.25,
-        "uptime": 24,
-        "packetLoss": 1.97
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xbdcf4fdadfece182565a06055c2704959d41b561",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Scorrier",
-        "asn": 6871,
-        "isp": "British Telecommunications Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 1.9666666666666663,
-        "latency": 35.94,
-        "bandwidth": 14.38,
-        "uptime": 13.75,
-        "packetLoss": 2.83
       }
     },
     {
@@ -7941,10 +8421,50 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 23.4,
+        "latency": 25.68,
         "bandwidth": 39.61,
         "uptime": 23.75,
         "packetLoss": 0.4
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x8ce6b6c7abc3cd1058939d88a3d92d423cd2b997",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Gosport",
+        "asn": 60377,
+        "isp": "Toob Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.2666666666666666,
+        "latency": 21.49,
+        "bandwidth": 30.95,
+        "uptime": 14.42,
+        "packetLoss": 0.24
       }
     },
     {
@@ -8021,7 +8541,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.94,
+        "latency": 36.54,
         "bandwidth": 76.87,
         "uptime": 24,
         "packetLoss": 0.84
@@ -8061,7 +8581,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 30.06,
+        "latency": 30.12,
         "bandwidth": 213.85,
         "uptime": 24,
         "packetLoss": 0.78
@@ -8104,7 +8624,7 @@
         "latency": 31.54,
         "bandwidth": 72.84,
         "uptime": 24,
-        "packetLoss": 0.87
+        "packetLoss": 0.75
       }
     },
     {
@@ -8140,8 +8660,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 30.37,
+        "quality": 2.8,
+        "latency": 29.87,
         "bandwidth": 66.95,
         "uptime": 24,
         "packetLoss": 0.69
@@ -8181,7 +8701,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 2972.03,
+        "latency": 3058.58,
         "bandwidth": 21.28,
         "uptime": 24,
         "packetLoss": 11
@@ -8302,7 +8822,7 @@
       "quality": {
         "quality": 2.8,
         "latency": 23.51,
-        "bandwidth": 202.44,
+        "bandwidth": 269.79,
         "uptime": 24,
         "packetLoss": 0.84
       }
@@ -8431,6 +8951,46 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
+      "provider_id": "0x0560598355641f376ff6924e41e0a96130c9f647",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 26,
+        "bandwidth": 780.76,
+        "uptime": 24,
+        "packetLoss": 2.36
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
       "provider_id": "0xdce0c8a8b29b21a0027902a61d832b280b979420",
       "service_type": "wireguard",
       "location": {
@@ -8501,50 +9061,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.62,
+        "latency": 32.19,
         "bandwidth": 514.74,
         "uptime": 24,
         "packetLoss": 1.47
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x0560598355641f376ff6924e41e0a96130c9f647",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 25.99,
-        "bandwidth": 780.76,
-        "uptime": 24,
-        "packetLoss": 2.36
       }
     },
     {
@@ -8580,8 +9100,8 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 29.66,
+        "quality": 2.7,
+        "latency": 30.55,
         "bandwidth": 65.73,
         "uptime": 24,
         "packetLoss": 3.21
@@ -8621,7 +9141,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 39.27,
+        "latency": 38.74,
         "bandwidth": 16.62,
         "uptime": 24,
         "packetLoss": 2.93
@@ -8701,7 +9221,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 32.79,
+        "latency": 31.86,
         "bandwidth": 31.31,
         "uptime": 24,
         "packetLoss": 0.28
@@ -8781,7 +9301,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.52,
+        "latency": 22.61,
         "bandwidth": 95.44,
         "uptime": 23.08,
         "packetLoss": 0.57
@@ -8821,10 +9341,10 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 32.32,
-        "bandwidth": 18.44,
+        "latency": 32.29,
+        "bandwidth": 18.69,
         "uptime": 24,
-        "packetLoss": 1.35
+        "packetLoss": 0.95
       }
     },
     {
@@ -8861,10 +9381,10 @@
       ],
       "quality": {
         "quality": 2.2,
-        "latency": 31.3,
+        "latency": 31.1,
         "bandwidth": 8.57,
         "uptime": 23.75,
-        "packetLoss": 6.01
+        "packetLoss": 5.83
       }
     },
     {
@@ -8941,7 +9461,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.66,
+        "latency": 33.7,
         "bandwidth": 63.61,
         "uptime": 24,
         "packetLoss": 9.56
@@ -9021,10 +9541,10 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 32.41,
-        "bandwidth": 43.24,
+        "latency": 31.74,
+        "bandwidth": 33.39,
         "uptime": 24,
-        "packetLoss": 0.47
+        "packetLoss": 0.4
       }
     },
     {
@@ -9061,7 +9581,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.57,
+        "latency": 26.29,
         "bandwidth": 651.49,
         "uptime": 24,
         "packetLoss": 0.5
@@ -9101,50 +9621,10 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 38.66,
+        "latency": 37.63,
         "bandwidth": 12.74,
         "uptime": 24,
         "packetLoss": 0.45
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x1da761020d7c8e06fe84928d5559af41799d7a2e",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 5378,
-        "isp": "Vodafone Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 31.17,
-        "bandwidth": 362.25,
-        "uptime": 23.75,
-        "packetLoss": 1.3
       }
     },
     {
@@ -9181,7 +9661,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 43.68,
+        "latency": 43.25,
         "bandwidth": 13.12,
         "uptime": 24,
         "packetLoss": 1.53
@@ -9220,11 +9700,11 @@
         }
       ],
       "quality": {
-        "quality": 2.5,
-        "latency": 93.35,
+        "quality": 2.4,
+        "latency": 107.83,
         "bandwidth": 75.81,
         "uptime": 24,
-        "packetLoss": 0.62
+        "packetLoss": 0.56
       }
     },
     {
@@ -9261,7 +9741,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.73,
+        "latency": 25.46,
         "bandwidth": 582.52,
         "uptime": 24,
         "packetLoss": 0.98
@@ -9301,7 +9781,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 34.96,
+        "latency": 33.08,
         "bandwidth": 15.44,
         "uptime": 24,
         "packetLoss": 1.09
@@ -9341,8 +9821,8 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.09,
-        "bandwidth": 69.87,
+        "latency": 32.1,
+        "bandwidth": 65.95,
         "uptime": 24,
         "packetLoss": 1.31
       }
@@ -9381,7 +9861,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.17,
+        "latency": 25.21,
         "bandwidth": 585.88,
         "uptime": 24,
         "packetLoss": 1.04
@@ -9420,8 +9900,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 30.01,
+        "quality": 2.3,
+        "latency": 254.68,
         "bandwidth": 69.21,
         "uptime": 24,
         "packetLoss": 0.88
@@ -9461,7 +9941,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 35.8,
+        "latency": 36.7,
         "bandwidth": 66.62,
         "uptime": 24,
         "packetLoss": 0.59
@@ -9540,10 +10020,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9,
-        "latency": 14.4,
+        "quality": 2.1333333333333333,
+        "latency": 21.91,
         "bandwidth": 318.79,
-        "uptime": 3.17,
+        "uptime": 8.17,
         "packetLoss": 2.56
       }
     },
@@ -9621,7 +10101,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.89,
+        "latency": 25.9,
         "bandwidth": 787.23,
         "uptime": 24,
         "packetLoss": 1.49
@@ -9661,7 +10141,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 21.83,
+        "latency": 23.54,
         "bandwidth": 739.2,
         "uptime": 24,
         "packetLoss": 0.47
@@ -9701,7 +10181,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.68,
+        "latency": 33.71,
         "bandwidth": 58.81,
         "uptime": 24,
         "packetLoss": 1.14
@@ -9740,10 +10220,10 @@
         }
       ],
       "quality": {
-        "quality": 2.033333333333333,
-        "latency": 32.16,
+        "quality": 2.3666666666666667,
+        "latency": 32.69,
         "bandwidth": 77.1,
-        "uptime": 8.75,
+        "uptime": 13.75,
         "packetLoss": 0.4
       }
     },
@@ -9860,9 +10340,9 @@
         }
       ],
       "quality": {
-        "quality": 2.6,
-        "latency": 26.67,
-        "bandwidth": 22.93,
+        "quality": 2.8,
+        "latency": 27.07,
+        "bandwidth": 81.47,
         "uptime": 24,
         "packetLoss": 0.35
       }
@@ -9901,7 +10381,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28.01,
+        "latency": 27.1,
         "bandwidth": 662.96,
         "uptime": 24,
         "packetLoss": 0.99
@@ -9941,10 +10421,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.99,
+        "latency": 31.42,
         "bandwidth": 56.12,
         "uptime": 24,
-        "packetLoss": 3.23
+        "packetLoss": 3.25
       }
     },
     {
@@ -9981,7 +10461,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 21.05,
+        "latency": 23.75,
         "bandwidth": 567.53,
         "uptime": 24,
         "packetLoss": 0.49
@@ -10021,10 +10501,10 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 20.97,
+        "latency": 20.88,
         "bandwidth": 24.72,
         "uptime": 24,
-        "packetLoss": 0.68
+        "packetLoss": 1.12
       }
     },
     {
@@ -10061,7 +10541,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.86,
+        "latency": 24.34,
         "bandwidth": 703.08,
         "uptime": 24,
         "packetLoss": 1.04
@@ -10101,7 +10581,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.85,
+        "latency": 26.68,
         "bandwidth": 567.95,
         "uptime": 24,
         "packetLoss": 0.34
@@ -10181,10 +10661,10 @@
       ],
       "quality": {
         "quality": 2.0666666666666664,
-        "latency": 27.38,
+        "latency": 26.32,
         "bandwidth": 14.5,
-        "uptime": 13.33,
-        "packetLoss": 1.13
+        "uptime": 15.42,
+        "packetLoss": 0.74
       }
     },
     {
@@ -10261,7 +10741,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 39.07,
+        "latency": 39.99,
         "bandwidth": 22.36,
         "uptime": 24,
         "packetLoss": 0.34
@@ -10335,7 +10815,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 24.39,
+        "latency": 26.93,
         "bandwidth": 39.32,
         "uptime": 24,
         "packetLoss": 0.25
@@ -10375,9 +10855,9 @@
       ],
       "quality": {
         "quality": 2.0666666666666664,
-        "latency": 169.93,
+        "latency": 153.61,
         "bandwidth": 65.99,
-        "uptime": 22.92,
+        "uptime": 22.83,
         "packetLoss": 1.92
       }
     },
@@ -10415,7 +10895,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 47.5,
+        "latency": 47.62,
         "bandwidth": 217.34,
         "uptime": 24,
         "packetLoss": 1.32
@@ -10455,7 +10935,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 21.85,
+        "latency": 22.89,
         "bandwidth": 278.09,
         "uptime": 24,
         "packetLoss": 0.5
@@ -10495,7 +10975,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 41.87,
+        "latency": 42.42,
         "bandwidth": 31.56,
         "uptime": 24,
         "packetLoss": 2.42
@@ -10575,8 +11055,8 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.88,
-        "bandwidth": 85.11,
+        "latency": 29.89,
+        "bandwidth": 84.23,
         "uptime": 24,
         "packetLoss": 1.41
       }
@@ -10615,7 +11095,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.06,
+        "latency": 20.58,
         "bandwidth": 229.4,
         "uptime": 24,
         "packetLoss": 0.46
@@ -10694,10 +11174,10 @@
         }
       ],
       "quality": {
-        "quality": 2.5,
-        "latency": 41.95,
+        "quality": 2.3,
+        "latency": 94.31,
         "bandwidth": 25.84,
-        "uptime": 24,
+        "uptime": 23.92,
         "packetLoss": 0.34
       }
     },
@@ -10735,7 +11215,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.82,
+        "latency": 28.02,
         "bandwidth": 92.26,
         "uptime": 24,
         "packetLoss": 3.4
@@ -10775,7 +11255,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.4,
+        "latency": 23.31,
         "bandwidth": 767.26,
         "uptime": 24,
         "packetLoss": 0.52
@@ -10815,7 +11295,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 25.52,
+        "latency": 27.26,
         "bandwidth": 14.44,
         "uptime": 24,
         "packetLoss": 1.14
@@ -10849,7 +11329,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 35.16,
+        "latency": 37.32,
         "bandwidth": 26.38,
         "uptime": 24,
         "packetLoss": 0.23
@@ -10889,7 +11369,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.46,
+        "latency": 24.4,
         "bandwidth": 767.65,
         "uptime": 24,
         "packetLoss": 0.51
@@ -10928,11 +11408,11 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 29.56,
+        "quality": 2.7,
+        "latency": 30.31,
         "bandwidth": 397.4,
         "uptime": 24,
-        "packetLoss": 1.73
+        "packetLoss": 1.72
       }
     },
     {
@@ -10969,7 +11449,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 44.22,
+        "latency": 44.57,
         "bandwidth": 20.58,
         "uptime": 24,
         "packetLoss": 1.19
@@ -11009,7 +11489,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.22,
+        "latency": 25.16,
         "bandwidth": 681.97,
         "uptime": 24,
         "packetLoss": 3.6
@@ -11049,7 +11529,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.72,
+        "latency": 34.24,
         "bandwidth": 76.19,
         "uptime": 24,
         "packetLoss": 3.69
@@ -11088,11 +11568,11 @@
         }
       ],
       "quality": {
-        "quality": 2.4,
-        "latency": 47.45,
+        "quality": 2.1,
+        "latency": 149.51,
         "bandwidth": 18.62,
         "uptime": 24,
-        "packetLoss": 0.68
+        "packetLoss": 0.56
       }
     },
     {
@@ -11129,7 +11609,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.89,
+        "latency": 23.4,
         "bandwidth": 164.14,
         "uptime": 24,
         "packetLoss": 0.5
@@ -11169,7 +11649,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 71.21,
+        "latency": 67.31,
         "bandwidth": 17.84,
         "uptime": 24,
         "packetLoss": 4.89
@@ -11209,7 +11689,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 30.79,
+        "latency": 30.75,
         "bandwidth": 17.41,
         "uptime": 24,
         "packetLoss": 1.31
@@ -11249,7 +11729,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 32.68,
+        "latency": 32.69,
         "bandwidth": 43.31,
         "uptime": 24,
         "packetLoss": 0.66
@@ -11289,10 +11769,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.25,
+        "latency": 29.64,
         "bandwidth": 55.74,
         "uptime": 24,
-        "packetLoss": 0.99
+        "packetLoss": 0.58
       }
     },
     {
@@ -11328,9 +11808,9 @@
         }
       ],
       "quality": {
-        "quality": 2.2,
-        "latency": 38.62,
-        "bandwidth": 9.92,
+        "quality": 2.3,
+        "latency": 38.77,
+        "bandwidth": 13.21,
         "uptime": 24,
         "packetLoss": 0.51
       }
@@ -11369,7 +11849,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.58,
+        "latency": 24.93,
         "bandwidth": 717.78,
         "uptime": 24,
         "packetLoss": 1.15
@@ -11409,10 +11889,10 @@
       ],
       "quality": {
         "quality": 2.2,
-        "latency": 391.74,
+        "latency": 418.53,
         "bandwidth": 98.21,
         "uptime": 24,
-        "packetLoss": 0.4
+        "packetLoss": 0.33
       }
     },
     {
@@ -11489,7 +11969,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 30.04,
+        "latency": 36.48,
         "bandwidth": 40.92,
         "uptime": 24,
         "packetLoss": 1.02
@@ -11527,7 +12007,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 35.93,
+        "latency": 35.92,
         "bandwidth": 14.94,
         "uptime": 24,
         "packetLoss": 6.7
@@ -11567,7 +12047,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 33.9,
+        "latency": 34.02,
         "bandwidth": 26.06,
         "uptime": 24,
         "packetLoss": 1.46
@@ -11607,7 +12087,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.58,
+        "latency": 24.53,
         "bandwidth": 740.62,
         "uptime": 24,
         "packetLoss": 1
@@ -11687,7 +12167,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.47,
+        "latency": 32.56,
         "bandwidth": 544.29,
         "uptime": 24,
         "packetLoss": 1.02
@@ -11726,8 +12206,8 @@
         }
       ],
       "quality": {
-        "quality": 2.5,
-        "latency": 84.07,
+        "quality": 2.4,
+        "latency": 175.52,
         "bandwidth": 202.51,
         "uptime": 24,
         "packetLoss": 0.68
@@ -11767,7 +12247,7 @@
       ],
       "quality": {
         "quality": 2.2,
-        "latency": 29.94,
+        "latency": 29.54,
         "bandwidth": 7.03,
         "uptime": 24,
         "packetLoss": 1.81
@@ -11807,7 +12287,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 33.58,
+        "latency": 34.42,
         "bandwidth": 40.22,
         "uptime": 24,
         "packetLoss": 0.44
@@ -11847,10 +12327,10 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 16.44,
-        "bandwidth": 6.31,
+        "latency": 15.12,
+        "bandwidth": 7.08,
         "uptime": 23.33,
-        "packetLoss": 2.81
+        "packetLoss": 2.43
       }
     },
     {
@@ -11887,7 +12367,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 38.69,
+        "latency": 39.53,
         "bandwidth": 50.9,
         "uptime": 24,
         "packetLoss": 0.93
@@ -11927,7 +12407,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.34,
+        "latency": 26.33,
         "bandwidth": 665.62,
         "uptime": 24,
         "packetLoss": 1.03
@@ -12006,8 +12486,8 @@
         }
       ],
       "quality": {
-        "quality": 2.4,
-        "latency": 95.91,
+        "quality": 2.1,
+        "latency": 373.73,
         "bandwidth": 37.5,
         "uptime": 23.92,
         "packetLoss": 0.73
@@ -12046,8 +12526,8 @@
         }
       ],
       "quality": {
-        "quality": 2.6,
-        "latency": 30.19,
+        "quality": 2.7,
+        "latency": 28.67,
         "bandwidth": 43.84,
         "uptime": 24,
         "packetLoss": 0.98
@@ -12087,7 +12567,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.25,
+        "latency": 21.96,
         "bandwidth": 361.33,
         "uptime": 24,
         "packetLoss": 0.52
@@ -12127,7 +12607,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 37.09,
+        "latency": 38.45,
         "bandwidth": 60.92,
         "uptime": 24,
         "packetLoss": 1.49
@@ -12166,8 +12646,8 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 27.85,
+        "quality": 2.7,
+        "latency": 30.99,
         "bandwidth": 82.16,
         "uptime": 24,
         "packetLoss": 0.51
@@ -12207,7 +12687,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 38.83,
+        "latency": 40.43,
         "bandwidth": 18.17,
         "uptime": 24,
         "packetLoss": 0.79
@@ -12246,8 +12726,8 @@
         }
       ],
       "quality": {
-        "quality": 2,
-        "latency": 229.93,
+        "quality": 2.4,
+        "latency": 45.39,
         "bandwidth": 16.13,
         "uptime": 24,
         "packetLoss": 0.95
@@ -12287,7 +12767,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.63,
+        "latency": 23.76,
         "bandwidth": 270.03,
         "uptime": 24,
         "packetLoss": 1.54
@@ -12327,7 +12807,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 26.61,
+        "latency": 26.51,
         "bandwidth": 12.82,
         "uptime": 23.83,
         "packetLoss": 2.49
@@ -12367,7 +12847,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.25,
+        "latency": 24.63,
         "bandwidth": 726.68,
         "uptime": 24,
         "packetLoss": 2.3
@@ -12407,10 +12887,50 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.47,
+        "latency": 28.1,
         "bandwidth": 537.27,
         "uptime": 24,
         "packetLoss": 1.03
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x2eca52643cdf31f1e764917e92808394567f2a7e",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Birmingham",
+        "asn": 5089,
+        "isp": "Virgin Media Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.2666666666666666,
+        "latency": 28.53,
+        "bandwidth": 27.63,
+        "uptime": 16.17,
+        "packetLoss": 2.25
       }
     },
     {
@@ -12447,7 +12967,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 27.46,
+        "latency": 28.02,
         "bandwidth": 15.8,
         "uptime": 24,
         "packetLoss": 0.17
@@ -12527,7 +13047,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 30.84,
+        "latency": 30.86,
         "bandwidth": 72.68,
         "uptime": 24,
         "packetLoss": 0.66
@@ -12567,7 +13087,7 @@
       ],
       "quality": {
         "quality": 1.8666666666666667,
-        "latency": 14.66,
+        "latency": 14.84,
         "bandwidth": 3.44,
         "uptime": 22.42,
         "packetLoss": 1.34
@@ -12607,7 +13127,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.66,
+        "latency": 37.79,
         "bandwidth": 87.15,
         "uptime": 24,
         "packetLoss": 9.2
@@ -12647,7 +13167,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.64,
+        "latency": 25.29,
         "bandwidth": 646.63,
         "uptime": 24,
         "packetLoss": 1.04
@@ -12766,10 +13286,10 @@
         }
       ],
       "quality": {
-        "quality": 1.9,
-        "latency": 14.57,
+        "quality": 2.1333333333333333,
+        "latency": 21.11,
         "bandwidth": 742.55,
-        "uptime": 3.67,
+        "uptime": 8.67,
         "packetLoss": 0.99
       }
     },
@@ -12807,7 +13327,7 @@
       ],
       "quality": {
         "quality": 1.8,
-        "latency": 23.8,
+        "latency": 25.43,
         "bandwidth": 0,
         "uptime": 24,
         "packetLoss": 0
@@ -12847,50 +13367,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.72,
+        "latency": 33.13,
         "bandwidth": 237.2,
         "uptime": 24,
         "packetLoss": 1.71
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xc1c79e2b62d6d4a2f3b80ae18d3b674ff607117c",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Lancaster",
-        "asn": 2856,
-        "isp": "British Telecommunications Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.1666666666666665,
-        "latency": 80.95,
-        "bandwidth": 94.19,
-        "uptime": 18.5,
-        "packetLoss": 0.5
       }
     },
     {
@@ -12927,7 +13407,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.85,
+        "latency": 35.97,
         "bandwidth": 76,
         "uptime": 24,
         "packetLoss": 0.36
@@ -12967,7 +13447,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 35,
+        "latency": 33.43,
         "bandwidth": 79.87,
         "uptime": 24,
         "packetLoss": 1.54
@@ -13043,8 +13523,8 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28.91,
-        "bandwidth": 765.5,
+        "latency": 28.51,
+        "bandwidth": 552.32,
         "uptime": 24,
         "packetLoss": 0.4
       }
@@ -13083,7 +13563,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 31.01,
+        "latency": 31.7,
         "bandwidth": 33.79,
         "uptime": 24,
         "packetLoss": 19.03
@@ -13124,9 +13604,9 @@
       "quality": {
         "quality": 2,
         "latency": 210.6,
-        "bandwidth": 15.42,
+        "bandwidth": 18.78,
         "uptime": 24,
-        "packetLoss": 0.34
+        "packetLoss": 0.28
       }
     },
     {
@@ -13163,7 +13643,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.02,
+        "latency": 25.01,
         "bandwidth": 788.8,
         "uptime": 24,
         "packetLoss": 2.32
@@ -13203,7 +13683,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.19,
+        "latency": 24.03,
         "bandwidth": 689.36,
         "uptime": 24,
         "packetLoss": 2.12
@@ -13243,10 +13723,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 29.3,
+        "latency": 28.21,
         "bandwidth": 32.07,
         "uptime": 24,
-        "packetLoss": 0.91
+        "packetLoss": 0.96
       }
     },
     {
@@ -13283,7 +13763,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 33.14,
+        "latency": 31.43,
         "bandwidth": 31.97,
         "uptime": 24,
         "packetLoss": 0.28
@@ -13363,7 +13843,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 28.7,
+        "latency": 28.71,
         "bandwidth": 16.49,
         "uptime": 24,
         "packetLoss": 1.25
@@ -13403,10 +13883,10 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 34.87,
+        "latency": 34.9,
         "bandwidth": 17.43,
         "uptime": 24,
-        "packetLoss": 0.69
+        "packetLoss": 0.46
       }
     },
     {
@@ -13443,10 +13923,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.47,
-        "bandwidth": 585.45,
+        "latency": 23.56,
+        "bandwidth": 697.59,
         "uptime": 24,
-        "packetLoss": 1.58
+        "packetLoss": 0.5
       }
     },
     {
@@ -13483,7 +13963,7 @@
       ],
       "quality": {
         "quality": 2.2,
-        "latency": 45.3,
+        "latency": 43.63,
         "bandwidth": 8.2,
         "uptime": 24,
         "packetLoss": 2.62
@@ -13563,7 +14043,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.5,
+        "latency": 25.3,
         "bandwidth": 657.98,
         "uptime": 24,
         "packetLoss": 0.3
@@ -13603,7 +14083,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.76,
+        "latency": 26.4,
         "bandwidth": 561.78,
         "uptime": 24,
         "packetLoss": 1.04
@@ -13683,7 +14163,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 27.43,
+        "latency": 27.16,
         "bandwidth": 45.83,
         "uptime": 24,
         "packetLoss": 0.26
@@ -13723,7 +14203,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.21,
+        "latency": 21.12,
         "bandwidth": 339.27,
         "uptime": 24,
         "packetLoss": 0.86
@@ -13763,10 +14243,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.86,
+        "latency": 24.07,
         "bandwidth": 320.94,
         "uptime": 24,
-        "packetLoss": 1.63
+        "packetLoss": 1.11
       }
     },
     {
@@ -13803,10 +14283,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 37.53,
-        "bandwidth": 67.06,
+        "latency": 33.49,
+        "bandwidth": 75.76,
         "uptime": 24,
-        "packetLoss": 0.77
+        "packetLoss": 0.7
       }
     },
     {
@@ -13842,51 +14322,11 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 29.37,
+        "quality": 2.6,
+        "latency": 30.63,
         "bandwidth": 38.89,
         "uptime": 24,
         "packetLoss": 0.79
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xb169c8fe23dc14a73dc18228fc8d8649f51b7277",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 14593,
-        "isp": "SpaceX Services Inc.",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.1,
-        "latency": 192.91,
-        "bandwidth": 19.63,
-        "uptime": 24,
-        "packetLoss": 1.46
       }
     },
     {
@@ -13923,10 +14363,50 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 37.41,
+        "latency": 36.39,
         "bandwidth": 13.04,
-        "uptime": 24,
+        "uptime": 23.92,
         "packetLoss": 2.42
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x3de084b45102cfdee3e184cfe911c28ce09d4653",
+      "service_type": "quic_scraping",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "Scotland",
+        "city": "Dullatur",
+        "asn": 5607,
+        "isp": "Sky UK Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 0.6,
+        "latency": 51.26,
+        "bandwidth": 0,
+        "uptime": 3.58,
+        "packetLoss": 0.67
       }
     },
     {
@@ -13963,7 +14443,7 @@
       ],
       "quality": {
         "quality": 2.3666666666666667,
-        "latency": 31.46,
+        "latency": 31.27,
         "bandwidth": 83.59,
         "uptime": 22.67,
         "packetLoss": 0.76
@@ -14003,50 +14483,10 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 33.18,
+        "latency": 33.1,
         "bandwidth": 24.13,
         "uptime": 24,
         "packetLoss": 0.23
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x2c5daed811f264a0545b6ea38c60792de4e6b764",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Slough",
-        "asn": 5089,
-        "isp": "Virgin Media Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.3,
-        "latency": 56.51,
-        "bandwidth": 15.82,
-        "uptime": 24,
-        "packetLoss": 1.66
       }
     },
     {
@@ -14083,7 +14523,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 35.38,
+        "latency": 34.55,
         "bandwidth": 14.58,
         "uptime": 24,
         "packetLoss": 3.56
@@ -14122,11 +14562,11 @@
         }
       ],
       "quality": {
-        "quality": 0.12625,
-        "latency": 41.54,
-        "bandwidth": 21.07,
+        "quality": 0.11110000000000002,
+        "latency": 138.11,
+        "bandwidth": 25.68,
         "uptime": 24,
-        "packetLoss": 2.02
+        "packetLoss": 2.84
       }
     },
     {
@@ -14163,7 +14603,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 35.26,
+        "latency": 35.27,
         "bandwidth": 15.93,
         "uptime": 24,
         "packetLoss": 1.81
@@ -14203,9 +14643,9 @@
       ],
       "quality": {
         "quality": 2.3666666666666667,
-        "latency": 26.4,
+        "latency": 27.99,
         "bandwidth": 46.42,
-        "uptime": 18.75,
+        "uptime": 22.25,
         "packetLoss": 0.26
       }
     },
@@ -14243,7 +14683,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.43,
+        "latency": 25.41,
         "bandwidth": 781.53,
         "uptime": 24,
         "packetLoss": 0.82
@@ -14277,7 +14717,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.25,
+        "latency": 34.27,
         "bandwidth": 260.86,
         "uptime": 24,
         "packetLoss": 12.47
@@ -14317,7 +14757,7 @@
       ],
       "quality": {
         "quality": 1.5333333333333332,
-        "latency": 35.71,
+        "latency": 35.79,
         "bandwidth": 8.65,
         "uptime": 7.42,
         "packetLoss": 3.88
@@ -14357,7 +14797,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 35.06,
+        "latency": 34.41,
         "bandwidth": 10.8,
         "uptime": 24,
         "packetLoss": 12.23
@@ -14397,7 +14837,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.18,
+        "latency": 33.53,
         "bandwidth": 70.21,
         "uptime": 24,
         "packetLoss": 0.57
@@ -14437,7 +14877,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 35.97,
+        "latency": 35.34,
         "bandwidth": 296.16,
         "uptime": 24,
         "packetLoss": 0.33
@@ -14477,7 +14917,7 @@
       ],
       "quality": {
         "quality": 2,
-        "latency": 34.93,
+        "latency": 35.11,
         "bandwidth": 3.88,
         "uptime": 24,
         "packetLoss": 4.22
@@ -14516,8 +14956,8 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 21.29,
+        "quality": 2.9,
+        "latency": 18.06,
         "bandwidth": 266.91,
         "uptime": 24,
         "packetLoss": 0.29
@@ -14557,7 +14997,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.63,
+        "latency": 23.64,
         "bandwidth": 318.7,
         "uptime": 24,
         "packetLoss": 1.65
@@ -14597,7 +15037,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.17,
+        "latency": 26.68,
         "bandwidth": 473.5,
         "uptime": 24,
         "packetLoss": 0.81
@@ -14640,7 +15080,7 @@
         "latency": 25.11,
         "bandwidth": 428.78,
         "uptime": 24,
-        "packetLoss": 1.04
+        "packetLoss": 0.72
       }
     },
     {
@@ -14677,7 +15117,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.39,
+        "latency": 33.3,
         "bandwidth": 61.36,
         "uptime": 24,
         "packetLoss": 0.41
@@ -14751,7 +15191,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 41.83,
+        "latency": 41.56,
         "bandwidth": 65.86,
         "uptime": 24,
         "packetLoss": 11.48
@@ -14791,8 +15231,8 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 22.43,
-        "bandwidth": 25.24,
+        "latency": 21.8,
+        "bandwidth": 24.67,
         "uptime": 24,
         "packetLoss": 1.63
       }
@@ -14831,7 +15271,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.71,
+        "latency": 24.95,
         "bandwidth": 715.25,
         "uptime": 24,
         "packetLoss": 0.5
@@ -14871,7 +15311,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.35,
+        "latency": 31.45,
         "bandwidth": 80.59,
         "uptime": 24,
         "packetLoss": 1.13
@@ -14911,7 +15351,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 36.05,
+        "latency": 33.9,
         "bandwidth": 19.48,
         "uptime": 24,
         "packetLoss": 0.28
@@ -14951,7 +15391,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.35,
+        "latency": 23.34,
         "bandwidth": 750.48,
         "uptime": 24,
         "packetLoss": 0.25
@@ -14991,7 +15431,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.13,
+        "latency": 27,
         "bandwidth": 61.26,
         "uptime": 24,
         "packetLoss": 0.65
@@ -15031,10 +15471,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 30.14,
+        "latency": 30.2,
         "bandwidth": 876.96,
         "uptime": 24,
-        "packetLoss": 1.01
+        "packetLoss": 1.02
       }
     },
     {
@@ -15109,7 +15549,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.28,
+        "latency": 22.44,
         "bandwidth": 671.47,
         "uptime": 24,
         "packetLoss": 1.03
@@ -15150,7 +15590,7 @@
       "quality": {
         "quality": 2.7,
         "latency": 30.11,
-        "bandwidth": 823.77,
+        "bandwidth": 682.62,
         "uptime": 24,
         "packetLoss": 0.35
       }
@@ -15229,7 +15669,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 32.71,
+        "latency": 35.51,
         "bandwidth": 44.75,
         "uptime": 24,
         "packetLoss": 3.01
@@ -15269,7 +15709,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.82,
+        "latency": 32.8,
         "bandwidth": 84.99,
         "uptime": 24,
         "packetLoss": 1.33
@@ -15309,7 +15749,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.03,
+        "latency": 27.09,
         "bandwidth": 285.77,
         "uptime": 24,
         "packetLoss": 0.5
@@ -15349,10 +15789,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.93,
+        "latency": 36.66,
         "bandwidth": 115.32,
         "uptime": 24,
-        "packetLoss": 1.21
+        "packetLoss": 1.11
       }
     },
     {
@@ -15389,7 +15829,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.99,
+        "latency": 27.28,
         "bandwidth": 76.58,
         "uptime": 24,
         "packetLoss": 0.91
@@ -15428,8 +15868,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 42.52,
+        "quality": 0.13635000000000003,
+        "latency": 42.54,
         "bandwidth": 53.26,
         "uptime": 24,
         "packetLoss": 9.74
@@ -15469,7 +15909,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 36.5,
+        "latency": 37.15,
         "bandwidth": 490.74,
         "uptime": 24,
         "packetLoss": 1.52
@@ -15509,7 +15949,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.83,
+        "latency": 27.84,
         "bandwidth": 284.8,
         "uptime": 24,
         "packetLoss": 1.06
@@ -15549,7 +15989,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 34.18,
+        "latency": 34.19,
         "bandwidth": 20.13,
         "uptime": 24,
         "packetLoss": 0.51
@@ -15589,7 +16029,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.18,
+        "latency": 23.64,
         "bandwidth": 74.37,
         "uptime": 24,
         "packetLoss": 0.4
@@ -15669,7 +16109,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.88,
+        "latency": 27.21,
         "bandwidth": 715.41,
         "uptime": 24,
         "packetLoss": 0.87
@@ -15709,7 +16149,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 32.62,
+        "latency": 34.06,
         "bandwidth": 18.67,
         "uptime": 24,
         "packetLoss": 0.35
@@ -15749,10 +16189,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.39,
+        "latency": 21.83,
         "bandwidth": 254.94,
         "uptime": 24,
-        "packetLoss": 1.72
+        "packetLoss": 1.5
       }
     },
     {
@@ -15789,7 +16229,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.94,
+        "latency": 27.46,
         "bandwidth": 698.14,
         "uptime": 24,
         "packetLoss": 0.86
@@ -15829,7 +16269,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.48,
+        "latency": 31.82,
         "bandwidth": 405.71,
         "uptime": 24,
         "packetLoss": 0.18
@@ -15869,7 +16309,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 195.42,
+        "latency": 194.99,
         "bandwidth": 721.32,
         "uptime": 24,
         "packetLoss": 1.62
@@ -15909,7 +16349,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 36.02,
+        "latency": 36.25,
         "bandwidth": 32.34,
         "uptime": 24,
         "packetLoss": 1.92
@@ -15952,7 +16392,7 @@
         "latency": 82.11,
         "bandwidth": 16.65,
         "uptime": 23.67,
-        "packetLoss": 0.79
+        "packetLoss": 0.86
       }
     },
     {
@@ -16029,7 +16469,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 42.63,
+        "latency": 40.65,
         "bandwidth": 6.96,
         "uptime": 24,
         "packetLoss": 8.31
@@ -16109,7 +16549,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.99,
+        "latency": 24.89,
         "bandwidth": 606.68,
         "uptime": 24,
         "packetLoss": 0.84
@@ -16183,10 +16623,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.78,
+        "latency": 25.62,
         "bandwidth": 73.9,
         "uptime": 24,
-        "packetLoss": 1.78
+        "packetLoss": 1.64
       }
     },
     {
@@ -16263,7 +16703,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 36.09,
+        "latency": 36.14,
         "bandwidth": 14.85,
         "uptime": 24,
         "packetLoss": 0.56
@@ -16303,7 +16743,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.01,
+        "latency": 24.02,
         "bandwidth": 768.03,
         "uptime": 24,
         "packetLoss": 0.62
@@ -16343,7 +16783,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 38.75,
+        "latency": 38.53,
         "bandwidth": 433.61,
         "uptime": 24,
         "packetLoss": 2.71
@@ -16383,7 +16823,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28,
+        "latency": 27.32,
         "bandwidth": 87.68,
         "uptime": 24,
         "packetLoss": 1.14
@@ -16417,7 +16857,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 36.57,
+        "latency": 36.58,
         "bandwidth": 25.09,
         "uptime": 24,
         "packetLoss": 1.75
@@ -16457,10 +16897,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.82,
+        "latency": 34.28,
         "bandwidth": 77.11,
         "uptime": 24,
-        "packetLoss": 0.26
+        "packetLoss": 0.4
       }
     },
     {
@@ -16534,11 +16974,11 @@
         }
       ],
       "quality": {
-        "quality": 2.3,
-        "latency": 93.58,
+        "quality": 2.5,
+        "latency": 40.16,
         "bandwidth": 23.39,
         "uptime": 24,
-        "packetLoss": 0.29
+        "packetLoss": 0.28
       }
     },
     {
@@ -16575,7 +17015,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 32.79,
+        "latency": 32.31,
         "bandwidth": 51.56,
         "uptime": 24,
         "packetLoss": 1.46
@@ -16615,7 +17055,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.23,
+        "latency": 26.24,
         "bandwidth": 733.88,
         "uptime": 24,
         "packetLoss": 1.05
@@ -16655,7 +17095,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 33.1,
+        "latency": 33.56,
         "bandwidth": 40.05,
         "uptime": 24,
         "packetLoss": 3.61
@@ -16695,7 +17135,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.68,
+        "latency": 28.64,
         "bandwidth": 708.12,
         "uptime": 24,
         "packetLoss": 1.03
@@ -16735,10 +17175,10 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 43.31,
+        "latency": 45.35,
         "bandwidth": 12.53,
         "uptime": 24,
-        "packetLoss": 3.11
+        "packetLoss": 2.32
       }
     },
     {
@@ -16775,7 +17215,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 32.24,
+        "latency": 32.81,
         "bandwidth": 39.49,
         "uptime": 24,
         "packetLoss": 1.32
@@ -16815,7 +17255,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 30.36,
+        "latency": 30.25,
         "bandwidth": 837.74,
         "uptime": 24,
         "packetLoss": 1.05
@@ -16855,10 +17295,50 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 33.75,
+        "latency": 32.98,
         "bandwidth": 17.64,
         "uptime": 24,
         "packetLoss": 1.85
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x51d9a9a1f24c1165a48d763858771e4cceb875b6",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 402072,
+        "isp": "Ozonti Network LLC",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.8,
+        "latency": 25.72,
+        "bandwidth": 659.48,
+        "uptime": 24,
+        "packetLoss": 0.77
       }
     },
     {
@@ -16895,7 +17375,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.8,
+        "latency": 28.63,
         "bandwidth": 58.86,
         "uptime": 24,
         "packetLoss": 1.77
@@ -16934,8 +17414,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 19.57,
+        "quality": 2.6,
+        "latency": 21.44,
         "bandwidth": 21.29,
         "uptime": 24,
         "packetLoss": 1.58
@@ -16975,50 +17455,10 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 38.67,
-        "bandwidth": 10.96,
+        "latency": 38.75,
+        "bandwidth": 11.01,
         "uptime": 24,
-        "packetLoss": 9.38
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x51d9a9a1f24c1165a48d763858771e4cceb875b6",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 24.11,
-        "bandwidth": 659.48,
-        "uptime": 24,
-        "packetLoss": 0.77
+        "packetLoss": 9.44
       }
     },
     {
@@ -17093,7 +17533,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.08,
+        "latency": 29.52,
         "bandwidth": 63.83,
         "uptime": 24,
         "packetLoss": 0.28
@@ -17133,7 +17573,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 21.84,
+        "latency": 23.51,
         "bandwidth": 616.16,
         "uptime": 24,
         "packetLoss": 2.18
@@ -17173,7 +17613,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 33.75,
+        "latency": 34.72,
         "bandwidth": 35.1,
         "uptime": 24,
         "packetLoss": 2.53
@@ -17213,7 +17653,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.12,
+        "latency": 26.29,
         "bandwidth": 60.98,
         "uptime": 24,
         "packetLoss": 0.65
@@ -17253,10 +17693,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.59,
+        "latency": 31.57,
         "bandwidth": 152.97,
         "uptime": 24,
-        "packetLoss": 0.88
+        "packetLoss": 0.59
       }
     },
     {
@@ -17373,7 +17813,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 33.53,
+        "latency": 33.24,
         "bandwidth": 57.72,
         "uptime": 24,
         "packetLoss": 0.66
@@ -17413,7 +17853,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 34.69,
+        "latency": 34.13,
         "bandwidth": 258.13,
         "uptime": 24,
         "packetLoss": 1.76
@@ -17453,7 +17893,7 @@
       ],
       "quality": {
         "quality": 2.1666666666666665,
-        "latency": 26.19,
+        "latency": 26.71,
         "bandwidth": 15.27,
         "uptime": 21.08,
         "packetLoss": 1.12
@@ -17493,10 +17933,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 43.49,
-        "bandwidth": 83.63,
+        "latency": 43.52,
+        "bandwidth": 89.83,
         "uptime": 24,
-        "packetLoss": 2.4
+        "packetLoss": 1.78
       }
     },
     {
@@ -17532,8 +17972,8 @@
         }
       ],
       "quality": {
-        "quality": 2.3,
-        "latency": 289.04,
+        "quality": 2.4,
+        "latency": 104.5,
         "bandwidth": 57.41,
         "uptime": 24,
         "packetLoss": 1.51
@@ -17573,10 +18013,10 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 39.52,
+        "latency": 39.6,
         "bandwidth": 17.17,
         "uptime": 24,
-        "packetLoss": 0.8
+        "packetLoss": 0.51
       }
     },
     {
@@ -17612,8 +18052,8 @@
         }
       ],
       "quality": {
-        "quality": 2.2,
-        "latency": 95.01,
+        "quality": 2.1,
+        "latency": 182.53,
         "bandwidth": 17.95,
         "uptime": 24,
         "packetLoss": 1.65
@@ -17663,46 +18103,6 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
-      "provider_id": "0xa617983e6c94dc320be94568947b7f39015ba4e7",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Leeds",
-        "asn": 2856,
-        "isp": "British Telecommunications Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 23.56,
-        "bandwidth": 74.94,
-        "uptime": 24,
-        "packetLoss": 3.27
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
       "provider_id": "0x4eec9ba105876e2ee402e14127ee192f678206fa",
       "service_type": "wireguard",
       "location": {
@@ -17733,7 +18133,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 39.95,
+        "latency": 40.04,
         "bandwidth": 68.38,
         "uptime": 24,
         "packetLoss": 1.24
@@ -17773,7 +18173,7 @@
       ],
       "quality": {
         "quality": 2.1666666666666665,
-        "latency": 38.64,
+        "latency": 36.66,
         "bandwidth": 22.8,
         "uptime": 21.67,
         "packetLoss": 1.58
@@ -17813,10 +18213,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.08,
+        "latency": 26.75,
         "bandwidth": 273.65,
-        "uptime": 24,
-        "packetLoss": 1.19
+        "uptime": 23.92,
+        "packetLoss": 0.97
       }
     },
     {
@@ -17892,8 +18292,8 @@
         }
       ],
       "quality": {
-        "quality": 2.5,
-        "latency": 29.01,
+        "quality": 2.4,
+        "latency": 30.68,
         "bandwidth": 18.78,
         "uptime": 24,
         "packetLoss": 0.34
@@ -17932,8 +18332,8 @@
         }
       ],
       "quality": {
-        "quality": 2.2,
-        "latency": 122.87,
+        "quality": 2.1,
+        "latency": 210.91,
         "bandwidth": 21.39,
         "uptime": 23.17,
         "packetLoss": 1.69
@@ -17976,7 +18376,7 @@
         "latency": 83.71,
         "bandwidth": 80.27,
         "uptime": 24,
-        "packetLoss": 10.91
+        "packetLoss": 10.68
       }
     },
     {
@@ -18013,7 +18413,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.42,
+        "latency": 25.24,
         "bandwidth": 656.46,
         "uptime": 24,
         "packetLoss": 0.21
@@ -18093,7 +18493,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 46.88,
+        "latency": 45.96,
         "bandwidth": 15.84,
         "uptime": 24,
         "packetLoss": 1.92
@@ -18133,7 +18533,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 31.45,
+        "latency": 31.34,
         "bandwidth": 107.59,
         "uptime": 24,
         "packetLoss": 1.16
@@ -18173,7 +18573,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 27.26,
+        "latency": 26.29,
         "bandwidth": 92.25,
         "uptime": 23.42,
         "packetLoss": 1.95
@@ -18213,8 +18613,8 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 36.86,
-        "bandwidth": 14.67,
+        "latency": 36.85,
+        "bandwidth": 10.99,
         "uptime": 24,
         "packetLoss": 19.26
       }
@@ -18255,7 +18655,7 @@
         "quality": 1.9,
         "latency": 261.57,
         "bandwidth": 14.02,
-        "uptime": 23.58,
+        "uptime": 23.92,
         "packetLoss": 4.62
       }
     },
@@ -18293,10 +18693,10 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 228.73,
+        "latency": 219.76,
         "bandwidth": 25.85,
         "uptime": 24,
-        "packetLoss": 0.28
+        "packetLoss": 0.29
       }
     },
     {
@@ -18333,10 +18733,10 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 34.64,
+        "latency": 33.39,
         "bandwidth": 22.23,
         "uptime": 24,
-        "packetLoss": 1.19
+        "packetLoss": 1.58
       }
     },
     {
@@ -18453,7 +18853,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 50.17,
+        "latency": 50.46,
         "bandwidth": 9.43,
         "uptime": 24,
         "packetLoss": 0.95
@@ -18492,8 +18892,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 30.37,
+        "quality": 2.8,
+        "latency": 27.92,
         "bandwidth": 73.42,
         "uptime": 24,
         "packetLoss": 0.71
@@ -18573,10 +18973,10 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 170.67,
+        "latency": 176.67,
         "bandwidth": 59.26,
         "uptime": 24,
-        "packetLoss": 0.17
+        "packetLoss": 0.21
       }
     },
     {
@@ -18613,7 +19013,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 38.17,
+        "latency": 38.08,
         "bandwidth": 16.2,
         "uptime": 24,
         "packetLoss": 3.21
@@ -18653,7 +19053,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 35.96,
+        "latency": 33.84,
         "bandwidth": 22.69,
         "uptime": 24,
         "packetLoss": 0.53
@@ -18693,7 +19093,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.68,
+        "latency": 24.53,
         "bandwidth": 574.41,
         "uptime": 24,
         "packetLoss": 1.53
@@ -18733,7 +19133,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.4,
+        "latency": 25.28,
         "bandwidth": 756.56,
         "uptime": 24,
         "packetLoss": 1.01
@@ -18783,46 +19183,6 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
-      "provider_id": "0x6d43ea6f21edc1af80262cb991e1a8ebaf40aae0",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 25310,
-        "isp": "Vodafone Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 35.67,
-        "bandwidth": 79.84,
-        "uptime": 24,
-        "packetLoss": 1.88
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
       "provider_id": "0x3eed0810886d70d6d8c98f05a244141052b07c52",
       "service_type": "wireguard",
       "location": {
@@ -18853,7 +19213,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 52.5,
+        "latency": 53.59,
         "bandwidth": 22.94,
         "uptime": 24,
         "packetLoss": 0.68
@@ -18893,7 +19253,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 40.54,
+        "latency": 40.04,
         "bandwidth": 32.85,
         "uptime": 24,
         "packetLoss": 2.37
@@ -18971,7 +19331,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 51.61,
+        "latency": 51.46,
         "bandwidth": 25.75,
         "uptime": 24,
         "packetLoss": 1.03
@@ -19051,10 +19411,10 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 36.34,
+        "latency": 36.35,
         "bandwidth": 20.9,
         "uptime": 24,
-        "packetLoss": 0.45
+        "packetLoss": 0.51
       }
     },
     {
@@ -19091,7 +19451,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 24.64,
+        "latency": 24.63,
         "bandwidth": 598.07,
         "uptime": 24,
         "packetLoss": 2.13
@@ -19131,44 +19491,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 49.81,
+        "latency": 49.79,
         "bandwidth": 60.13,
         "uptime": 24,
         "packetLoss": 0.43
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x48ef3cec0d3bd93871f97023b1d3be5c5107b45c",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Jarrow",
-        "asn": 5089,
-        "isp": "Virgin Media Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.3,
-        "latency": 42.97,
-        "bandwidth": 12.51,
-        "uptime": 24,
-        "packetLoss": 0.9
       }
     },
     {
@@ -19205,10 +19531,44 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 40.67,
+        "latency": 38.92,
         "bandwidth": 16.3,
         "uptime": 24,
         "packetLoss": 11.82
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0x48ef3cec0d3bd93871f97023b1d3be5c5107b45c",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "Jarrow",
+        "asn": 5089,
+        "isp": "Virgin Media Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2.3,
+        "latency": 43.46,
+        "bandwidth": 12.51,
+        "uptime": 24,
+        "packetLoss": 0.9
       }
     },
     {
@@ -19325,7 +19685,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.53,
+        "latency": 23.83,
         "bandwidth": 461.76,
         "uptime": 24,
         "packetLoss": 2.56
@@ -19365,50 +19725,10 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 30.61,
+        "latency": 30.24,
         "bandwidth": 357.17,
         "uptime": 24,
         "packetLoss": 0.93
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xe59821cbb00b5bfdb79a0ba0a79647024cbe80a1",
-      "service_type": "quic_scraping",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 201838,
-        "isp": "Community Fibre Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 0.7666666666666666,
-        "latency": 851.35,
-        "bandwidth": 0,
-        "uptime": 13.75,
-        "packetLoss": 0
       }
     },
     {
@@ -19446,7 +19766,7 @@
       "quality": {
         "quality": 2.8,
         "latency": 25.98,
-        "bandwidth": 533.43,
+        "bandwidth": 384.07,
         "uptime": 24,
         "packetLoss": 1.01
       }
@@ -19485,7 +19805,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 28.38,
+        "latency": 28.39,
         "bandwidth": 45.82,
         "uptime": 24,
         "packetLoss": 0.2
@@ -19524,51 +19844,11 @@
         }
       ],
       "quality": {
-        "quality": 1.7999999999999998,
-        "latency": 429.3,
+        "quality": 1.9,
+        "latency": 255.35,
         "bandwidth": 13.9,
         "uptime": 24,
         "packetLoss": 1.7
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xb1cb50c95bd6c91afb3d50fc7222979ede00b95c",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 14593,
-        "isp": "SpaceX Services Inc.",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.3,
-        "latency": 82.08,
-        "bandwidth": 22.36,
-        "uptime": 24,
-        "packetLoss": 0.52
       }
     },
     {
@@ -19605,7 +19885,7 @@
       ],
       "quality": {
         "quality": 2.1,
-        "latency": 32.15,
+        "latency": 35.35,
         "bandwidth": 6.29,
         "uptime": 24,
         "packetLoss": 3.74
@@ -19644,11 +19924,11 @@
         }
       ],
       "quality": {
-        "quality": 2.2,
+        "quality": 2.3,
         "latency": 12.48,
-        "bandwidth": 3.52,
+        "bandwidth": 5.15,
         "uptime": 24,
-        "packetLoss": 6.76
+        "packetLoss": 3.39
       }
     },
     {
@@ -19685,7 +19965,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 39.07,
+        "latency": 38.72,
         "bandwidth": 684.6,
         "uptime": 24,
         "packetLoss": 1.25
@@ -19726,7 +20006,7 @@
       "quality": {
         "quality": 2.7,
         "latency": 28.35,
-        "bandwidth": 45.12,
+        "bandwidth": 44.52,
         "uptime": 24,
         "packetLoss": 1.52
       }
@@ -19764,8 +20044,8 @@
         }
       ],
       "quality": {
-        "quality": 2.7,
-        "latency": 49.99,
+        "quality": 2.6,
+        "latency": 51.82,
         "bandwidth": 58.99,
         "uptime": 24,
         "packetLoss": 7.91
@@ -19805,7 +20085,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.97,
+        "latency": 25.96,
         "bandwidth": 752.86,
         "uptime": 24,
         "packetLoss": 0.35
@@ -19845,7 +20125,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.69,
+        "latency": 24.92,
         "bandwidth": 669.5,
         "uptime": 24,
         "packetLoss": 0.51
@@ -19885,7 +20165,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 42.74,
+        "latency": 42.73,
         "bandwidth": 570.43,
         "uptime": 24,
         "packetLoss": 0.96
@@ -19925,7 +20205,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 22.45,
+        "latency": 24.9,
         "bandwidth": 675.2,
         "uptime": 24,
         "packetLoss": 0.87
@@ -19965,7 +20245,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 38.46,
+        "latency": 38.51,
         "bandwidth": 32.13,
         "uptime": 24,
         "packetLoss": 2.68
@@ -20005,7 +20285,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 39.67,
+        "latency": 39.61,
         "bandwidth": 15.58,
         "uptime": 24,
         "packetLoss": 5.02
@@ -20045,50 +20325,10 @@
       ],
       "quality": {
         "quality": 2.2666666666666666,
-        "latency": 29.16,
+        "latency": 26.98,
         "bandwidth": 23.26,
-        "uptime": 22,
+        "uptime": 21.75,
         "packetLoss": 0.63
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x60f58d9f891f5fa3b9f31313d4697c8f4c2b08a3",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Plymouth",
-        "asn": 5089,
-        "isp": "Virgin Media Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.6,
-        "latency": 45.23,
-        "bandwidth": 36.67,
-        "uptime": 24,
-        "packetLoss": 0.43
       }
     },
     {
@@ -20124,8 +20364,8 @@
         }
       ],
       "quality": {
-        "quality": 2.8,
-        "latency": 28.95,
+        "quality": 2.7,
+        "latency": 30.85,
         "bandwidth": 54.49,
         "uptime": 24,
         "packetLoss": 0.87
@@ -20168,7 +20408,7 @@
         "latency": 71.62,
         "bandwidth": 8,
         "uptime": 24,
-        "packetLoss": 2.16
+        "packetLoss": 1.92
       }
     },
     {
@@ -20205,7 +20445,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 28.78,
+        "latency": 29.02,
         "bandwidth": 806.17,
         "uptime": 24,
         "packetLoss": 0.87
@@ -20245,7 +20485,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23,
+        "latency": 22.99,
         "bandwidth": 479.93,
         "uptime": 24,
         "packetLoss": 2.2
@@ -20325,7 +20565,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 23.85,
+        "latency": 23.25,
         "bandwidth": 640.01,
         "uptime": 24,
         "packetLoss": 0.52
@@ -20365,7 +20605,7 @@
       ],
       "quality": {
         "quality": 2.3,
-        "latency": 44.57,
+        "latency": 39.52,
         "bandwidth": 12.96,
         "uptime": 24,
         "packetLoss": 1.08
@@ -20445,7 +20685,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 29.4,
+        "latency": 29.47,
         "bandwidth": 188.51,
         "uptime": 24,
         "packetLoss": 0.11
@@ -20485,7 +20725,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 33.31,
+        "latency": 33.5,
         "bandwidth": 40.67,
         "uptime": 24,
         "packetLoss": 0.51
@@ -20525,10 +20765,10 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.7,
+        "latency": 22.63,
         "bandwidth": 587.35,
         "uptime": 24,
-        "packetLoss": 1.03
+        "packetLoss": 1.81
       }
     },
     {
@@ -20605,7 +20845,7 @@
       ],
       "quality": {
         "quality": 2.7,
-        "latency": 39.56,
+        "latency": 40.74,
         "bandwidth": 63.13,
         "uptime": 24,
         "packetLoss": 0.49
@@ -20661,7 +20901,7 @@
         "continent": "EU",
         "country": "GB",
         "region": "England",
-        "city": "London",
+        "city": "Cambridge",
         "asn": 2856,
         "isp": "British Telecommunications Limited",
         "ip_type": "residential"
@@ -20684,11 +20924,51 @@
         }
       ],
       "quality": {
-        "quality": 1.7666666666666666,
-        "latency": 32.16,
+        "quality": 1.5666666666666667,
+        "latency": 86.04,
         "bandwidth": 7.76,
-        "uptime": 16.83,
+        "uptime": 21.83,
         "packetLoss": 0.79
+      }
+    },
+    {
+      "id": 0,
+      "format": "service-proposal/v3",
+      "compatibility": 2,
+      "provider_id": "0xbd80d3b292fc39b5cbb2d05dcdbd5e39146393bf",
+      "service_type": "wireguard",
+      "location": {
+        "continent": "EU",
+        "country": "GB",
+        "region": "England",
+        "city": "London",
+        "asn": 5607,
+        "isp": "Sky UK Limited",
+        "ip_type": "residential"
+      },
+      "contacts": [
+        {
+          "type": "nats/p2p/v1",
+          "definition": {
+            "broker_addresses": [
+              "nats://broker.mysterium.network:4222",
+              "nats://broker.mysterium.network:4222",
+              "nats://159.69.15.34:4222",
+              "nats://159.69.244.241:4222",
+              "nats://116.203.130.98:4222",
+              "nats://49.12.244.81:4222",
+              "nats://46.224.211.253:4222",
+              "nats://188.245.149.150:4222"
+            ]
+          }
+        }
+      ],
+      "quality": {
+        "quality": 2,
+        "latency": 343.22,
+        "bandwidth": 23.48,
+        "uptime": 23.08,
+        "packetLoss": 1.12
       }
     },
     {
@@ -20735,46 +21015,6 @@
       "id": 0,
       "format": "service-proposal/v3",
       "compatibility": 2,
-      "provider_id": "0xbd80d3b292fc39b5cbb2d05dcdbd5e39146393bf",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 5607,
-        "isp": "Sky UK Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.1,
-        "latency": 292.66,
-        "bandwidth": 23.48,
-        "uptime": 23.08,
-        "packetLoss": 1.12
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
       "provider_id": "0x5fc966d4ac9030d3a27926dab54216445e216978",
       "service_type": "wireguard",
       "location": {
@@ -20805,7 +21045,7 @@
       ],
       "quality": {
         "quality": 2.5,
-        "latency": 33.41,
+        "latency": 34.31,
         "bandwidth": 24.29,
         "uptime": 24,
         "packetLoss": 0.46
@@ -20845,7 +21085,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.84,
+        "latency": 25.54,
         "bandwidth": 431.95,
         "uptime": 24,
         "packetLoss": 0.5
@@ -20885,7 +21125,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 25.06,
+        "latency": 24.1,
         "bandwidth": 742.95,
         "uptime": 24,
         "packetLoss": 0.51
@@ -20925,7 +21165,7 @@
       ],
       "quality": {
         "quality": 2.6,
-        "latency": 28.36,
+        "latency": 28.43,
         "bandwidth": 20.7,
         "uptime": 24,
         "packetLoss": 2.15
@@ -20965,7 +21205,7 @@
       ],
       "quality": {
         "quality": 2.4,
-        "latency": 147.86,
+        "latency": 160.93,
         "bandwidth": 431.47,
         "uptime": 24,
         "packetLoss": 1.85
@@ -21005,7 +21245,7 @@
       ],
       "quality": {
         "quality": 2.8,
-        "latency": 26.72,
+        "latency": 26.2,
         "bandwidth": 705.44,
         "uptime": 24,
         "packetLoss": 0.83
@@ -21021,7 +21261,7 @@
         "continent": "EU",
         "country": "GB",
         "region": "England",
-        "city": "Brighton",
+        "city": "Farnborough",
         "asn": 2856,
         "isp": "British Telecommunications Limited",
         "ip_type": "residential"
@@ -21044,491 +21284,11 @@
         }
       ],
       "quality": {
-        "quality": 1.7,
-        "latency": 30.36,
+        "quality": 1.8,
+        "latency": 29.76,
         "bandwidth": 0.96,
         "uptime": 23.92,
         "packetLoss": 2.89
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x99d4c2c43192f4e94a84df94fadeccbde2e9f66f",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "Northern Ireland",
-        "city": "Knockmanoul",
-        "asn": 5607,
-        "isp": "Sky UK Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 39.21,
-        "bandwidth": 87.07,
-        "uptime": 24,
-        "packetLoss": 8.46
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x209b9b15640728700b579ada7024e290e445727e",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Bradford",
-        "asn": 5607,
-        "isp": "Sky UK Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.6,
-        "latency": 33.9,
-        "bandwidth": 47.53,
-        "uptime": 24,
-        "packetLoss": 10.52
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xd1c7eb31c75c3169d9235cbeb0236201169f716f",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Leeds",
-        "asn": 5607,
-        "isp": "Sky UK Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 33.8,
-        "bandwidth": 61.38,
-        "uptime": 24,
-        "packetLoss": 0.69
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x96c44087fe988f4da5b78f8d31d41cbcff47c5f6",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Southampton",
-        "asn": 60377,
-        "isp": "Toob Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 26.91,
-        "bandwidth": 343.91,
-        "uptime": 24,
-        "packetLoss": 0.84
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x7357106763739633ef96c40f71d1dc5ccd9440a0",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 23.96,
-        "bandwidth": 709.89,
-        "uptime": 24,
-        "packetLoss": 0.98
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x8e9c6638873537f069b580bb37b7b3a37c3c1fe8",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Reading",
-        "asn": 60377,
-        "isp": "Toob Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 26.54,
-        "bandwidth": 396.76,
-        "uptime": 24,
-        "packetLoss": 0.98
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xe927f17108ffcd0178066b9fbe9f98410227a4d5",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 23.41,
-        "bandwidth": 427.79,
-        "uptime": 24,
-        "packetLoss": 1.3
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xb0da2cd0b74558d05dd79a4daa55539dbb3b1198",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.5,
-        "latency": 81.08,
-        "bandwidth": 712.4,
-        "uptime": 24,
-        "packetLoss": 1.05
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x07b1a5ce86903910683058c5980d369b3239f600",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "Birmingham",
-        "asn": 5378,
-        "isp": "Vodafone Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.7,
-        "latency": 35.23,
-        "bandwidth": 71.15,
-        "uptime": 24,
-        "packetLoss": 0.54
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xbc0330bf375b6fdfc01b9b566d80a2f82c4f7e76",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 56478,
-        "isp": "Hyperoptic Ltd",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 24.06,
-        "bandwidth": 51.6,
-        "uptime": 24,
-        "packetLoss": 0.93
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0xeab85757856672bb309c6125337d1438ab242952",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 201838,
-        "isp": "Community Fibre Limited",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.2333333333333334,
-        "latency": 18.4,
-        "bandwidth": 61.31,
-        "uptime": 5.08,
-        "packetLoss": 2.06
-      }
-    },
-    {
-      "id": 0,
-      "format": "service-proposal/v3",
-      "compatibility": 2,
-      "provider_id": "0x99e1e60efc53621aec706a31a861ecfd8eb5ff45",
-      "service_type": "wireguard",
-      "location": {
-        "continent": "EU",
-        "country": "GB",
-        "region": "England",
-        "city": "London",
-        "asn": 402072,
-        "isp": "Ozonti Network LLC",
-        "ip_type": "residential"
-      },
-      "contacts": [
-        {
-          "type": "nats/p2p/v1",
-          "definition": {
-            "broker_addresses": [
-              "nats://broker.mysterium.network:4222",
-              "nats://broker.mysterium.network:4222",
-              "nats://159.69.15.34:4222",
-              "nats://159.69.244.241:4222",
-              "nats://116.203.130.98:4222",
-              "nats://49.12.244.81:4222",
-              "nats://46.224.211.253:4222",
-              "nats://188.245.149.150:4222"
-            ]
-          }
-        }
-      ],
-      "quality": {
-        "quality": 2.8,
-        "latency": 25.05,
-        "bandwidth": 747.7,
-        "uptime": 24,
-        "packetLoss": 3.83
       }
     }
   ]
